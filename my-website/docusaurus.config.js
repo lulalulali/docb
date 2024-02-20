@@ -8,9 +8,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
+  title: 'My Note',
   tagline: 'Dinosaurs are cool',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/Joxer.ico',
 
   // Set the production url of your site here
   url: 'https://your-docusaurus-site.example.com',
@@ -31,7 +31,7 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en','zh-Hans'],
   },
 
   presets: [
@@ -53,6 +53,14 @@ const config = {
           editUrl:
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
+
+        // docs: {
+        //   routeBasePath: '/', // Serve the docs at the site's root
+        //   /* other docs plugin options */
+        // },
+        // blog: false, // Optional: disable the blog plugin
+        // // ...
+
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -71,14 +79,14 @@ const config = {
           alt: 'My Site Logo',
           src: 'img/logo.svg',
         },
-        items: [
+      items: [
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Tutorial',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+      {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/facebook/docusaurus',
             label: 'GitHub',
