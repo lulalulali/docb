@@ -113,8 +113,3 @@ displayed_sidebar: apiSidebar或tutorialSidebar
 ref项目不参与导航的，但是适用于其他侧边栏转入链接
 
 ## 分化版本
-
-## blog
-
-blogSidebarTitle
-blogSidebarCount: 'ALL'
