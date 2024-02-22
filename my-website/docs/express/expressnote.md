@@ -128,9 +128,11 @@ node.js应用程序来跑案例中的配置文件 运行node a.js
 
 概述：点击登录，跳出认证错误；点击禁止页，跳出'你被否了'。填入正确的账号密码，跳出通过核准。此时再点击禁止页按钮，跳入新页面；点击登出按钮。
 
+```js
 app.use(express.urlencoded({ extended: false })):用来解析表单中的输入，发给您一个地方req.body 中
 
 app.use(session({ resave: false, saveUninitialized: false, secret: 'shhhh, very secret' })):
+
 resave: false saveUninitialized: false意思是你没更改，就不存。
 
 secret: 'shhhh, very secret' 加强安全性
@@ -139,6 +141,7 @@ app.use(function(req, res, next){...}:中间件，请求来了才执行它的动
 var err = req.session.error; 和 var msg = req.session.success;:抓错误和成功消息
 delete req.session.error; 和 delete req.session.success;:删掉之前的错误和成功消息，防污染
 res.locals.message = '';:建一个本地变量用来做展示准备
+```
 
 ```js
 if (err) res.locals.message = '<p class="msg error">' + err + '</p>'; 如果err存在，则上句的本地变量塞东西进来 if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';:同理
@@ -148,6 +151,7 @@ next();:调用 next()，
 
 总的来说，是展示对错的消息
 
+```js
 var users = { tj: { name: 'tj' } };:创建一个对象，里面有一个叫tj的对象，它有个name属性，这个属性是tj
 
 hash({ password: 'foobar' }, function (err, pass, salt, hash) {...}:hash接收一个passwor对象
@@ -157,6 +161,7 @@ function (err, pass, salt, hash) { if (err) throw err; ... }:
 if (err) throw err;:
 
 users.tj.salt = salt; 和 users.tj.hash = hash;:如果抛出错误，则将salt和hash给用户对象中（一般工作中会传回企业的数据库）
+```
 
 总体来说，创一个tj，hash一个到数据库
 
