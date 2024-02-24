@@ -122,6 +122,17 @@ express.static或者e.json或urlencode
 
 ## examples
 
+在控制台的常规操作：一般用来理解、调试、测试函数
+1.调用函数，直接调用，传参，后执行。
+2.consolelog加函数查看函数定义
+3.查看函数返回值 与2大致相同，不过log的函数后跟了括号的
+4.查看函数参数，也是用consolelog
+5.查看函数属性
+6.重新定义函数，y=func加新parameter
+7.定义一个匿名函数
+8.定义一个箭头函数
+9.编写递归函数并调用
+
 node.js应用程序来跑案例中的配置文件 运行node a.js
 
 ## auth是为authentication
@@ -166,3 +177,271 @@ users.tj.salt = salt; 和 users.tj.hash = hash;:如果抛出错误，则将salt�
 总体来说，创一个tj，hash一个到数据库
 
 先验用户名，然后验密码的hash值
+
+## content negotiation
+
+概述：就是从database中拿数据，传到页面上？不很懂
+
+## Working with cookie-based sessions基于页面cookie的动作
+
+用cookie session中间件记录访问次数appusecount
+
+## Working with cookies使用cookie
+
+没懂
+
+```js
+if (process.env.NODE_ENV !== 'test') app.use(logger(':method :url'))
+app.use(cookieParser('my secret here'));
+app.get('/', function(req, res){
+  if (req.cookies.remember) {
+    res.send('Remembered :). Click to <a href="/forget">forget</a>!.');
+  } else {
+    res.send('<form method="post"><p>Check to <label>'
+      + '<input type="checkbox" name="remember"/> remember me</label> '
+      + '<input type="submit" value="Submit"/>.</p></form>');
+  }
+});
+app.get('/forget', function(req, res){
+  res.clearCookie('remember');
+  res.redirect('back');
+});
+app.post('/', function(req, res){
+  var minute = 60000;
+  if (req.body.remember) res.cookie('remember', 1, { maxAge: minute });
+  res.redirect('back');
+});
+```
+
+如果环境不是测试环境，则使用 morgan 中间件记录请求的方法和URL。
+
+使用 cookie-parser 中间件，并提供一个密钥（"my secret here"）用于签名和验证 Cookie。
+
+处理根路径 / 的 GET 请求。根据请求中的 Cookie 显示相应的页面内容。
+
+处理 /forget 路径的 GET 请求。清除名为 'remember' 的 Cookie 并重定向回原始页面。
+
+处理根路径 / 的 POST 请求。根据提交的表单内容设置名为 'remember' 的 Cookie 并重定向回原始页面。
+
+## 下载
+
+路由：提供指定路径的文件，若存在，则下载；不存在返回404并报告错误
+
+```js
+app.get('/files/:file(*)', function(req, res, next){
+  res.download(req.params.file, { root: FILES_DIR }, function (err) {
+    if (!err) return; // file sent
+    if (err.status !== 404) return next(err); // non-404 error
+    // file for download not found
+    res.statusCode = 404;
+    res.send('Cant find that file, sorry!');
+  });
+});
+```
+
+无错误，返回；有错误，是非404的吗，是跳下一个中间件处理，不是非404的（即404），状态码和消息整上
+
+## ejs
+
+Embedded JavaScript templating (ejs)使用嵌入式js模板
+
+```js
+app.use(express.static(path.join(__dirname, 'public')));
+```
+
+从public文件夹中取你要用的css脚本
+
+## 创建错误界面
+
+设置路由 /500 /404 /403的各个函数
+
+捕获错误，状态码，渲染视图
+
+## error
+
+迷糊
+
+```js
+if (!test) app.use(logger('dev'));
+function error(err, req, res, next) {
+  if (!test) console.error(err.stack);
+  res.status(500);
+  res.send('Internal Server Error');
+}
+app.get('/', function () {
+  throw new Error('something broke!');
+});
+app.get('/next', function(req, res, next){
+  process.nextTick(function(){
+    next(new Error('oh no!'));
+  });
+});
+app.use(error);
+```
+
+检查test变量，若为假，则请求记录；为真，跳过
+
+error函数：如果test为假，则打印，状态码设500，发送字符串“报错”
+
+定义一个路由函数：出现错误时抛出，给到下一个件
+
+当访问/next时，往下传
+
+总之：设置、使用错误处理中间件，何时抛出、处理错误
+
+## hello world
+
+appget / function res send helloworld
+
+```js
+app.get('/', function(req, res){
+  res.send('Hello World');
+});
+```
+
+## md模板引擎
+
+不懂，用md渲染界面？
+
+```js
+app.engine('md', function(path, options, fn){
+  fs.readFile(path, 'utf8', function(err, str){
+    if (err) return fn(err);
+    var html = marked.parse(str).replace(/\{([^}]+)\}/g, function(_, name){
+      return escapeHtml(options[name] || '');
+    });
+    fn(null, html);
+  });
+});
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'md');
+app.get('/', function(req, res){
+  res.render('index', { title: 'Markdown Example' });
+});
+app.get('/fail', function(req, res){
+  res.render('missing', { title: 'Markdown Example' });
+});
+```
+
+自定义一个md引擎，读md文件并转换为html
+
+视图模板文件的存放位置为当前目录下的views
+
+去扩展名使用render的准备工作
+
+访问/时，渲染index并传递数据
+
+当访问/fail时，渲染 'missing' 视图，并传递数据。
+
+## multiple Express routers
+
+多个express路由，就是不同路由
+
+apiv1get和apiv2get
+
+## multipart-encoded forms
+
+多部分编码的表单，上传一文件和它的名字
+
+```js
+  form.on('error', next);
+  form.on('close', function(){
+    res.send(format('\nuploaded %s (%d Kb) as %s'
+      , image.filename
+      , image.size / 1024 | 0
+      , title));
+  });
+  form.on('field', function(name, val){
+    if (name !== 'title') return;
+    title = val;
+  });
+  form.on('part', function(part){
+    if (!part.filename) return;
+    if (part.name !== 'image') return part.resume();
+    image = {};
+    image.filename = part.filename;
+    image.size = 0;
+    part.on('data', function(buf){
+      image.size += buf.length;
+    });
+  });
+  ```
+
+formerror了调next
+
+解析表单，send一个含结果的响应
+
+监听表单字段，如果字段名跟title一样，给title
+
+监听文件格式，是image就给一个初始化的对象；监听data事件计算图像大小。
+
+总之：处理表单上传，监听不同事，处理错误、获文件信息、以及获取表单字段值
+
+## MVC-style controllers
+
+abc都有狗，a有12，b有3，c没有
+
+model逻辑和数据存取view界面呈现 controller接受输入并调用m和v
+
+```js
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.response.message = function(msg){
+  var sess = this.req.session;
+  sess.messages = sess.messages || [];
+  sess.messages.push(msg);
+  return this;
+};
+if (!module.parent) app.use(logger('dev'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'some secret here'
+}));
+app.use(express.urlencoded({ extended: true }))
+app.use(methodOverride('_method'));
+app.use(function(req, res, next){
+  var msgs = req.session.messages || [];
+  res.locals.messages = msgs;
+  res.locals.hasMessages = !! msgs.length;
+  next();
+  req.session.messages = [];
+});
+require('./lib/boot')(app, { verbose: !module.parent });
+app.use(function(err, req, res, next){
+  if (!module.parent) console.error(err.stack);
+  res.status(500).render('5xx');
+});
+app.use(function(req, res, next){
+  res.status(404).render('404', { url: req.originalUrl });
+});
+```
+
+设置视图引擎为ejs，即用ejs模板来呈现视图
+
+视图模板的存放路径为当前目录的views夹中
+
+resmessage方法来存和检索信息
+
+morgan中间件记录请求日志
+
+使用expressstatic中间价：提供静态服务
+
+expresssession中间价:会话支持，存储检索用户信息
+
+urlencoded中间件：传入请求的表单，放进reqbody中
+
+methodoverride中间件：查询参数来覆盖http请求方法
+
+自定义中间件：将会话中的信息给视图
+
+通过/lib/boot路径加载控制器和应用模块
+
+错误处理中间件：有错误。控制台记录，渲染5xx视图
+
+404处理中间件：渲染404视图，显示请求原始url
+
+总之，写一些中间件，设置视图引擎，启用会话支持，提供静态服务，加载控制器，并处理错误和404
+
+## Simple request handler简单的访问
