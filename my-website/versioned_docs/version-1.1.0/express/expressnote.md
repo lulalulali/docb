@@ -379,9 +379,17 @@ formerror了调next
 
 ## MVC-style controllers
 
+model逻辑和数据存取view界面呈现 controller接受输入并调用m和v
+
 abc都有狗，a有12，b有3，c没有
 
-model逻辑和数据存取view界面呈现 controller接受输入并调用m和v
+main里面是重定向函数
+
+pet里面是show、edit、update；还有view，有showejs和editejs
+
+user里面是展示、编辑、更新、列表；还有view，edithbs、listhbs、showhbs
+
+user-pet里面是创建宠物路由，和用户相关路由关联
 
 ```js
 app.set('view engine', 'ejs');
@@ -444,4 +452,305 @@ methodoverride中间件：查询参数来覆盖http请求方法
 
 总之，写一些中间件，设置视图引擎，启用会话支持，提供静态服务，加载控制器，并处理错误和404
 
-## Simple request handler简单的访问
+```js
+if (obj.engine) app.set('view engine', obj.engine);
+  app.set('views', path.join(__dirname, '..', 'controllers', name, 'views'));
+    for (var key in obj) {
+      if (~['name', 'prefix', 'engine', 'before'].indexOf(key)) continue;
+      switch (key) {
+        case 'show':
+          method = 'get';
+          url = '/' + name + '/:' + name + '_id';
+          break;
+        case 'list':
+          method = 'get';
+          url = '/' + name + 's';
+          break;
+        case 'edit':
+          method = 'get';
+          url = '/' + name + '/:' + name + '_id/edit';
+          break;
+        case 'update':
+          method = 'put';
+          url = '/' + name + '/:' + name + '_id';
+          break;
+        case 'create':
+          method = 'post';
+          url = '/' + name;
+          break;
+        case 'index':
+          method = 'get';
+          url = '/';
+          break;
+        default:
+          throw new Error('unrecognized route: ' + name + '.' + key);
+      }
+      handler = obj[key];
+      url = prefix + url;
+      if (obj.before) {
+        app[method](url, obj.before, handler);
+        verbose && console.log('     %s %s -> before -> %s', method.toUpperCase(), url, key);
+      } else {
+        app[method](url, handler);
+        verbose && console.log('     %s %s -> %s', method.toUpperCase(), url, key);
+      }
+    }
+    parent.use(app);
+  });
+};
+```
+
+自动生成express路由的模块
+
+如果obj中有engine，就将其设置为视图引擎
+
+视图模板的存放路径
+
+遍历obj属性
+
+跳过特殊属性
+
+根据属性名生成路由配置
+
+生成相应http方法和url，
+
+有objbefore，加进路由配置里
+
+使用express的http方法设置路由
+
+输出一些日志信息，表示已经设置对应的路由。
+
+将生成的程序挂载在父类中
+
+lib总之，就是基于对象obj生成路由，支持一些方法配置。好处是简单自定义对象来创建组织，利于模块化和维护
+
+## Tracking online user activity with online and redis packages
+
+用online和redis包追踪用户行为
+
+## Simp这是一个使用Node.js和Express框架创建的简单Web应用程序，用于跟踪在线用户并显示最近在线的用户列表。以下是主要部分的代码解释
+
+```javascript
+app.use(function(req, res, next){
+  online.add(req.headers['user-agent']);  // 在每个请求中，将用户代理信息添加到在线用户列表
+  next();
+});
+```
+
+将用户信息添加到在线用户列表
+
+```javascript
+function list(ids) {
+  return '<ul>' + ids.map(function(id){
+    return '<li>' + id + '</li>';
+  }).join('') + '</ul>';
+}
+```
+
+生成列表
+
+```javascript
+app.get('/', function(req, res, next){
+  online.last(5, function(err, ids){
+    if (err) return next(err);
+    res.send('<p>Users online: ' + ids.length + '</p>' + list(ids));  // 返回包含在线用户数量和用户列表的HTML响应
+  });
+});
+```
+
+走一个get请求，显示在线用户数量
+
+总之，用redis存表，然后用户加入的信息可以进表。get请求可以显示最新的用户表
+
+## route parameters
+
+效果是：/user/1或0或2 1显示是lobi 2是tj 这样，即不同的路由下的页面展示
+
+   ```javascript
+   app.param(['to', 'from'], function(req, res, next, num, name){
+     req.params[name] = parseInt(num, 10);
+     if( isNaN(req.params[name]) ){
+       next(createError(400, 'failed to parseInt '+num));
+     } else {
+       next();
+     }
+   });
+   ```
+
+appparam是路由参数处理器，parseint赋给reqparamsname。判reqparamsname，inNaN表示如果是数组字则fasle，执行else；跟数无关的话，传给createerror中间件处理。
+
+   ```javascript
+   app.param('user', function(req, res, next, id){
+     if (req.user = users[id]) {
+       next();
+     } else {
+       next(createError(404, 'failed to find user'));
+     }
+   });
+   ```
+
+根据userid判断，如果没有，走createerror中间件；有执行next
+
+   ```javascript
+   app.get('/', function(req, res){
+     res.send('Visit /user/0 or /users/0-2');
+   });
+   ```
+
+走/路径，send到页面展示：visit /user/0
+
+   ```javascript
+   app.get('/user/:user', function (req, res) {
+     res.send('user ' + req.user.name);
+   });
+   ```
+
+走/user/1路径，就send信息到页面：user tobi或者user tj
+
+   ```javascript
+   app.get('/users/:from-:to', function (req, res) {
+     var from = req.params.from;
+     var to = req.params.to;
+     var names = users.map(function(user){ return user.name; });
+     res.send('users ' + names.slice(from, to + 1).join(', '));
+   });
+   ```
+
+走/users/0-2路径，就send信息到页面：user tj tobi loki
+
+## Multiple HTTP operations on the same resource
+
+基于同一资源库的http操作 建了一个RESTful资源（users）
+
+   ```javascript
+   app.resource = function(path, obj) {
+     this.get(path, obj.index);
+     this.get(path + '/:a..:b.:format?', function(req, res){
+       var a = parseInt(req.params.a, 10);
+       var b = parseInt(req.params.b, 10);
+       var format = req.params.format;
+       obj.range(req, res, a, b, format);
+     });
+     this.get(path + '/:id', obj.show);
+     this.delete(path + '/:id', function(req, res){
+       var id = parseInt(req.params.id, 10);
+       obj.destroy(req, res, id);
+     });
+   };
+   ```
+
+get所有用户列表
+
+get范围内的用户，range返回格式format
+
+get指定的id用户
+
+删掉指定的id用户
+
+   ```javascript
+   var User = {
+     index: function(req, res){
+       res.send(users);
+     },
+     show: function(req, res){
+       res.send(users[req.params.id] || { error: 'Cannot find user' });
+     },
+     destroy: function(req, res, id){
+       var destroyed = id in users;
+       delete users[id];
+       res.send(destroyed ? 'destroyed' : 'Cannot find user');
+     },
+     range: function(req, res, a, b, format){
+       var range = users.slice(a, b + 1);
+       switch (format) {
+         case 'json':
+           res.send(range);
+           break;
+         case 'html':
+         default:
+           var html = '<ul>' + range.map(function(user){
+             return '<li>' + user.name + '</li>';
+           }).join('\n') + '</ul>';
+           res.send(html);
+           break;
+       }
+     }
+   };
+   ```
+
+定义了一个user，里面有四个方法 `index`, `show`, `destroy`, 和 `range`
+
+index:返回用户列表
+show：返回特定的id要不就是报错
+destroy：删除特定用户id 用三元运算符表示如果删了就是destroyed如果没有就是cannotfinduser
+range：如果是json格式，发range数组；如果是其它的，转换为li元素，连成字符串，发给客户端。
+
+## routes using a map
+
+具体没懂，但是可以用/users/1/pets
+
+定义一个函数，内含http方法，然后调用
+
+   ```javascript
+   app.map = function(a, route){
+     route = route || '';
+     for (var key in a) {
+       switch (typeof a[key]) {
+         case 'object':
+           app.map(a[key], route + key);
+           break;
+         case 'function':
+           if (verbose) console.log('%s %s', key, route);
+           app[key](route, a[key]);
+           break;
+       }
+     }
+   };
+   ```
+
+接受两个参数，路由的对象和路径。属性是object，搜寻街道；属性是function，
+
+   ```javascript
+   var users = {
+     list: function(req, res){
+       res.send('user list');
+     },
+     get: function(req, res){
+       res.send('user ' +  escapeHtml(req.params.uid));
+     },
+     delete: function(req, res){
+       res.send('delete users');
+     }
+   };
+
+   var pets = {
+     list: function(req, res){
+       res.send('user ' + escapeHtml(req.params.uid) + '\'s pets');
+     },
+     delete: function(req, res){
+       res.send('delete ' + escapeHtml(req.params.uid) + '\'s pet ' + escapeHtml(req.params.pid));
+     }
+   };
+   ```
+
+对象的`list`、`get`、`delete`实现
+
+   ```javascript
+   app.map({
+     '/users': {
+       get: users.list,
+       delete: users.delete,
+       '/:uid': {
+         get: users.get,
+         '/pets': {
+           get: pets.list,
+           '/:pid': {
+             delete: pets.delete
+           }
+         }
+       }
+     }
+   });
+   ```
+
+总体而言，这段代码的作用是通过嵌套对象的方式定义和映射路由，使得路由的组织结构更加清晰，并且可以方便地添加和修改路由。
