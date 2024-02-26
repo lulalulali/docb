@@ -524,11 +524,9 @@ if (obj.engine) app.set('view engine', obj.engine);
 
 lib总之，就是基于对象obj生成路由，支持一些方法配置。好处是简单自定义对象来创建组织，利于模块化和维护
 
-## Tracking online user activity with online and redis packages
+## online和redis包
 
-用online和redis包追踪用户行为
-
-## Simp这是一个使用Node.js和Express框架创建的简单Web应用程序，用于跟踪在线用户并显示最近在线的用户列表。以下是主要部分的代码解释
+Tracking online user activity with online and redis packages用online和redis包追踪用户行为，显示用户列表
 
 ```javascript
 app.use(function(req, res, next){
@@ -618,9 +616,9 @@ appparam是路由参数处理器，parseint赋给reqparamsname。判reqparamsnam
 
 走/users/0-2路径，就send信息到页面：user tj tobi loki
 
-## Multiple HTTP operations on the same resource
+## resource
 
-基于同一资源库的http操作 建了一个RESTful资源（users）
+Multiple HTTP operations on the same resource基于同一资源库的http操作 建了一个RESTful资源（users）
 
    ```javascript
    app.resource = function(path, obj) {
@@ -685,9 +683,9 @@ show：返回特定的id要不就是报错
 destroy：删除特定用户id 用三元运算符表示如果删了就是destroyed如果没有就是cannotfinduser
 range：如果是json格式，发range数组；如果是其它的，转换为li元素，连成字符串，发给客户端。
 
-## routes using a map
+## route-map
 
-具体没懂，但是可以用/users/1/pets
+routes using a map具体没懂，但是可以用/users/1/pets
 
 定义一个函数，内含http方法，然后调用
 
@@ -708,7 +706,7 @@ range：如果是json格式，发range数组；如果是其它的，转换为li�
    };
    ```
 
-接受两个参数，路由的对象和路径。属性是object，搜寻街道；属性是function，
+接受两个参数，路由的对象和路径。属性是object，搜寻街道；属性是function，标记此物的位置
 
    ```javascript
    var users = {
@@ -733,24 +731,269 @@ range：如果是json格式，发range数组；如果是其它的，转换为li�
    };
    ```
 
-对象的`list`、`get`、`delete`实现
+总之，用嵌套对象定义映射路由，方便添加修改路由
+
+## route-middleware
+
+user/0/edit就ok，但是user/1/edit就报错。路由中间件，基本的身份认证，
 
    ```javascript
-   app.map({
-     '/users': {
-       get: users.list,
-       delete: users.delete,
-       '/:uid': {
-         get: users.get,
-         '/pets': {
-           get: pets.list,
-           '/:pid': {
-             delete: pets.delete
-           }
-         }
+   var users = [
+     { id: 0, name: 'tj', email: 'tj@vision-media.ca', role: 'member' },
+     { id: 1, name: 'ciaran', email: 'ciaranj@gmail.com', role: 'member' },
+     { id: 2, name: 'aaron', email: 'aaron.heckmann+github@gmail.com', role: 'admin' }
+   ];
+   ```
+
+一个虚拟数组，有四个属性
+
+   ```javascript
+   function loadUser(req, res, next) {
+     var user = users[req.params.id];
+     if (user) {
+       req.user = user;
+       next();
+     } else {
+       next(new Error('Failed to load user ' + req.params.id));
+     }
+   }
+   ```
+
+loaduser中间件，如果找到用户，则将用户id附在请求的对象上；如果没有，抛出failed to load user 9  
+
+   ```javascript
+   function andRestrictToSelf(req, res, next) {
+     if (req.authenticatedUser.id === req.user.id) {
+       next();
+     } else {
+       next(new Error('Unauthorized'));
+     }
+   }
+   ```
+
+andRestrictToSelf 中间件 ，检查当前id是否和已认证？正在查看?的相同，不同，抛出，unauthorized
+
+   ```javascript
+   function andRestrictTo(role) {
+     return function(req, res, next) {
+       if (req.authenticatedUser.role === role) {
+         next();
+       } else {
+         next(new Error('Unauthorized'));
        }
      }
+   }
+   ```
+
+andrestrictto检查名叫role的属性是否匹配
+
+   ```javascript
+   app.use(function(req, res, next){
+     req.authenticatedUser = users[0];
+     next();
    });
    ```
 
-总体而言，这段代码的作用是通过嵌套对象的方式定义和映射路由，使得路由的组织结构更加清晰，并且可以方便地添加和修改路由。
+faux模拟身份认证，真实应用是怎么样操作的呢？
+
+   ```javascript
+   app.get('/', function(req, res){
+     res.redirect('/user/0');
+   });
+   app.get('/user/:id', loadUser, function(req, res){
+     res.send('Viewing user ' + req.user.name);
+   });
+   app.get('/user/:id/edit', loadUser, andRestrictToSelf, function(req, res){
+     res.send('Editing user ' + req.user.name);
+   });
+   app.delete('/user/:id', loadUser, andRestrictTo('admin'), function(req, res){
+     res.send('Deleted user ' + req.user.name);
+   });
+   ```
+
+redirect重定向
+
+总之，验证授权，并可以在确定用户下执行特定操作
+
+## route-separation
+
+Organizing routes per each resource为每个资源流组织路由，主页有两个按钮，分别是进入posts页面和users页面
+
+这是一个使用Node.js和Express框架构建的Web应用程序的部分代码。以下是对这段代码的解释：
+
+```javascript
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+if (!module.parent) {
+  app.use(logger('dev'));
+}
+app.use(methodOverride('_method'));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }))
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/users', user.list);
+app.all('/user/:id/:op?', user.load);
+app.get('/user/:id', user.view);
+app.get('/user/:id/view', user.view);
+app.get('/user/:id/edit', user.edit);
+app.put('/user/:id/edit', user.update);
+app.get('/posts', post.list);
+```
+
+设置视图引擎为ejs，设置视图文件夹路径，添加日志中间件
+
+使用methodoverride中间价；cookie的parse；使用expressurlcoded中间件，解析请求中的数据；静态文件服务中间件，指定public目录
+
+显示users页面、user1、user1view、user1edit和posts页面
+
+总之，index中视图引擎、静态文件目录、中间件、首页、用户相关路由、帖子相关路由。可以有列表，查看信息、编辑信息
+
+```javascript
+exports.list = function(req, res){
+  // 渲染名为 'posts' 的视图，并传递一个包含标题和帖子数据的对象
+  res.render('posts', { title: 'Posts', posts: posts });
+};
+```
+
+第一个‘posts’是文件名；后面是一个数据对象，包含一个title和post数组，post数组用的是之前定义的数组；这样就渲染了
+
+```html
+<dl id="posts">
+  <% posts.forEach(function(post) { %>
+    <dt><%= post.title %></dt>
+    <dd><%= post.body %></dd>
+  <% }) %>  
+</dl>
+<%- include('../footer') -%>
+```
+
+自定义一个列表，起个名字
+ejs模板语法 dt插入帖子标题；dd插入帖子正文
+一个名为footer的外部模板
+
+## search
+
+search API
+
+```javascript
+var db = redis.createClient();
+var app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+db.sadd('ferret', 'tobi');
+db.sadd('ferret', 'loki');
+db.sadd('ferret', 'jane');
+db.sadd('cat', 'manny');
+db.sadd('cat', 'luna');
+app.get('/search/:query?', function(req, res){
+  var query = req.params.query;
+  db.smembers(query, function(err, vals){
+    if (err) return res.send(500);
+    res.send(vals);
+  });
+});
+
+app.get('/client.js', function(req, res){
+  res.sendFile(path.join(__dirname, 'client.js'));
+});
+```
+
+创建redis实例；将public设置为静态文件跟目录
+
+向redis数据库加入数据
+
+获取集合中与查询匹配的所有成员，send回客户端
+
+sendfile发送文件
+
+## session
+
+user session,第一次访问吗？第2、第3、第4直到第n次 即跟踪用户访问的次数
+
+```javascript
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'keyboard cat'
+}));
+```
+
+使用expresssession中间件，resavefalse意味着你（用户）不改的话默认就不保存；saveuninitialized不创建未初始化的，意思就是你没存数据我就不给你创会话；secretkeyboard cat用来签名会话id的密钥，防篡改，可是任意字符串
+
+```javascript
+app.get('/', function(req, res){
+  var body = '';
+  if (req.session.views) {
+    ++req.session.views;
+  } else {
+    req.session.views = 1;
+    body += '<p>First time visiting? view this page in several browsers :)</p>';
+  }
+  res.send(body + '<p>viewed <strong>' + req.session.views + '</strong> times.</p>');
+});
+```
+
+如果存在reqsessionviews，则在原有的基础上加1；不存在，给reqsessionviews赋1，body给一个句子。不管如何都send一个view？times
+
+## static-files
+
+静态文件，通过更改路由来显示文件。如/hello/txt
+
+```javascript
+// 记录请求日志
+app.use(logger('dev'));
+// express 默认不理解 "文件" 的概念。express.static() 中间件检查与 `req.path` 匹配的文件，
+// 在传递给它的目录中查找。例如 "GET /js/app.js" 将在 "./public/js/app.js" 中查找。
+app.use(express.static(path.join(__dirname, 'public')));
+// 如果你想要添加 "前缀"，你可以使用 Connect 提供的挂载特性，例如
+// "GET /static/js/app.js" 而不是 "GET /js/app.js"。
+// 挂载路径 "/static" 在传递控制给 express.static() 中间件之前会被简单地移除，
+// 因此它会正确地通过忽略 "/static" 来服务文件。
+app.use('/static', express.static(path.join(__dirname, 'public')));
+// 如果由于某种原因你想要从多个目录中提供文件，你可以多次使用 express.static()！
+// 在这里我们传递 "./public/css"，这将允许 "GET /style.css" 而不是 "GET /css/style.css"：
+app.use(express.static(path.join(__dirname, 'public', 'css')));
+```
+
+用logger中间件请求日日志
+用expresstatic中间件将public文件夹设置为静态根目录，便于浏览器访问
+用/static置换/public
+用/public/css当静态根目录，也就是说css文件夹中的文件访问时可以直接打在主路由上
+
+## vhost
+
+使用虚拟主机，不同子域名来处理不同的请求。
+
+```javascript
+/*
+edit /etc/hosts:
+127.0.0.1       foo.example.com
+127.0.0.1       bar.example.com
+127.0.0.1       example.com
+*/
+if (!module.parent) main.use(logger('dev'));
+main.get('/', function(req, res){
+  res.send('Hello from main app!');
+});
+main.get('/:sub', function(req, res){
+  res.send('requested ' + req.params.sub);
+});
+var redirect = express();
+redirect.use(function(req, res){
+  if (!module.parent) console.log(req.vhost);
+  res.redirect('http://example.com:3000/' + req.vhost[0]);
+});
+var app = module.exports = express();
+app.use(vhost('*.example.com', redirect)); // 将所有子域名请求导向 Redirect app
+app.use(vhost('example.com', main)); // 将主域名请求导向 Main server app
+```
+
+如果module中没有爹件，使用logger中间件请求日志
+
+根路径请求
+
+带有子路径的请求，返回request和reqparamssub
+
+如果module中没有爹件，重定向到example3000
+
+使用vhost中间件，将请求导向redirectapp、main sever app
