@@ -575,7 +575,7 @@ app.get('/', function(req, res, next){
    });
    ```
 
-appparam是路由参数处理器，parseint赋给reqparamsname。判reqparamsname，inNaN表示如果是数组字则fasle，执行else；跟数无关的话，传给createerror中间件处理。
+appparam是路由参数处理器，parseint赋给reqparamsname。判reqparamsname，isNaN表示如果是数组字not notanumber则fasle，执行else；跟数无关的话，即notanumber，传给createerror中间件处理。
 
    ```javascript
    app.param('user', function(req, res, next, id){
@@ -956,8 +956,11 @@ app.use(express.static(path.join(__dirname, 'public', 'css')));
 ```
 
 用logger中间件请求日日志
+
 用expresstatic中间件将public文件夹设置为静态根目录，便于浏览器访问
+
 用/static置换/public
+
 用/public/css当静态根目录，也就是说css文件夹中的文件访问时可以直接打在主路由上
 
 ## vhost
