@@ -1125,7 +1125,7 @@ self.engine使用之前从 options.engines 中获取的引擎（可能是 Markdo
 
 ## view-locals
 
-Saving data in request object between middleware calls，
+即演示一些基本的api。Saving data in request object between middleware calls，不是很清晰逻辑，只跑出来一个页面。
 
 不同方式获取用户数量和列表，将之传给视图
 
@@ -1228,3 +1228,105 @@ count2和users2将用户数量和列表放入reslocals。渲染视图时，通�
    ```
 
 全局中间价和路由中间价演示，全局的local变量可供后续使用
+
+## web-service
+
+Simple API service，简单的api服务。用于提供对应用程序中数据和功能的编程式访问，开发者可以通过网络请求访问和操作特定资源，无需操作数据库和底层系统
+
+   ```javascript
+   var express = require('../../');
+   var app = module.exports = express();
+   ```
+
+导入express模块，创建express实例
+
+   ```javascript
+   function error(status, msg) {
+     var err = new Error(msg);
+     err.status = status;
+     return err;
+   }
+   ```
+
+error函数：含状态码和消息的err对象
+
+   ```javascript
+   app.use('/api', function(req, res, next){
+     var key = req.query['api-key'];
+     // key isn't present
+     if (!key) return next(error(400, 'api key required'));
+     // key is invalid
+     if (apiKeys.indexOf(key) === -1) return next(error(401, 'invalid api key'))
+     // all good, store req.key for route access
+     req.key = key;
+     next();
+   });
+   ```
+
+验证apikey中间件，如果key是空或是-1，则返回错误
+
+   ```javascript
+   var apiKeys = ['foo', 'bar', 'baz'];
+   ```
+
+定义了一组有效的 API Keys。
+
+   ```javascript
+   var repos = [ /* ... */ ];
+   var users = [ /* ... */ ];
+   var userRepos = { /* ... */ };
+   ```
+
+存储库、用户、用户存储库来模拟用户数据
+
+   ```javascript
+   app.get('/api/users', function (req, res) {
+     res.send(users);
+   });
+   ```
+
+路由处理函数用于返回用户列表。
+
+   ```javascript
+   app.get('/api/repos', function (req, res) {
+     res.send(repos);
+   });
+
+路由处理函数用于返回存储库列表。
+
+   ```javascript
+   app.get('/api/user/:name/repos', function(req, res, next){
+     var name = req.params.name;
+     var user = userRepos[name];
+     if (user) res.send(user);
+     else next();
+   });
+   ```
+
+路由处理函数根据用户名返回特定用户的存储库列表。
+
+   ```javascript
+   app.use(function(err, req, res, next){
+     res.status(err.status || 500);
+     res.send({ error: err.message });
+   });
+   ```
+
+错误处理中间件，用于处理在之前中间件或路由处理函数中抛出的错误。
+
+  ```javascript
+    app.use(function(req, res){
+      res.status(404);
+      res.send({ error: "Sorry, can't find that" })
+    });
+    ```
+
+一个处理 404 错误的中间件，如果前面的所有中间件和路由没有匹配，则会调用这个中间件。
+
+    ```javascript
+    if (!module.parent) {
+      app.listen(3000);
+      console.log('Express started on port 3000');
+    }
+    ```
+    如果这个模块不是被其他模块引入，而是直接运行的话，启动 Express 应用在端口 3000 上监听请求。
