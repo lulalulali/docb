@@ -962,7 +962,7 @@ app.use(express.static(path.join(__dirname, 'public', 'css')));
 
 ## vhost
 
-使用虚拟主机，不同子域名来处理不同的请求。
+使用虚拟主机，不同子域名来处理不同的请求。意思就是sub.google.com和google.com,用户的导向不一样，但是可以在同一服务器上托管域名
 
 ```javascript
 /*
@@ -997,3 +997,65 @@ app.use(vhost('example.com', main)); // 将主域名请求导向 Main server app
 如果module中没有爹件，重定向到example3000
 
 使用vhost中间件，将请求导向redirectapp、main sever app
+
+## view-constructor
+
+Rendering views dynamically,所谓动态渲染视图，就是给一个视图模板，什么人的文章进来我都用这个模板去呈现。方便app适应不同内容和需求、维护修改。
+
+   ```javascript
+   app.engine('md', function(str, options, fn){
+     try {
+       var html = md(str);
+       html = html.replace(/\{([^}]+)\}/g, function(_, name){
+         return options[name] || '';
+       });
+       fn(null, html);
+     } catch(err) {
+       fn(err);
+     }
+   });
+   ```
+
+注册md引擎，它用来将md渲染成html。
+
+定义一个md函数，它是一个转换器
+
+replace方法  没懂！ ，前是正则表达式，/是开始符号，/g是global全局匹配，\{是匹配左花括号，右花括号亦然，^}表示除了右花括号的字符，+号表示匹配一或多个  整个replace后面的内容就是匹配所有{}内的内容
+
+optionname中有值就把模板中的换掉，没有就用空串
+
+fn回调函数，传递第一个参数null表示没错误，第二个参数html传给回调参数
+
+转换过程出现错误，则catch抓到，会fn传出去err的消息
+
+总之，就是md转成html，转成之后替换模板。出错了，则。。。
+
+   ```javascript
+   app.set('views', 'expressjs/express');
+   ```
+
+指定视图文件（，前是‘views’）的根目录是expresssjs/express
+
+   ```javascript
+   app.set('view', GithubView);
+   ```
+
+设置一个名为githubview的视图构造器，这个是自定义的。
+
+   ```javascript
+   app.get('/', function(req, res){
+     // 渲染与仓库相关的视图，app.locals、res.locals 和传递的 locals 变量的工作方式与通常相同。
+     res.render('examples/markdown/views/index.md', { title: 'Example' });
+   });
+   ```
+
+用，后的内容渲染，前的目标文件
+
+   ```javascript
+   app.get('/Readme.md', function(req, res){
+     // 渲染来自 https://github.com/expressjs/express/blob/master/Readme.md 的视图
+     res.render('Readme.md');
+   });
+   ```
+
+当访问/readme路径时，用来自github中的read.md渲染视图
