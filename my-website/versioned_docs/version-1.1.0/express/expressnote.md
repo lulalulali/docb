@@ -1059,3 +1059,172 @@ fn回调函数，传递第一个参数null表示没错误，第二个参数html�
    ```
 
 当访问/readme路径时，用来自github中的read.md渲染视图
+
+```javascript
+module.exports = GithubView;
+```
+
+导出了GithubView，使得其他文件或模块可使用
+
+```javascript
+/**
+ * Custom view that fetches and renders
+ * remove github templates. You could
+ * render templates from a database etc.
+ */
+function GithubView(name, options){
+  this.name = name;
+  options = options || {};
+  this.engine = options.engines[extname(name)];
+  // "root" is the app.set('views') setting, however
+  // in your own implementation you could ignore this
+  this.path = '/' + options.root + '/master/' + name;
+}
+```
+
+定义了一个函数，两个参数。传进来的模板name给this。name中；options有值就给options，没有就给空值
+从options.engines对象中获取引擎，用来渲染模板？
+构造github上模板的路径
+
+```javascript
+/**
+ * Render the view.
+ */
+GithubView.prototype.render = function(options, fn){
+  var self = this;
+  var opts = {
+    host: 'raw.githubusercontent.com',
+    port: 443,
+    path: this.path,
+    method: 'GET'
+  };
+  https.request(opts, function(res) {
+    var buf = '';
+    res.setEncoding('utf8');
+    res.on('data', function(str){ buf += str });
+    res.on('end', function(){
+      self.engine(buf, options, fn);
+    });
+  }).end();
+};
+```
+
+定义上面函数上的render方法，用来渲染视图。
+
+var opts构造了一个包含请求参数的选项对象，用于向 GitHub 发送 GET 请求获取模板文件的内容 ？
+
+https.request 使用 Node.js 的 https模块发起请求，获取 GitHub 上模板文件的内容 ？
+
+res.on data当收到数据时，将数据累加到缓冲区 buf中。
+
+res.on end当数据接收完成时，调用回调函数，将缓冲区中的数据传递给self.engine进行渲染。
+
+self.engine使用之前从 options.engines 中获取的引擎（可能是 Markdown 渲染引擎等）来渲染模板文件的内容，并将结果传递给回调函数 fn。
+
+总之，是自己定义一个自定义的视图构造器，它用来接github上获取的模板，这很动态
+
+## view-locals
+
+Saving data in request object between middleware calls，
+
+不同方式获取用户数量和列表，将之传给视图
+
+   ```javascript
+   function ferrets(user) {
+     return user.species === 'ferret';
+   }
+   ```
+
+判断userspecies的属性是否等于ferret字符串，返回true或者false
+
+   ```javascript
+   app.get('/', function(req, res, next){
+     User.count(function(err, count){
+       if (err) return next(err);
+       User.all(function(err, users){
+         if (err) return next(err);
+         res.render('index', {
+           title: 'Users',
+           count: count,
+           users: users.filter(ferrets)
+         });
+       })
+     })
+   });
+   ```
+
+如果异步操作中发生了错误，调用nexterr将错误传递
+
+usercount后，即已获取用户列表了，render渲染index视图，传数据给title、count、users
+
+总之，获取用户数量、过滤列表、传递信息
+
+   ```javascript
+   function count(req, res, next) {
+     User.count(function(err, count){
+       if (err) return next(err);
+       req.count = count;
+       next();
+     })
+   }
+   function users(req, res, next) {
+     User.all(function(err, users){
+       if (err) return next(err);
+       req.users = users;
+       next();
+     })
+   }
+   app.get('/middleware', count, users, function (req, res) {
+     res.render('index', {
+       title: 'Users',
+       count: req.count,
+       users: req.users.filter(ferrets)
+     });
+   });
+   ```
+
+count和users获取用户数量和列表
+
+将这些数据给后续处理函数，最后render渲染
+
+   ```javascript
+   function count2(req, res, next) {
+     User.count(function(err, count){
+       if (err) return next(err);
+       res.locals.count = count;
+       next();
+     })
+   }
+   function users2(req, res, next) {
+     User.all(function(err, users){
+       if (err) return next(err);
+       res.locals.users = users.filter(ferrets);
+       next();
+     })
+   }
+   app.get('/middleware-locals', count2, users2, function (req, res) {
+     res.render('index', { title: 'Users' });
+   });
+   ```
+
+count2和users2将用户数量和列表放入reslocals。渲染视图时，通过reslocals获取数据
+
+   ```javascript
+   app.use(function(req, res, next){
+     res.locals.user = req.user;
+     res.locals.sess = req.session;
+     next();
+   });
+   app.use('/api', function(req, res, next){
+     res.locals.user = req.user;
+     res.locals.sess = req.session;
+     next();
+   });
+   app.all('/api/*', function(req, res, next){
+     res.locals.user = req.user;
+     res.locals.sess = req.session;
+     next();
+   });
+   ```
+
+全局中间价和路由中间价演示，全局的local变量可供后续使用
