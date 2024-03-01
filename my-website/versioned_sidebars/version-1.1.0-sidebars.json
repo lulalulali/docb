@@ -13,8 +13,39 @@
       "items": [
         "mdn/html",
         "mdn/css",
-        "mdn/js",
-        "mdn/webForms"
+        {
+          "type": "category",
+          "label": "js",
+          "items": [
+            "js/introduc",
+            "js/htmlinjs",
+            "js/basicgrammar",
+            "js/variable",
+            "js/basicrefer",
+            "js/iterator",
+            "js/oop",
+            "js/agencyreflect", 
+            "js/function",
+            "js/async",
+            "js/bom",
+            "js/clientdetect",           
+            "js/dom",
+            "js/domextend",
+            "js/dom23",
+            "js/event",
+            "js/canvas",
+            "js/webforms",
+            "js/apijs",
+            "js/errordebug",
+            "js/xml",
+            "js/json",
+            "js/networkreq",
+            "js/clientstor",
+            "js/modulejs",
+            "js/workerthread",
+            "js/bestpract"
+          ]
+        }   
       ]
     },
     "backend",
@@ -23,7 +54,13 @@
       "label": "node",
       "items": [
         "node/nodejs",
-        "node/npm"
+        "node/npm",
+        "node/getstarted",
+        "node/asynchronous",
+        "node/manipulatingfiles",
+        "node/clinode",
+        "node/module",
+        "node/diognostics"
       ]
     },
     {

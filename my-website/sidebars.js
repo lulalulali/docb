@@ -28,7 +28,7 @@ const sidebars = {
   // ],
   tutorialSidebar: [
     'frontend',
-    {
+      {
       label: 'mdn',
       type: 'category',
       collapsible: true,
@@ -39,8 +39,15 @@ const sidebars = {
         type: 'doc',
         id: 'mdn/mdn',
       },
-      items: ['mdn/html', 'mdn/css', 'mdn/js', 'mdn/webForms'],
+      items: ['mdn/html', 'mdn/css',
+      {
+      type: 'category',
+      label: 'vue',
+      items: ['vue/vue', 'vue/vuemd'],
+    }],
+      
     },
+    ,
     'backend',
     {
       type: 'category',
