@@ -99,11 +99,119 @@ js引擎会记住变量声明的标志符即所在的块作用域
 
 #### 其它异同
 
-暂时性死区：let声明的变量不会在作用域中被提升，即打印必须在声明后；但var可以在声明前
+多用let，少用var
 
+暂时性死区：let声明的变量不会在作用域中被提升，即打印必须在声明后；但var可以在声明前。有什么用？
 
-<!-- ## 数据类型
+全局声明：console.log(window.name); 打印name，假如是let声明的name，打印不出来；var声明的，此打印可以。有什么用？
 
-## 流控制语句
+条件声明：let的作用域是块，块就是``<script>``.也就是说假如let在第一块中声明了一个变量s，第二块你不能再声明s；但var可以这么做。就是说let声明过的，你接下来用，哪怕是在另一个``<script>``中，你不能再声明，直接赋值即可。有什么用？
 
-## 理解函数 -->
+for循环中的let声明：
+
+```js
+for (var i = 0; i < 5; ++i) { 
+ setTimeout(() => console.log(i), 0) 
+} 
+```
+
+输出5、5、5、5、5因为虽然每跑一次变量都出现一次超时函数但只有循环走完才执行超时函数的逻辑；但是换成let就是0、1、2、3、4，因为let每次都走声明，每次循环都是新声明
+
+### const声明
+
+声明并赋值以后不能再声明或赋值，作用域也是块。声明变量person的内部属性name可以赋值，即person.name可以赋值。
+
+遍历属性名
+
+```js
+for (const key in {a: 1, b: 2}) { 
+ console.log(key); 
+} 
+```
+
+遍历值const value
+
+### 声明风格及最佳实践
+
+不使用var，const优先，let次之。知道变量的值未来会变时再用let
+
+## 数据类型
+
+有6种：undefined null boolean number string symbol
+还有一种：object
+
+### typeof操作符
+
+```js
+let message = "some string"; 
+console.log(typeof message); // "string" 
+console.log(typeof(message)); // "string" 
+console.log(typeof 95); // "number"
+```
+
+操作符它不是函数，所以它不需参数，虽然也可以。它返回一个字符串，这个字符串表明数据类型，是undefined Boolean string number object function symbol
+
+### undefined类型
+
+```js
+let message; // 这个变量被声明了，只是值为 undefined 
+// age 没有声明 
+if (message) { 
+ // 这个块不会执行
+} 
+if (!message) { 
+ // 这个块会执行
+} 
+if (age) { 
+ // 这里会报错
+}
+```
+
+### null类型
+
+mull表示一个空对象指针。变量要保存对象，但是没对象，就用null填充。
+
+```js
+let message = null; 
+let age; 
+if (message) { 
+ // 这个块不会执行
+} 
+if (!message) { 
+ // 这个块会执行
+} 
+if (age) { 
+ // 这个块不会执行
+} 
+if (!age) { 
+ // 这个块会执行
+} 
+```
+
+### boolean类型
+
+哪些会在条件中被转换成true：非空字符串、非0数值、任意对象、N/A；哪些会false：空字符串、0、NaN、null、undefined
+
+### number类型
+
+#### 浮点值
+
+不要测试浮点值，即两个浮点值相加不一定跟你想象的完全一致。计算机的特性？
+
+#### 值的范围
+
+监测超出有限数值范围的计算，使用inFinite函数
+
+#### NaN
+
+nan不等于任何东西，也不等于nan。nan操作来操作去还是nan
+
+哪些是nan：nan blue
+
+哪些不是nan：10 "10" true
+
+#### 数值转换
+
+3个将非数值转换成数值的函数
+
+Number（）：
