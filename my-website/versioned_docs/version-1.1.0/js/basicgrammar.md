@@ -214,4 +214,104 @@ nan不等于任何东西，也不等于nan。nan操作来操作去还是nan
 
 3个将非数值转换成数值的函数
 
-Number（）：
+int是integer的缩写，整数的意思
+
+Number（）：一个取数函数 它输出的是0、1、NaN或者数
+
+parseInt（）：取（）内的字符串含的数，输出的是NaN或者整数，它也能识别其他进制。
+
+let num1 = parseInt("10", x);x是进制方法，10是x进制的10
+
+parseFloat()：输出0或者小数或整数，输入只能阅读十进制；可以读字符串，只关注里面的数
+
+### string类型
+
+字符串使用什么包起来？单引号 双引号 反引号 均可，注意前后一致性。
+
+#### 字符字面量
+
+字符字面量就是用来表示一个字符，什么字符呢？非打印字符或有其它用途的字符。怎么用不知道。。。
+
+#### 字符串的特点
+
+即字符串的拼接，字符串一旦创建就不可变immutable，所以字符串拼接时等式左边会重新分配空间给拼接后的字符，填充完毕后，删掉原先的字符串。
+
+#### 转换为字符串
+
+两种方法：1、变量.toString()给出一个字符串，变量不能是null和undefined。特有的一种，即（）可以放东西的情况，是将一个数变成你想要的进制的字符串。（）放进制数。例如：console.log(num.toString(8)); // "12"  num是10   如果不放就是十进制。
+
+```js
+let value1 = 10; 
+let value2 = true; 
+let value3 = null; 
+let value4; 
+console.log(String(value1)); // "10" 
+console.log(String(value2)); // "true" 
+console.log(String(value3)); // "null" 
+console.log(String(value4)); // "undefined"
+```
+
+2、值+""  也是转换为字符串的方法
+
+#### 模板字面量
+
+即`` ，即用来定义模板的。以换行符开头，即第一个字符是[0].怎么用，干嘛的？
+
+#### 字符串插值
+
+```js
+let value = ''; 
+function append() { 
+ value = `${value}abc` 
+ console.log(value); 
+} 
+append(); // abc 
+append(); // abcabc 
+append(); // abcabcabc 
+```
+
+就是使用`{}`使得花括号里面的变量强制转换成字符串。这就叫插值符号。上面的例子再写一个循环，就可以实现字符串固定增加几个字符
+
+#### 模板字面量标签函数
+
+function simpleTag（）是个什么函数？
+完全没看懂啊
+
+```javascript
+function zipTag(strings, ...expressions) { 
+  return strings[0] + 
+    expressions.map((e, i) => `${e}${strings[i + 1]}`) 
+    .join(''); 
+}
+```
+
+1. **`function zipTag(strings, ...expressions) {`：**
+   - 定义了一个名为 `zipTag` 的函数。
+   - `strings` 是一个包含模板字面量中所有字符串部分的数组。
+   - `expressions` 是一个包含模板字面量中所有插值表达式的数组。
+
+```js
+2. **`return strings[0] + expressions.map((e, i) => `${e}${strings[i + 1]}`).join('');`：**
+   - `strings[0]` 表示模板字面量中的第一个字符串部分，它将是最终结果的开头。
+   - `expressions.map((e, i) => `${e}${strings[i + 1]}`)`：使用 `map` 方法遍历 `expressions` 数组，对每个插值表达式进行处理。
+      - 对于每个表达式 `e` 和对应的字符串部分 `strings[i + 1]`，使用模板字符串将它们拼接在一起。
+   - `.join('')`：将处理后的字符串数组拼接成一个字符串，形成模板字面量的最终结果。
+```
+
+这个函数的作用是将模板字面量的各个部分重新组合成一个字符串。它通过 `map` 方法遍历插值表达式数组，将每个表达式和其对应的字符串部分拼接在一起，最后使用 `join('')` 将它们连接成一个字符串。这样做的效果是，保留了模板字面量中原始字符串的排列顺序，但将插值表达式的值插入其中。
+
+#### 原始字符串
+
+```js
+for (const rawString of strings.raw) { 
+ console.log(rawString); 
+ } 
+```
+
+干嘛的？看不懂，啥叫取字符串的原始内容？
+
+### symbol类型
+
+symbol即符号，不是为了提供属性行为的，就是来创建唯一记号，而是非字符串形式的对象属性。
+
+#### 符号的基本用法
