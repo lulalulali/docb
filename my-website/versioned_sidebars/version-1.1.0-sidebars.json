@@ -104,6 +104,13 @@
           "dirName": "next/one"
         }
       ]
+    },
+    {
+      "type": "category",
+      "label": "aaaa",
+      "items": [
+        "js/btc"
+      ]
     }
   ]
 }

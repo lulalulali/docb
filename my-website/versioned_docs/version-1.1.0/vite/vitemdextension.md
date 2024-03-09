@@ -1,4 +1,4 @@
-# md extension
+# mdextension
 
 ```- [电脑](#title-1)
 - [主板](#title-2)
