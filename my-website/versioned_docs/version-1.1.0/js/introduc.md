@@ -77,3 +77,111 @@ dom是一种api，分成节点。解析head是一支。解析body是一支
     ```
 
 总结：对于 `null` 值，`valueOf()` 返回 `null`，而 `toString()` 返回字符串 "null"。这两个方法通常在处理对象时用于获取对象的原始值或字符串表示。
+
+## BOM
+
+BOM 的缩写指的是 "Browser Object Model"，翻译为中文是 "浏览器对象模型"。 BOM 是一组浏览器提供的 JavaScript API，用于操作和控制浏览器窗口、处理用户屏幕信息、导航历史等功能。与 DOM（文档对象模型）一起，BOM 构成了在浏览器环境中进行客户端脚本编程的基础。
+BOM（浏览器对象模型）是指浏览器提供的一组 JavaScript API，用于与浏览器窗口进行交互和控制。BOM 不是标准的一部分，而是由各个浏览器厂商实现的一组特定于浏览器的功能。
+
+BOM 包含一系列对象，其中一些常见的对象包括：
+
+1. **`window` 对象：** 表示浏览器的窗口，是 BOM 的顶层对象。`window` 对象提供了许多方法和属性，用于控制和操作浏览器窗口，以及访问文档和其他 BOM 对象。
+
+2. **`navigator` 对象：** 提供关于浏览器的信息，如浏览器类型、版本和操作系统等。
+
+3. **`screen` 对象：** 提供关于用户屏幕的信息，如屏幕的宽度和高度。
+
+4. **`location` 对象：** 用于获取和设置当前加载的文档的 URL，使得 JavaScript 能够在浏览器中定向到不同的页面。
+
+5. **`history` 对象：** 用于管理浏览器的历史记录，可以通过 JavaScript 进行前进、后退等操作。
+
+BOM 对象的功能在不同的浏览器中可能有所不同，因此在使用 BOM 的功能时，需要注意浏览器的兼容性。在现代的 Web 开发中，通常更关注 DOM（文档对象模型）和 ECMAScript 标准，而对 BOM 的使用相对较少。
+
+## next()
+
+在 JavaScript 中，并没有内建的 `next()` 方法，因此具体的含义会取决于你在哪个上下文中使用这个方法。通常情况下，`next()` 方法常常与迭代器（Iterators）或生成器（Generators）相关联。
+
+1. **迭代器（Iterators）：** 在使用 `for...of` 循环遍历可迭代对象时，你可能会使用 `next()` 方法。迭代器对象（如数组的迭代器）上有一个 `next()` 方法，每次调用它都会返回一个包含当前迭代值和是否还有更多值的对象。当没有更多值可供迭代时，`done` 属性将为 `true`。
+
+    ```javascript
+    let arr = [1, 2, 3];
+    let iterator = arr[Symbol.iterator](); // 获取迭代器对象
+
+    let result = iterator.next();
+    while (!result.done) {
+        console.log(result.value); // 输出当前值
+        result = iterator.next();
+    }
+    ```
+
+2. **生成器（Generators）：** 如果你定义了一个生成器函数，该函数会生成一个迭代器。在生成器函数中，`next()` 方法用于执行生成器的下一个步骤，并返回一个包含生成器产出值的对象。生成器可以在函数执行期间暂停和恢复，因此 `next()` 方法可以用于逐步执行生成器的代码。
+
+    ```javascript
+    function* myGenerator() {
+        yield 1;
+        yield 2;
+        yield 3;
+    }
+
+    let generator = myGenerator();
+
+    console.log(generator.next().value); // 输出: 1
+    console.log(generator.next().value); // 输出: 2
+    console.log(generator.next().value); // 输出: 3
+    ```
+
+如果你有特定的上下文或库，提供了一个名为 `next()` 的方法，请提供更多的上下文信息，以便更好地理解这个方法的具体用途。
+
+## new
+
+new 运算符允许开发人员创建一个用户定义的对象类型的实例或具有构造函数的内置对象的实例。
+
+```js
+function Car(make, model, year) {
+  this.make = make;
+  this.model = model;
+  this.year = year;
+}
+
+const car1 = new Car('Eagle', 'Talon TSi', 1993);
+
+console.log(car1.make);
+// Expected output: "Eagle"
+
+//一些语法
+new constructor
+new constructor()
+new constructor(arg1)
+new constructor(arg1, arg2)
+new constructor(arg1, arg2, /* …, */ argN)
+```
+
+## `function` 和 `object`
+
+在 JavaScript 中，`function` 和 `object` 之间有一种特殊的关系。实际上，JavaScript 中的函数（`function`）是一种特殊类型的对象（`object`）。
+
+比方说，可以将函数看作是一个特殊的对象，具有一些额外的行为，比如可以被调用。这是因为在 JavaScript 中，函数是一等公民，它们可以被赋值给变量，作为参数传递，以及作为返回值。
+
+以下是一个简单的比方：
+
+假设你有一辆汽车，这辆汽车是一个对象。现在，你在这辆汽车上加了一个特殊的装置，这个装置让这辆汽车能够执行额外的操作，比如可以响应指令移动。这个装置是函数。
+
+```javascript
+// 汽车对象
+var car = {
+    brand: "Toyota",
+    model: "Camry",
+    year: 2022,
+    color: "Blue"
+};
+
+// 加了一个特殊装置（函数）使汽车能够移动
+car.move = function() {
+    console.log("The car is moving!");
+};
+
+// 调用函数，就像给汽车发送移动的指令
+car.move(); // 输出: "The car is moving!"
+```
+
+在这个比方中，`car` 是一个普通的对象，而 `car.move` 是一个特殊的对象，它是一个函数。这个函数使得汽车能够执行额外的动作，就像 JavaScript 中的函数允许对象执行额外的操作一样。

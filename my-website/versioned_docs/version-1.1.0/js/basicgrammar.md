@@ -1,4 +1,4 @@
-# basicgrammar
+# 语言基础
 
 介绍语言的基本概念，包括语法和流控制语句；解释 JavaScript 与其他类 C 语言在语法上的异同点。在讨论内置操作符时也会谈到强制类型转换。此外还将介绍所有的原始类型，包括 Symbol。
 
@@ -21,6 +21,36 @@ ECMAScript是宽松语法，借鉴了c和类c的语言，如java和perl
 例如：firstSecond myCar
 
 关键字、保留字、true、false、null不能作为标志符。？
+
+**标识符**是在编程语言中用来标识变量、函数、属性或其他用户自定义项的名称。在大多数编程语言中，标识符必须遵循一定的命名规则，通常包括以下规定：
+
+- 只能包含字母（大写或小写）、数字（0-9）、下划线 (_) 或美元符号 ($)。
+- 第一个字符不能是数字。
+- 不能是保留关键字（例如，语言中预留给编程语言使用的特殊单词）。
+
+**标识符查找**是指在程序执行过程中，根据标识符的名称查找相应的变量、函数、属性等的过程。当程序中使用一个标识符时，编程语言需要找到与该标识符相关联的实体，并根据上下文使用它。
+
+**比方说明：**
+
+想象一下你的程序是一座大图书馆，而标识符就是书的书名。当你在程序中使用一个标识符时，就好比你在图书馆里寻找一本书。标识符的查找过程就像你在图书馆中寻找特定书籍的过程一样。
+
+例如，在JavaScript中：
+
+```javascript
+let myVariable = 42;
+
+function myFunction() {
+    console.log("Hello, World!");
+}
+
+// 在这里，myVariable 和 myFunction 就是标识符
+// 当程序执行到这里时，JavaScript 需要查找这两个标识符对应的值或行为
+
+console.log(myVariable);  // 查找 myVariable 的值
+myFunction();             // 查找并执行 myFunction
+```
+
+在这个例子中，`myVariable` 和 `myFunction` 就是标识符。当程序执行到使用它们的地方时，JavaScript 引擎会进行标识符查找，找到相应的值或行为。这就好比你在图书馆中查找书籍一样，通过书名找到相应的书。
 
 ### 注释
 
@@ -1583,3 +1613,349 @@ false
 
 #### 条件操作符
 
+``let max = (num1 > ((num2) ? num1 : num2;()内是条件,如果()true了,则num1给max;否则,num2给max``
+
+#### 赋值操作符
+
+=
+
+```js
+num = num + 10;以上代码的第二行可以通过复合赋值来完成:num += 10;
+
+乘后赋值（*=）
+ 除后赋值（/=）
+ 取模后赋值（%=）
+ 加后赋值（+=）
+ 减后赋值（-=）
+ 左移后赋值（<<=）
+ 右移后赋值（>>=）
+ 无符号右移后赋值（>>>=）
+简写,有助提高性能
+```
+
+### 逗号操作符
+
+``let num1 = 1, num2 = 2, num3 = 3;let num = (5, 1, 4, 8, 0); // num 的值为 0``
+
+后面一句不常用,但是也可以存在
+
+## 语句foo
+
+语句,也称流控制语句
+
+### if语句
+
+连续if
+
+```js
+if () { 
+
+} else if () { 
+
+} else { 
+
+} 
+```
+
+### do-while语句
+
+是一种后测试循环语句.翻译为 先做一次,只要,就继续做
+tip:循环体内的代码在退出前至少要执行一次
+
+```js
+do { 
+ statement 
+} while (expression); 
+下面是一个例子：
+let i = 0; 
+do { 
+ i += 2; 
+} while (i < 10); 
+```
+
+### while语句
+
+一种先测试循环语句,即先检测退出条件,再执行循环体内的代码.翻译为 看能做吗,再视情况执行.
+tip:可能没执行就退出了
+
+``while () { }``
+
+### for语句
+
+也是先测试语句,只不过for后的()里面加入了初始变量、``for (initialization; expression; post-loop-expression) statement等同于let count = 10;let i = 0;while (i < count) {console.log(i);i++;}``statement执行了postloopexpression也会执行
+
+无法while循环的，同样也无法for循环，for只是将一些要素封装了一起。initialization用let，意味着仅在作用域中声明。
+
+for（）内的都不是必须的，不要也能跑。若只含条件/expression，就变成了while循环
+
+### for-in语句
+
+```js
+for (property in expression) statement
+
+for (const propName in window) { 
+ document.write(propName); 
+}
+```
+
+条件会枚举，但是不一定按序举
+
+### for-of语句
+
+```js
+for (const el of [2,4,6,8]) { 
+ document.write(el); 
+} 
+```
+
+会将所有元素迭代完。按序迭代。什么意思？按写的顺序跑执行语句，按序出结果?推荐用const。
+
+### 标签语句
+
+``start: for (let i = 0; i < count; i++) {console.log(i);}``
+
+在这个例子中，标签 start 并没有被使用，因此循环会正常执行。
+
+### break和continue语句
+
+```js
+let num = 0; 
+for (let i = 1; i < 10; i++) { 
+ if (i % 5 == 0) { 
+ break; 
+  } 
+ num++; 
+} 
+console.log(num); // 4
+```
+
+break意味着循环立马结束,下面的句子不再跑了
+
+```js
+let num = 0; 
+for (let i = 1; i < 10; i++) { 
+ if (i % 5 == 0) { 
+ continue; 
+ } 
+ num++; 
+} 
+console.log(num); // 8 
+```
+
+continue比较难理解一点,是跳过后面的expression的句子,而不是结束整个loop
+
+```js
+let num = 0; 
+outermost: 
+for (let i = 0; i < 10; i++) { 
+ for (let j = 0; j < 10; j++) { 
+ if (i == 5 && j == 5) { 
+ break outermost; 
+ } 
+ num++; 
+ } 
+} 
+console.log(num); // 55
+```
+
+停止循环
+
+```js
+let num = 0; 
+outermost: 
+for (let i = 0; i < 10; i++) { 
+ for (let j = 0; j < 10; j++) { 
+if (i == 5 && j == 5) { 
+ continue outermost; 
+ } 
+ num++; 
+ } 
+} 
+console.log(num); // 95
+```
+
+继续循环,但是跳过i是5情况下,j是5以后的循环
+
+### with语句
+
+```js
+let qs = location.search.substring(1); 
+let hostName = location.hostname; 
+let url = location.href;
+的简化版就是下面:
+
+with(location) { 
+ let qs = search.substring(1); 
+ let hostName = hostname; 
+ let url = href; 
+} 
+```
+
+with用来装载作用域,将作用域搞成个对象.严格模式禁用!不推荐用!
+
+### switch语句
+
+与if语句紧密相关的流控制语句
+
+```js
+switch (expression) { 
+ case value1: 
+ statement 
+ break; 
+ case value2: 
+ statement 
+ break; 
+ case value3: 
+ statement 
+ break; 
+ case value4: 
+ statement 
+ break; 
+ default: 
+ statement 
+} 
+```
+
+break关键字会导致代码执行跳出 switch 语句。
+为避免不必要的条件判断，最好给每个条件后面都加上 break 语句。
+
+```js
+switch (i) { 
+ case 25: 
+ /*跳过*/ 
+ case 35: 
+ console.log("25 or 35"); 
+ break; 
+ case 45: 
+ console.log("45"); 
+ break; 
+ default: 
+```
+
+如果没有 break，则代码会继续匹配下一个条件。
+
+在使用 `switch` 语句时，如果不在每个 `case` 分支中使用 `break` 语句，那么控制流会穿透到下一个 `case` 分支，直到遇到 `break` 或者 `switch` 语句结束。有时候，开发者可能故意让控制流穿透到下一个分支，这种情况下可以通过注释来表明这是有意为之，而不是遗漏了 `break`。
+
+举个例子，假设我们有一个星期的例子，我们想为每个工作日输出一条消息：
+
+```javascript
+let day = 'Monday';
+
+switch (day) {
+    case 'Monday':
+    case 'Tuesday':
+    case 'Wednesday':
+    case 'Thursday':
+    case 'Friday':
+        console.log('It\'s a workday.');
+        // 没有使用 break，是故意让控制流穿透到下一个分支
+        // 这里可以加上注释表明是有意为之的
+        break;
+    case 'Saturday':
+    case 'Sunday':
+        console.log('It\'s a weekend.');
+        break;
+    default:
+        console.log('Not a valid day.');
+}
+```
+
+在这个例子中，我们故意没有在每个工作日的 `case` 中使用 `break`，因为我们希望将它们合并到一起，执行相同的逻辑。通过注释，可以清晰地表明这是有意为之的设计选择。如果遗漏了 `break` 语句，可能导致意外的控制流穿透，因此在故意省略 `break` 时，注释非常有助于提高代码的可读性和维护性。
+
+就是说故意不写break,可能是想需要检验的条件都跑一遍.
+
+```js
+switch ("hello world") { 
+ case "hello" + " world": 
+ console.log("Greeting was found."); 
+ break; 
+ case "goodbye": 
+ console.log("Closing was found."); 
+ break; 
+ default: 
+ console.log("Unexpected message was found."); 
+} 
+VM50:3 Greeting was found.
+```
+
+```js
+let num = 25; 
+switch (true) { 
+ case num < 0: 
+ console.log("Less than 0."); 
+ break; 
+ case num >= 0 && num <= 10: 
+ console.log("Between 0 and 10."); 
+ break; 
+ case num > 10 && num <= 20: 
+ console.log("Between 10 and 20."); 
+ break; 
+ default: 
+ console.log("More than 20."); 
+}
+```
+
+()中的true,意思是expression,即条件.当case后的表达式给出布尔值true时,执行case后面的
+
+## 函数
+
+第10章更详细介绍
+
+```js
+function functionName(arg0, arg1,...,argN) { 
+ statements 
+}
+示例:
+function sayHi(name, message) { 
+ console.log("Hello " + name + ", " + message); 
+} 
+```
+
+```js
+function sum(num1, num2) { 
+ return num1 + num2; 
+ console.log("Hello world"); // return的效能,函数中后面的不会执行
+}
+```
+
+```js
+function diff(num1, num2) { 
+ if (num1 < num2) { 
+ return num2 - num1; 
+ } else { 
+ return num1 - num2; 
+ } 
+ //但是可以多个return语句
+} 
+```
+
+```js
+function sayHi(name, message) { 
+ return; 
+ console.log("Hello " + name + ", " + message); // 不会执行,用于我想让函数立马shut的情况,并返回undefined
+}
+```
+
+要么返回值,要么返回undefined,别在某些条件下返回,调试时会有麻烦.
+
+严格模式对函数的限制:1.名称不能叫eval或arguments 2.参数不能叫eval或arguments 3.两个命名参数不能拥有同一个名称``function duplicateParameters(param1, param1)``
+
+## 小结
+
+ECMAScript 中的基本数据类型包括 Undefined、Null、Boolean、Number、String 和 Symbol。
+
+ 与其他语言不同，ECMAScript 不区分整数和浮点值，只有 Number 一种数值数据类型。
+
+ Object 是一种复杂数据类型，它是这门语言中所有对象的基类。
+
+ 严格模式为这门语言中某些容易出错的部分施加了限制。
+
+ ECMAScript 提供了 C 语言和类 C 语言中常见的很多基本操作符，包括数学操作符、布尔操作符、关系操作符、相等操作符和赋值操作符等。
+
+ 这门语言中的流控制语句大多是从其他语言中借鉴而来的，比如 if 语句、for 语句和 switch语句等。
+
+ECMAScript 中的函数与其他语言中的函数不一样。
+
+ 不需要指定函数的返回值，因为任何函数可以在任何时候返回任何值。
+
+ 不指定返回值的函数实际上会返回特殊值 undefined。
