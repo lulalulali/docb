@@ -1068,7 +1068,7 @@ let num = selectFrom(2,10);
 console.log(num); // 2~10 范围内的值，其中包含 2 和 10 
 //和下面的配套使用.即用mathrandom写一个selectfrom函数
 let colors = ["red", "green", "blue", "yellow", "black", "purple", "brown"]; 
-let color = colors[selectFrom(0, colors.length-1)];
+ let color = colors[selectFrom(0, colors.length-1)];
 ```
 
 如果是为了加密而需要生成随机数（传给生成器的输入需要较高的不确定性），那么建议使用 window.crypto.getRandomValues().
@@ -1112,7 +1112,7 @@ JavaScript 中的对象称为引用值，几种内置的引用类型可用于创
 
 JavaScript 比较独特的一点是，函数实际上是 Function 类型的实例，也就是说函数也是对象。因为函数也是对象，所以函数也有方法，可以用于增强其能力。
 
-由于原始值包装类型的存在，JavaScript 中的原始值可以被当成对象来使用。有 3 种原始值包装类型：Boolean、Number 和 String。它们都具备如下特点。
+由于原始值包装类型的存在，JavaScript 中的原始值可以被当成对象来使用。有 3 种原始值包装类型：Boolean、Number 和 String。它们都具备如下特 点。
 
  每种包装类型都映射到同名的原始类型。
 

@@ -158,8 +158,8 @@ console.log(Array.from(arrayLikeObject)); // [1, 2, 3, 4]
 ```js
 //接受第二个可选的映射函数参数.这个函数可以用于增强数组的值，无须调用 Array.from().map()先创建一个中间数组。还可接收第三个可选参数，用于指定映射函数中 this 的值。但这个重写的 this 值在箭头函数中不适用。
 const a1 = [1, 2, 3, 4]; 
-const a2 = Array.from(a1, x => x**2); 
-const a3 = Array.from(a1, function(x) {return x**this.exponent}, {exponent: 2}); 
+const a2 = Array.from(a1, x => x2); 
+const a3 = Array.from(a1, function(x) {return xthis.exponent}, {exponent: 2}); 
 console.log(a2); // [1, 4, 9, 16] 
 console.log(a3); // [1, 4, 9, 16] 
 ```
@@ -677,18 +677,21 @@ alert(removed); // yellow，只有一个元素的数组
 
 两类搜索数组的方法:按严格相等搜索和按断言函数搜索.
 
+#### 严格相等
+
 ```js
 let numbers = [1, 2, 3, 4, 5, 4, 3, 2, 1]; 
 
-alert(numbers.indexOf(4)); // 3 
-alert(numbers.lastIndexOf(4)); // 5 
-alert(numbers.includes(4)); // true 
+alert(numbers.indexOf(4)); // 3 找4,按顺序找到在3位置
+alert(numbers.lastIndexOf(4)); // 5 找4,按倒序找到在5位置
+alert(numbers.includes(4)); // true 包含吗?包含
 
-alert(numbers.indexOf(4, 4)); // 5 
-alert(numbers.lastIndexOf(4, 4)); // 3 
-alert(numbers.includes(4, 7)); // false 
+alert(numbers.indexOf(4, 4)); // 5 找4,从4位置开始找,找到了,在5位置
+alert(numbers.lastIndexOf(4, 4)); // 3 找4,从4位置开始倒序找,找到在3位置
+alert(numbers.includes(4, 7)); // false 找4,从7位置开始找,没找到
 
-let person = { name: "Nicholas" }; 
+let person = { name: "Nicholasssssss" }; 
+//相当于let person = { name: "Nicholas" }; 
 let people = [{ name: "Nicholas" }]; 
 let morePeople = [person]; 
 
@@ -698,26 +701,221 @@ alert(people.includes(person)); // false
 alert(morePeople.includes(person)); // true 
 ```
 
+#### 断言函数
+
+find()和 findIndex()方法使用了断言函数。predict search.
+
 ```js
+const people = [ 
+ { 
+ name: "Matt", 
+ age: 27 
+ }, 
+ { 
+ name: "Nicholas", 
+ age: 29 
+ } 
+]; 
+alert(people.find((element, index, array) => element.age < 28)); 
+// {name: "Matt", age: 27} 把数组中的element抓出来
+alert(people.findIndex((element, index, array) => element.age < 28)); 
+// 0 把符合条件的element的位置数抓出来
 ```
 
 ```js
+//找到匹配项后，这两个方法都不再继续搜索。
+const evens = [2, 4, 6]; 
+// 找到匹配后，永远不会检查数组的最后一个元素
+evens.find((element, index, array) => { 
+ console.log(element); 
+ console.log(index); 
+ console.log(array); 
+ return element === 4; 
+}); 
+// 2 
+// 0 
+// [2, 4, 6] 以上是第一个元素
+
+// 4 
+// 1 
+// [2, 4, 6] 以上是第二个元素,找到了就停止了
 ```
 
-```js
-```
+### 迭代方法
+
+ every()：对数组每一项都运行传入的函数，如果对每一项函数都返回 true，则这个方法返回 true。
+
+ filter()：对数组每一项都运行传入的函数，函数返回 true 的项会组成数组之后返回。
+
+ forEach()：对数组每一项都运行传入的函数，没有返回值。
+
+ map()：对数组每一项都运行传入的函数，返回由每次函数调用的结果构成的数组。
+
+ some()：对数组每一项都运行传入的函数，如果有一项函数返回 true，则这个方法返回 true。
 
 ```js
+let numbers = [1, 2, 3, 4, 5, 4, 3, 2, 1]; 
+let everyResult = numbers.every((item, index, array) => item > 2); 
+alert(everyResult); // false 每一项都得返回true
+let someResult = numbers.some((item, index, array) => item > 2); 
+alert(someResult); // true 有一项返回true即可
+
+//filter方法
+let numbers = [1, 2, 3, 4, 5, 4, 3, 2, 1]; 
+let filterResult = numbers.filter((item, index, array) => item > 2); 
+alert(filterResult); // 3,4,5,4,3 返回所有值大于2得数组
+
+//map方法
+let numbers = [1, 2, 3, 4, 5, 4, 3, 2, 1]; 
+let mapResult = numbers.map((item, index, array) => item * 2); 
+alert(mapResult); // 2,4,6,8,10,8,6,4,2 返回凡所有结果的数组
+
+//forEach方法=使用for循环遍历数组
+let numbers = [1, 2, 3, 4, 5, 4, 3, 2, 1]; 
+numbers.forEach((item, index, array) => { 
+ // 执行某些操作 
+}); 
 ```
 
-```js
-```
+### 归并方法
+
+两个归并方法：reduce()和 reduceRight()。reduce()方法从数组第一项开始遍历到最后一项。而 reduceRight()从最后一项开始遍历至第一项。
+
+4 个参数：上一个归并值、当前项、当前项的索引和数组本身
 
 ```js
+let values = [1, 2, 3, 4, 5]; 
+let sum = values.reduce((prev, cur, index, array) => prev + cur); 
+alert(sum); // 15 数组累加求和
+
+let values = [1, 2, 3, 4, 5]; 
+let sum = values.reduceRight(function(prev, cur, index, array){ 
+ return prev + cur; 
+}); 
+alert(sum); // 15 是反方向的累加,跟reduce功能一样
 ```
 
+## 定型数组
+
+typed array.指的是一种特殊的包含数值类型的数组.
+
+### 历史
+
+初是开发一套js API,从而充分利用3d图形和GPU加速,以便``<canvas>``元素上渲染复杂的图形
+
+1.WebGL graphic library 就是数字格式不对头,需要时间上图像
+2.定型数组 CanvasFloatArray。这是一个提供JavaScript 接口的、C 语言风格的浮点值数组。JavaScript 运行时使用这个类型可以分配、读取和写入数组。这个数组可以直接传给底层图形驱动程序 API，也可以直接从底层获取到。最终，CanvasFloatArray变成了 Float32Array，也就是今天定型数组中可用的第一个“类型”
+
+### ArrayBuffer
+
+SharedArrayBuffer 是 ArrayBuffer 的一个变体，可以无须复制就在执行上下文间传递它。
+
 ```js
+const buf = new ArrayBuffer(16); // 在内存中分配 16 字节
+alert(buf.byteLength); // 16 
+//ArrayBuffer 一经创建就不能再调整大小。不过，可以使用 slice()复制其全部或部分到一个新实例中
+const buf1 = new ArrayBuffer(16); 
+const buf2 = buf1.slice(4, 12); 
+alert(buf2.byteLength); // 8 
 ```
+
+ArrayBuffer 某种程度上类似于 C++的 malloc()，但也有几个明显的区别。
+ malloc()在分配失败时会返回一个 null 指针。ArrayBuffer 在分配失败时会抛出错误。
+ malloc()可以利用虚拟内存，因此最大可分配尺寸只受可寻址系统内存限制。ArrayBuffer分配的内存不能超过 Number.MAX_SAFE_INTEGER（2^53-1）字节。
+ malloc()调用成功不会初始化实际的地址。声明 ArrayBuffer 则会将所有二进制位初始化为 0。
+ 通过 malloc()分配的堆内存除非调用 free()或程序退出，否则系统不能再使用。而通过声明ArrayBuffer 分配的堆内存可以被当成垃圾回收，不用手动释放。
+不能仅通过对 ArrayBuffer 的引用就读取或写入其内容。要读取或写入 ArrayBuffer，就必须通过视图。视图有不同的类型，但引用的都是 ArrayBuffer 中存储的二进制数据。
+
+看不懂???
+
+### DataView
+
+看不懂???
+
+第一种允许你读写 ArrayBuffer 的视图是 DataView。这个视图专为文件 I/O 和网络 I/O 设计，其API 支持对缓冲数据的高度控制，但相比于其他类型的视图性能也差一些。DataView 对缓冲内容没有任何预设，也不能迭代。
+必须在对已有的 ArrayBuffer 读取或写入时才能创建 DataView 实例。这个实例可以使用全部或部分 ArrayBuffer，且维护着对该缓冲实例的引用，以及视图在缓冲中开始的位置。
+
+```js
+const buf = new ArrayBuffer(16); 
+
+// DataView 默认使用整个 ArrayBuffer 
+const fullDataView = new DataView(buf); 
+alert(fullDataView.byteOffset); // 0 
+alert(fullDataView.byteLength); // 16 
+alert(fullDataView.buffer === buf); // true 
+
+// 构造函数接收一个可选的字节偏移量和字节长度
+// byteOffset=0 表示视图从缓冲起点开始
+// byteLength=8 限制视图为前 8 个字节
+const firstHalfDataView = new DataView(buf, 0, 8); 
+alert(firstHalfDataView.byteOffset); // 0 
+alert(firstHalfDataView.byteLength); // 8 
+alert(firstHalfDataView.buffer === buf); // true 
+
+// 如果不指定，则 DataView 会使用剩余的缓冲
+// byteOffset=8 表示视图从缓冲的第 9 个字节开始
+// byteLength 未指定，默认为剩余缓冲
+const secondHalfDataView = new DataView(buf, 8); 
+alert(secondHalfDataView.byteOffset); // 8 
+alert(secondHalfDataView.byteLength); // 8  16-8=8
+alert(secondHalfDataView.buffer === buf); // true
+```
+
+1.`const buf = new ArrayBuffer(16);`： - 创建了一个长度为 16 字节的 ArrayBuffer 实例，并将其存储在变量 `buf` 中。
+  比喻：- 就像创建了一个长度为 16 的存储空间，用来存放字节数据的缓冲区。
+
+2.`const fullDataView = new DataView(buf);`：- 创建了一个 DataView 实例，用于在整个 ArrayBuffer 上创建视图。
+  比喻： - 就像放置了一块透明的窗户，可以全面观察整个存储空间中的数据。
+
+3.`const firstHalfDataView = new DataView(buf, 0, 8);`： - 创建了一个 DataView 实例，该视图仅覆盖 ArrayBuffer 的前 8 个字节。
+  比喻： - 就像放置了一块窗户，只能观察到缓冲区的前半部分数据。
+
+4.`const secondHalfDataView = new DataView(buf, 8);`： - 创建了一个 DataView 实例，该视图从 ArrayBuffer 的第 9 个字节开始，并覆盖剩余的字节。
+  比喻：- 就像放置了一块窗户，只能观察到缓冲区的后半部分数据。
+
+功能说明：这段代码演示了如何使用 DataView 来创建不同的视图，以便在 ArrayBuffer 中查看和操作数据。通过指定不同的字节偏移量和字节长度，可以在缓冲区中创建不同大小和位置的视图。这种功能类似于在一个房间的不同位置开不同大小的窗户，以便观察房间内的不同部分。
+
+1.ElementType
+
+DataView 应该使用 ElementType 来实现 JavaScript 的 Number 类型到缓冲内二进制格式的转换
+
+```js
+// 在内存中分配两个字节并声明一个 DataView 
+const buf = new ArrayBuffer(2); 
+const view = new DataView(buf); 
+
+// 说明整个缓冲确实所有二进制位都是 0 
+// 检查第一个和第二个字符
+alert(view.getInt8(0)); // 0 
+alert(view.getInt8(1)); // 0 
+// 检查整个缓冲
+alert(view.getInt16(0)); // 0 
+
+// 将整个缓冲都设置为 1 
+// 255 的二进制表示是 11111111（2^8 - 1）
+view.setUint8(0, 255); 
+
+// DataView 会自动将数据转换为特定的 ElementType 
+// 255 的十六进制表示是 0xFF 
+view.setUint8(1, 0xFF); 
+
+// 现在，缓冲里都是 1 了
+// 如果把它当成二补数的有符号整数，则应该是-1 
+alert(view.getInt16(0)); // -1
+```
+
+1. `const buf = new ArrayBuffer(2);`：- 创建了一个长度为 2 字节的 ArrayBuffer 实例，并将其存储在变量 `buf` 中。
+2. `const view = new DataView(buf);`：- 创建了一个 DataView 实例，该实例关联到刚刚创建的 ArrayBuffer。
+   比喻： - 就像在内存中划分了一个长度为 2 字节的空间，并在上面安装了一个数据监视器。
+3. `alert(view.getInt8(0)); // 0` 和 `alert(view.getInt8(1)); // 0`： - 检查了 DataView 中索引为 0 和 1 的位置的值。
+   比喻：- 就像查看了监视器上第一个字节和第二个字节的内容，由于刚创建时没有设置值，因此显示为 0。
+4. `alert(view.getInt16(0)); // 0`：- 检查了整个 DataView 中的 16 位有符号整数值。
+   比喻：- 就像查看了监视器上整个 16 位数据的内容，由于刚创建时没有设置值，因此显示为 0。
+5. `view.setUint8(0, 255);` 和 `view.setUint8(1, 0xFF);`：- 将 DataView 中索引为 0 和 1 的位置的值分别设置为 255（0xFF）。
+   比喻：- 就像在监视器上的第一个字节和第二个字节写入了值 255，由于这是一个无符号整数的最大值，所以以二进制表示就是 11111111。
+6. `alert(view.getInt16(0)); // -1`： - 检查了整个 DataView 中的 16 位有符号整数值。
+   比喻：- 就像再次查看了监视器上整个 16 位数据的内容，现在由于前两个字节的值都是最大无符号整数，所以将它们解释为有符号整数时，值为 -1。
+功能说明：这段代码演示了如何使用 DataView 来查看和设置内存中的数据。DataView 提供了灵活的方法来解释和操作 ArrayBuffer 中的数据。就像在监视器上查看和修改内存中的字节一样，可以根据需要读取和写入不同大小和类型的数据。
 
 ```js
 ```
