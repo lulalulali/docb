@@ -154,20 +154,548 @@ iterator protocol.
 next方法和两个属性done、value
 
 ```js
-// 可迭代对象
+// 可迭代对象Iterable object
 let arr = ['foo', 'bar']; 
 
-// 迭代器工厂函数
+// 迭代器工厂函数Iterator factory
 console.log(arr[Symbol.iterator]); // f values() { [native code] } 
 
-// 迭代器
+// 迭代器 Iterator
 let iter = arr[Symbol.iterator](); 
 console.log(iter); // ArrayIterator {} 
 
-// 执行迭代
+// 执行迭代Performing iteration. done是个布尔值,表示是否还可以再次调用next取下一个值
 console.log(iter.next()); // { done: false, value: 'foo' } 
 console.log(iter.next()); // { done: false, value: 'bar' } 
 console.log(iter.next()); // { done: true, value: undefined } 
+
+//迭代器done了就是下面这样
+let arr = ['foo']; 
+let iter = arr[Symbol.iterator](); 
+console.log(iter.next()); // { done: false, value: 'foo' } 
+console.log(iter.next()); // { done: true, value: undefined } 
+console.log(iter.next()); // { done: true, value: undefined } 
+console.log(iter.next()); // { done: true, value: undefined } 
+```
+
+```js
+//不同的迭代器实例之间独立.
+let arr = ['foo', 'bar']; 
+let iter1 = arr[Symbol.iterator](); 
+let iter2 = arr[Symbol.iterator](); 
+
+console.log(iter1.next()); // { done: false, value: 'foo' } 
+console.log(iter2.next()); // { done: false, value: 'foo' } 
+console.log(iter2.next()); // { done: false, value: 'bar' } 
+console.log(iter1.next()); // { done: false, value: 'bar' }
+```
+
+```js
+//可迭代对象在迭代中途被修改,会出现说明情况:
+let arr = ['foo', 'baz']; 
+let iter = arr[Symbol.iterator](); 
+
+console.log(iter.next()); // { done: false, value: 'foo' } 
+
+// 在数组中间插入值
+arr.splice(1, 0, 'bar'); //1是索引位,0是删除数,插入后顺序是 foo bar baz
+
+console.log(iter.next()); // { done: false, value: 'bar' } 
+console.log(iter.next()); // { done: false, value: 'baz' } 
+console.log(iter.next()); // { done: true, value: undefined } 
+```
+
+迭代器会阻止垃圾回收程序回收可迭代对象
+
+```js
+// 这个类实现了可迭代接口（Iterable） 
+// 调用默认的迭代器工厂函数会返回
+// 一个实现迭代器接口（Iterator）的迭代器对象
+class Foo {
+    //迭代器工厂函数
+    [Symbol.iterator]() { 
+ return { 
+ next() { 
+ return { done: false, value: 'foo' }; 
+ } 
+ } 
+ } 
+} 
+//[Symbol.iterator]() 方法被定义在 Foo 类中，用于实现迭代器接口。该方法返回一个对象，该对象具有一个 next 方法，用于迭代数据。在 next 方法中，返回了一个包含 done 和 value 属性的对象。done 表示迭代是否已完成，value 表示当前迭代的值。
+
+let f = new Foo(); 
+
+// 打印出实现了迭代器接口的对象
+console.log(f[Symbol.iterator]()); // { next: f() {} } 
+
+// Array 类型实现了可迭代接口（Iterable）
+//array可以实现iterable
+// 调用 Array 类型的默认迭代器工厂函数
+// 会创建一个 ArrayIterator 的实例
+let a = new Array(); 
+
+// 打印出 ArrayIterator 的实例
+console.log(a[Symbol.iterator]()); // Array Iterator {}
+```
+
+### 自定义迭代器
+
+custom iterator definition.
+与Iterable 接口类似，任何实现 Iterator 接口的对象都可以作为迭代器使用。
+
+```js
+//下面的counter类只能被迭代一定的次数
+
+class Counter { 
+ // Counter 的实例应该迭代 limit 次
+ constructor(limit) 
+ //构造函数接受一个参数 limit，用于指定计数器的上限值。在构造函数中，count 初始化为 1，表示计数器的当前值，limit 初始化为传入的 limit 参数，表示计数器的上限值。
+ { 
+ this.count = 1; 
+ this.limit = limit; 
+ } 
+
+ next() { 
+ if (this.count <= this.limit) { 
+ return { done: false, value: this.count++ }; 
+ } else { 
+ return { done: true, value: undefined }; 
+ } 
+ } 
+ //定义了一个 next 方法，用于生成迭代器的下一个值。如果当前计数器的值小于等于上限值，则返回一个对象，其中 done 属性为 false，表示迭代尚未完成，value 属性为当前计数器的值，并且将计数器的值递增。如果当前计数器的值已经大于上限值，则返回一个对象，其中 done 属性为 true，表示迭代已完成，value 属性为 undefined。
+ [Symbol.iterator]() { 
+ return this; 
+ } 
+ //定义了一个 [Symbol.iterator] 方法，该方法返回 this，  即返回当前对象自身，表示该对象是一个可迭代对象!!!!!!
+} 
+
+let counter = new Counter(3); 
+//创建了一个 Counter 类的实例 counter，并传入参数 3，表示计数器的上限值为 3。
+
+for (let i of counter) { 
+ console.log(i); 
+} 
+//使用 for...of 循环迭代计数器对象 counter。在每次迭代中，会调用计数器对象的 next 方法来获取下一个值，并将该值赋给变量 i，然后将 i 打印出来。
+// 1 
+// 2 
+// 3
+
+//构造函数初始化了计数器对象的当前值和上限值，next 方法用于生成迭代器的下一个值，[Symbol.iterator] 方法用于返回迭代器对象自身，从而使得该对象可以被 for...of 循环迭代。
+```
+
+```js
+//以下实现了iterator接口,但不理想=每个实例只能被迭代一次
+for (let i of counter) { console.log(i); } 
+// 1
+// 2 
+// 3 
+for (let i of counter) { console.log(i); } 
+// (nothing logged) 
+```
+
+```js
+//为了让一个可迭代对象能够创建多个迭代器，必须每创一个迭代器就对应一个新计数器。为此，可以把计数器变量放到闭包里，然后通过闭包返回迭代器：
+
+//创建了一个可迭代的计数器对象,计数器和next放进iterator工厂里
+class Counter { 
+ constructor(limit) { 
+ this.limit = limit; 
+ } 
+
+ [Symbol.iterator]() { 
+ let count = 1, 
+ limit = this.limit; 
+ return { 
+ next() { 
+ if (count <= limit) { 
+ return { done: false, value: count++ }; 
+ } else { 
+ return { done: true, value: undefined }; 
+ } 
+ } 
+ }; 
+ } 
+} 
+
+let counter = new Counter(3); 
+for (let i of counter) { console.log(i); } 
+// 1 
+// 2 
+// 3 
+
+for (let i of counter) { console.log(i); } 
+// 1 
+// 2 
+// 3 
+```
+
+```js
+//
+let arr = ['foo', 'bar', 'baz']; 
+let iter1 = arr[Symbol.iterator](); 
+//iter1是arr的迭代器
+
+console.log(iter1[Symbol.iterator]); // f values() { [native code] } 
+let iter2 = iter1[Symbol.iterator](); 
+
+console.log(iter1 === iter2); // true 
+```
+
+```js
+//for of循环中用到迭代器的接口,因为所用之处也是可迭代对象
+
+let arr = [3, 1, 4]; 
+let iter = arr[Symbol.iterator]();
+for (let item of arr ) { console.log(item); } 
+// 3 
+// 1 
+// 4 
+for (let item of iter ) { console.log(item); } 
+// 3 
+// 1 
+// 4 
+```
+
+### 提前终止迭代器
+
+early termination of iterators.
+即用return方法关闭迭代器:for-of 循环通过 break、continue、return 或 throw 提前退出；解构操作并未消费所有值。
+
+```js
+class Counter { 
+ constructor(limit) { 
+ this.limit = limit; 
+ } 
+ //构造函数接受一个参数 limit，用于指定计数器的上限值，并将其存储在对象的 limit 属性中。
+
+ [Symbol.iterator]() 
+ //定义了一个 [Symbol.iterator] 方法，该方法返回一个迭代器对象。
+ { 
+ let count = 1, 
+ limit = this.limit; 
+ //声明了两个变量 count 和 limit，分别初始化为 1 和构造函数中传入的 limit 属性值。
+  return { 
+ next() { 
+ if (count <= limit)
+
+ { 
+ return { done: false, value: count++ }; 
+ } else { 
+ return { done: true }; 
+ } 
+ },
+ //next 方法用于生成迭代器的下一个值。判断当前计数器的值是否小于等于上限值。如果小于等于上限值，则返回一个对象，其中 done 属性为 false，表示迭代尚未完成，value 属性为当前计数器的值 count，并将 count 递增。如果大于上限值，则返回一个对象，其中 done 属性为 true，表示迭代已完成。
+ return() { 
+ console.log('Exiting early'); 
+ return { done: true }; 
+ } 
+ //return 方法用于提前退出迭代。输出一条消息表示提前退出。返回一个对象，其中 done 属性为 true，表示迭代已完成。
+ }
+ //返回一个具有 next 和 return 方法的对象，用于生成迭代器的下一个值和提前退出迭代。
+ ; 
+ } 
+} 
+
+let counter1 = new Counter(5); 
+for (let i of counter1) { 
+ if (i > 2) { 
+ break; 
+ } 
+ console.log(i); 
+} 
+// 1 
+// 2 
+// Exiting early
+
+//以下是  在使用 Counter 类时，通过 return 方法提前退出迭代的情况以及在解构赋值时的行为。
+let counter2 = new Counter(5); //创建了一个新的 Counter 对象 counter2，其上限值为 5。
+//使用了 try-catch 块来捕获可能发生的异常。
+try { 
+    //对 counter2 进行迭代。迭代过程中，当计数器的值大于 2 时，抛出了一个错误 'err'。如果没有提前退出，就打印当前计数器的值 i。
+ for (let i of counter2) { 
+ if (i > 2) { 
+ throw 'err'; 
+ } 
+ console.log(i); 
+  //在循环中打印当前计数器的值 i。
+ } 
+ }
+catch(e) {} 
+//在捕获到异常后，不执行任何操作。
+
+// 1 
+// 2 
+// Exiting early 
+
+let counter3 = new Counter(5); //创建了另一个新的 Counter 对象 counter3，其上限值也为 5。
+let [a, b] = counter3; //使用解构赋值从 counter3 中获取值，并赋给变量 a 和 b。在解构赋值的过程中，会触发 return 方法，从而提前退出迭代。
+// Exiting early 
+```
+
+```js
+//如果迭代器没有关闭，则还可以继续从上次离开的地方继续迭代。比如，数组的迭代器就是不能关闭的：
+let a = [1, 2, 3, 4, 5]; 
+let iter = a[Symbol.iterator](); 
+
+for (let i of iter) { 
+ console.log(i); 
+ if (i > 2) { 
+ break 
+ } 
+} 
+// 1 
+// 2 
+// 3 
+
+for (let i of iter) { 
+ console.log(i); 
+} 
+// 4 
+// 5 
+```
+
+```js
+//return是可选的,所以并非所有迭代器都是可关闭的.想知道是不是可关的?可以测试 这个迭代器实例的 return 属性是不是函数对象?. return不会强制关,因为不可关的return关不了.即便这样,return()还是会被调用.
+let a = [1, 2, 3, 4, 5]; 
+let iter = a[Symbol.iterator](); 
+
+iter.return = function() { 
+ console.log('Exiting early'); 
+ return { done: true };
+ }; 
+
+for (let i of iter) { 
+ console.log(i); 
+ if (i > 2) { 
+ break 
+ } 
+} 
+// 1 
+// 2 
+// 3 
+// Exiting early
+for (let i of iter) { 
+ console.log(i); 
+} 
+// 4 
+// 5 
+
+//提前退出并不意味着迭代器关闭了
+```
+
+## 生成器
+
+generators.
+能力:在一个函数内暂停\恢复代码执行的能力.eg:用生成器自定义迭代器和实现协程
+
+### 生成器基础
+
+generator basics.函数前面加个*就是生成器.凡能定义函数的地方,就可定义生成器.
+
+```js
+// 生成器函数声明
+function* generatorFn() {} 
+
+// 生成器函数表达式
+let generatorFn = function* () {} 
+
+// 作为对象字面量方法的生成器函数
+let foo = { 
+ * generatorFn() {} 
+} 
+
+// 作为类实例方法的生成器函数
+class Foo { 
+ * generatorFn() {} 
+} 
+
+// 作为类静态方法的生成器函数
+class Bar { 
+ static * generatorFn() {} 
+} 
+
+//箭头函数不能用来定义生成器函数
+```
+
+```js
+//标识生成器函数的星号不受两侧空格的影响.下面的第一个例子
+
+// 等价的生成器函数： 
+function* generatorFnA() {} 
+function *generatorFnB() {} 
+function * generatorFnC() {} 
+// 等价的生成器方法：
+class Foo { 
+ *generatorFnD() {} 
+ * generatorFnE() {} 
+}
+```
+
+```js
+//调用生成器函数会弄出来一个生成器对象.其开始处于suspended状态.跟迭代器相似,生成器对象也实现了iterator接口,因此又next方法.
+
+//调用这个方法会让生成器开始或恢复执行
+
+function* generatorFn() {} 
+
+const g = generatorFn(); 
+
+console.log(g); // generatorFn {<suspended>} 
+console.log(g.next); // f next() { [native code] } 
+```
+
+```js
+//next方法返回值类似迭代器,有done和value.空函数体的生成器中间不会停留,调一次next就会让生成器达到done状态
+
+function* generatorFn() {} 
+let generatorObject = generatorFn(); 
+console.log(generatorObject); // generatorFn {<suspended>} 
+console.log(generatorObject.next()); // { done: true, value: undefined }
+```
+
+```js
+//value的值可以由生成器函数的返回值指定
+
+function* generatorFn() { 
+ return 'foo'; 
+} 
+let generatorObject = generatorFn(); 
+console.log(generatorObject); // generatorFn {<suspended>} 
+console.log(generatorObject.next()); // { done: true, value: 'foo' }
+```
+
+```js
+//生成器函数只会在初次调用 next()方法后开始执行
+function* generatorFn() { 
+ console.log('foobar'); 
+} 
+// 初次调用生成器函数并不会打印日志
+let generatorObject = generatorFn(); 
+generatorObject.next(); // foobar 
+
+//生成器对象实现了 Iterable 接口，它们默认的迭代器是自引用的：
+function* generatorFn() {} 
+
+console.log(generatorFn); 
+// f* generatorFn() {} 
+console.log(generatorFn()[Symbol.iterator]); 
+// f [Symbol.iterator]() {native code} 
+console.log(generatorFn()); 
+// generatorFn {<suspended>} 
+console.log(generatorFn()[Symbol.iterator]()); 
+// generatorFn {<suspended>}
+
+const g = generatorFn(); 
+console.log(g === g[Symbol.iterator]()); 
+// true 
+
+console.log(g);//generatorFn {<suspended>}生成器函数本身的信息
+
+//注意 
+ console.log(g[Symbol.iterator]);
+ //ƒ [Symbol.iterator]() { [native code] }生成器函数的 Symbol.iterator 方法的信息。
+ 
+console.log(g === g[Symbol.iterator]); 
+// false
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
 ```
 
 ```js
