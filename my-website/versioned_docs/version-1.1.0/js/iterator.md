@@ -1,5 +1,7 @@
 # 迭代器与生成器
 
+基本上没懂???
+
 iterators and gernerators
 
 介绍 ECMAScript 新版中引入的两个基本概念：迭代器和生成器，并分别讨论它们最基本的行为和在当前语言环境下的应用。
@@ -582,75 +584,446 @@ console.log(generatorFn()[Symbol.iterator]);
 // f [Symbol.iterator]() {native code} 
 console.log(generatorFn()); 
 // generatorFn {<suspended>} 
-console.log(generatorFn()[Symbol.iterator]()); 
+console.log(generatorFn()[S ymbol.iterator]()); 
 // generatorFn {<suspended>}
 
 const g = generatorFn(); 
 console.log(g === g[Symbol.iterator]()); 
 // true 
 
-console.log(g);//generatorFn {<suspended>}生成器函数本身的信息
+console.log(g);//generatorFn {<suspended>} 生成器函数本身的信息
 
 //注意 
  console.log(g[Symbol.iterator]);
- //ƒ [Symbol.iterator]() { [native code] }生成器函数的 Symbol.iterator 方法的信息。
- 
+ //ƒ [Symbol.iterator]() { [native code] } 生成器函数的 Symbol.iterator 方法的信息。
+
 console.log(g === g[Symbol.iterator]); 
 // false
 ```
 
+### 通过yield中断执行
+
+yield是孕育\产生\giveup\屈服\放弃索偿\放弃占有的意思
+interrupting execution with "yield".
+
+是能让生成器停止和开始执行的,也是生成器最有用的地方.遇到yield,生成器函数的执行会停止,函数作用域的状态会被保留.停止执行的 只能 用next方法恢复执行.
+
 ```js
+function* generatorFn() { 
+ yield; 
+} 
+
+let generatorObject = generatorFn(); 
+
+console.log(generatorObject.next()); // { done: false, value: undefined } 
+console.log(generatorObject.next()); // { done: true, value: undefined } 
 ```
 
 ```js
+//yield,中断会使得生成器函数处于donefalse;通过return会关键字退出的函数会处于donetrue
+
+function* generatorFn() { 
+ yield 'foo'; 
+ yield 'bar'; 
+ return 'baz'; 
+} 
+let generatorObject = generatorFn(); 
+console.log(generatorObject.next()); // { done: false, value: 'foo' } 
+console.log(generatorObject.next()); // { done: false, value: 'bar' } 
+console.log(generatorObject.next()); // { done: true, value: 'baz' } 
 ```
 
 ```js
+//生成器对象generatorObject1和generatorObject2互不影响
+
+function* generatorFn() { 
+ yield 'foo'; 
+ yield 'bar'; 
+ return 'baz'; 
+} 
+
+let generatorObject1 = generatorFn(); 
+let generatorObject2 = generatorFn(); 
+
+console.log(generatorObject1.next()); // { done: false, value: 'foo' } 
+console.log(generatorObject2.next()); // { done: false, value: 'foo' }
+console.log(generatorObject2.next()); // { done: false, value: 'bar' } 
+console.log(generatorObject1.next()); // { done: false, value: 'bar' }  
 ```
 
 ```js
+//yield关键字 只能 在生成器函数内部使用
+
+// 有效
+function* validGeneratorFn() { 
+ yield; 
+} 
+// 无效
+function* invalidGeneratorFnA() { 
+ function a() { 
+ yield; 
+ } 
+} 
+// 无效
+function* invalidGeneratorFnB() { 
+ const b = () => { 
+ yield; 
+ } 
+} 
+// 无效
+function* invalidGeneratorFnC() { 
+ (() => { 
+ yield; 
+ })(); 
+} 
+```
+
+1.生成器对象作为可迭代对象
+
+Using a Generator Object as an Iterable.
+
+```js
+//这么用更方便:把生成器对象当可迭代对象
+
+function* generatorFn() { 
+ yield 1; 
+ yield 2; 
+ yield 3; 
+} 
+for (const x of generatorFn()) { 
+ console.log(x); 
+} 
+// 1 
+// 2 
+// 3 
 ```
 
 ```js
+//生成器对象(n),我们自定义一个可迭代的生成器函数
+
+function* nTimes(n) { 
+ while(n--) { 
+ yield; 
+ } 
+} 
+//定义了一个生成器函数 nTimes(n)，该函数接受一个参数 n，表示要生成的迭代次数。在每次迭代中，它都会调用 yield 关键字来暂停执行并返回一个空值。直到 n 为 0 时，迭代结束。
+
+for (let _ of nTimes(3)) { 
+ console.log('foo'); 
+} 
+//使用 nTimes(3) 生成器生成了一个迭代器，并对其进行迭代。每次迭代，由于生成器函数内部有 yield 关键字，会暂停执行并输出 'foo'。这样，整个循环会执行三次，每次输出 'foo'。
+
+// foo 
+// foo 
+// foo 
+```
+
+2.使用yield实现输入和输出
+
+Using “yield” for Input and Output.
+
+```js
+//除了可以作为函数的中间返回语句使用，yield 关键字还可以作为函数的中间参数使用。即yield()是可以的,(yield)也是可以的.
+
+function* generatorFn(initial) { 
+ console.log(initial); 
+ console.log(yield); 
+ console.log(yield); 
+} 
+
+let generatorObject = generatorFn('foo'); 
+
+generatorObject.next('bar'); // foo  第一次的调用时,next传入的值不会被使用,因为是相当于开始执行生成器函数
+generatorObject.next('baz'); // baz 
+generatorObject.next('qux'); // qux 
 ```
 
 ```js
+//yield 关键字可以同时用于输入和输出，如下例所示：
+function* generatorFn() { 
+ return yield 'foo'; 
+} 
+let generatorObject = generatorFn(); 
+console.log(generatorObject.next()); // { done: false, value: 'foo' }  必须先对整个表达式求值才能确定返回的值,所以foo
+console.log(generatorObject.next('bar')); // { done: true, value: 'bar' }  这里是第二次调用,传入了bar
 ```
 
 ```js
+//yield 关键字并非只能使用一次。比如，以下代码就定义了一个无穷计数生成器函数：
+function* generatorFn() { 
+ for (let i = 0;;++i) 
+ 
+ { 
+ yield i; 
+ } 
+} 
+let generatorObject = generatorFn(); 
+console.log(generatorObject.next().value); // 0 
+console.log(generatorObject.next().value); // 1 
+console.log(generatorObject.next().value); // 2 
+console.log(generatorObject.next().value); // 3 
+console.log(generatorObject.next().value); // 4 
+console.log(generatorObject.next().value); // 5 
+...
 ```
 
 ```js
+//假设我们想定义一个生成器函数，它会根据配置的值迭代相应次数并产生迭代的索引。初始化一个新数组可以实现这个需求，但不用数组也可以实现同样的行为：
+function* nTimes(n) { 
+ for (let i = 0; i < n; ++i) { 
+ yield i; 
+ } 
+} 
+for (let x of nTimes(3)) { 
+ console.log(x); 
+} 
+// 0 
+// 1 
+// 2 
+
+
+//使用 while 循环也可以，而且代码稍微简洁一点：
+function* nTimes(n) { 
+ let i = 0; 
+ while(n--) { 
+ yield i++; 
+ } 
+} 
+//定义了一个生成器函数 nTimes(n)，该函数接受一个参数 n，表示要生成的迭代次数。在每次迭代中，它都会调用 yield 关键字来暂停执行并返回一个空值。直到 n 为 0 时，迭代结束。
+
+for (let x of nTimes(3)) { 
+ console.log(x); 
+} 
+//上面有个例子,不过打印的是("foo")是一个逻辑.在这里yield实现输出.
+// 0 
+// 1 
+// 2
 ```
 
 ```js
+//使用生成器也可以实现范围和填充数组：看你yield的是什么
+function* range(start, end) { 
+ while(end > start) { 
+ yield start++; 
+ } 
+} 
+for (const x of range(4, 7)) { 
+ console.log(x); 
+} 
+// 4 
+// 5 
+// 6 
+function* zeroes(n) { 
+ while(n--) { 
+ yield 0; 
+ } 
+} 
+console.log(Array.from(zeroes(8))); // [0, 0, 0, 0, 0, 0, 0, 0] 
+```
+
+3.产生可迭代对象
+
+Yielding an Iterable.
+
+```js
+// 等价的 generatorFn： 
+// function* generatorFn() { 
+// for (const x of [1, 2, 3]) { 
+// yield x; 
+// } 
+// } 
+function* generatorFn() { 
+ yield* [1, 2, 3]; 
+ //使用了✳,增强yield=一次生产一个
+} 
+let generatorObject = generatorFn(); 
+for (const x of generatorFn()) { 
+ console.log(x); 
+} 
+// 1 
+// 2 
+// 3 
 ```
 
 ```js
+//跟生成器函数不受两侧空格影响一样,yield星号  两侧也不受
+
+function* generatorFn() { 
+ yield* [1, 2]; 
+ yield *[3, 4]; 
+ yield * [5, 6]; 
+} 
+for (const x of generatorFn()) { 
+ console.log(x); 
+} 
+// 1 
+// 2 
+// 3 
+// 4 
+// 5 
+// 6 
 ```
 
 ```js
+function* generatorFnA() { 
+ for (const x of [1, 2, 3]) { 
+ yield x; 
+ } 
+} 
+
+for (const x of generatorFnA()) { 
+ console.log(x); 
+} 
+// 1 
+// 2 
+// 3 
+
+
+//上下两个例子一样:yield*是可以将对象序列逐个产出=循环
+
+function* generatorFnB() { 
+ yield* [1, 2, 3]; 
+} 
+for (const x of generatorFnB()) { 
+ console.log(x); 
+}
+// 1 
+// 2 
+// 3 
 ```
 
 ```js
+//yield*的值是关联迭代器返回 done: true 时的 value 属性.什么意思???对于普通迭代器来说，这个值是undefined：   
+
+function* generatorFn() { 
+ console.log('iter value:', yield* [1, 2, 3]); 
+} 
+//定义了一个生成器函数 generatorFn()。在函数内部，它使用了 yield* 关键字来代理另一个可迭代对象 [1, 2, 3] 的迭代过程。
+
+for (const x of generatorFn()) { 
+ console.log('value:', x); 
+} 
+//对 generatorFn() 返回的生成器进行迭代。每次迭代，会执行生成器函数，其中 yield* [1, 2, 3] 会将控制权委托给 [1, 2, 3] 的迭代器，并且生成器函数内部的代码会等待迭代器返回的值。由于 [1, 2, 3] 中的值依次为 1、2、3，因此在每次迭代时，x 的值分别为 1、2、3。
+// value: 1 
+// value: 2 
+// value: 3 
+// iter value: undefined
+
+//先打印value,就是123;然后x,x就是生成器iter value
 ```
 
 ```js
+
+//不懂???
+
+//什么是迭代器对象?x和'iter value:'\'value:'
+function* innerGeneratorFn() { 
+ yield 'foo'; 
+ return 'bar'; 
+} 
+function* outerGeneratorFn(genObj) { 
+ console.log('iter value:', yield* innerGeneratorFn()); 
+}
+
+for (const x of outerGeneratorFn()) { 
+ console.log('value:', x); 
+} 
+// value: foo 
+// iter value: bar  对于生成器函数产生的迭代器来说，这个值就是生成器函数返回的值
+
+//下面做了一点改动
+
+function* innerGeneratorFn() { 
+ yield 'foo'; 
+//无
+} 
+function* outerGeneratorFn(genObj) { 
+ console.log('iter value:', yield* innerGeneratorFn()); 
+}
+
+for (const x of outerGeneratorFn()) { 
+ console.log('value:', x); 
+} 
+// value: foo
+//iter value:undefined
+```
+
+4.使用yield实现递归算法
+
+```js
+//yield*最有用的地方是实现递归操作，此时生成器可以产生自身。
+function* nTimes(n) { 
+ if (n > 0) { 
+ yield* nTimes(n - 1); 
+ yield n - 1; 
+ //在这里产生自身
+ } 
+} 
+for (const x of nTimes(3))
+//3代表返回的次数是3次
+{ 
+ console.log(x); 
+} 
+// 0  从1开始, 1才0
+// 1   2才1
+// 2   3才2 
+
+//x 是一个变量名，用于在每次迭代中存储迭代器返回的当前值。作用：x 在每次迭代中代表迭代器对象返回的当前值。在循环的每次迭代中，x 的值会随着迭代器对象返回的值而变化。在这个例子中，x 的值将会依次是 0、1 和 2，因为 nTimes(3) 生成的迭代器对象会依次返回这些值。
 ```
 
 ```js
-```
+//下面是使用递归生成器结构和yield* 优雅的表达递归算法,实现了一个随机的双向图.
+class Node { 
+ constructor(id) { 
+ this.id = id; 
+ this.neighbors = new Set(); 
+ } 
+ connect(node) { 
+ if (node !== this) { 
+ this.neighbors.add(node); 
+ node.neighbors.add(this); 
+ } 
+ } 
+} 
+class RandomGraph { 
+ constructor(size) { 
+ this.nodes = new Set(); 
 
-```js
-```
+ // 创建节点
+ for (let i = 0; i < size; ++i) { 
+ this.nodes.add(new Node(i)); 
+ } 
 
-```js
-```
-
-```js
-```
-
-```js
+ // 随机连接节点
+ const threshold = 1 / size; 
+ for (const x of this.nodes) { 
+ for (const y of this.nodes) { 
+ if (Math.random() < threshold) { 
+ x.connect(y); 
+ } 
+ } 
+ } 
+ } 
+ 
+ // 这个方法仅用于调试
+ print() { 
+ for (const node of this.nodes) { 
+ const ids = [...node.neighbors] 
+ .map((n) => n.id) 
+ .join(','); 
+ console.log(`${node.id}: ${ids}`); 
+ } 
+ } 
+} 
+const g = new RandomGraph(6); 
+g.print(); 
+// 示例输出：
+// 0: 2,3,5 
+// 1: 2,3,4,5 
+// 2: 1,3 
+// 3: 0,1,2,4 
+// 4: 2,3 
+// 5: 0,4 
 ```
 
 ```js
