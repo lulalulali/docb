@@ -972,25 +972,36 @@ for (const x of nTimes(3))
 ```
 
 ```js
+
+//看不懂???
+
 //下面是使用递归生成器结构和yield* 优雅的表达递归算法,实现了一个随机的双向图.
 class Node { 
  constructor(id) { 
  this.id = id; 
  this.neighbors = new Set(); 
- } 
+ }
+ //constructor(id) 方法是 Node 类的构造函数，用于创建节点对象。它接受一个参数 id，表示节点的唯一标识符。在构造函数内部，通过 this.id = id; 将传入的 id 赋值给节点对象的 id 属性。同时，通过 this.neighbors = new Set(); 创建了一个空的 Set，用于存储节点的邻居节点。 
  connect(node) { 
  if (node !== this) { 
  this.neighbors.add(node); 
  node.neighbors.add(this); 
  } 
- } 
+ }
+ //connect(node) 方法用于将当前节点与另一个节点相连。它接受一个参数 node，表示要连接的另一个节点。在方法内部，首先通过 if (node !== this) 判断要连接的节点是否是当前节点本身，以避免将节点与自身相连。然后，通过 this.neighbors.add(node); 将另一个节点添加到当前节点的邻居列表中。同时，通过 node.neighbors.add(this); 将当前节点也添加到另一个节点的邻居列表中，以确保连接是双向的。 
 } 
+//Node 类代表图中的节点。每个节点具有一个唯一的 id 属性和一个 neighbors 属性，它是一个 Set，用于存储与该节点相邻的其他节点。Node 类还有一个 connect() 方法，用于将当前节点与另一个节点连接起来，同时将另一个节点也添加到当前节点的邻居列表中。
 class RandomGraph { 
- constructor(size) { 
+ constructor(size) 
+ //constructor(size) 方法是 RandomGraph 类的构造函数，用于创建随机图对象。它接受一个参数 size，表示图中节点的数量。
+ { 
  this.nodes = new Set(); 
+ //创建了一个空的 Set，用于存储图中的节点
 
  // 创建节点
- for (let i = 0; i < size; ++i) { 
+ for (let i = 0; i < size; ++i) 
+ //循环用于创建图中的节点。在每次循环中，通过 new Node(i) 创建一个新的节点对象，并将其添加到 nodes 集合中。
+{ 
  this.nodes.add(new Node(i)); 
  } 
 
@@ -1003,20 +1014,37 @@ class RandomGraph {
  } 
  } 
  } 
+ //接下来的嵌套循环用于随机连接节点。外层循环遍历图中的所有节点 x，内层循环再次遍历所有节点 y。对于每对节点 (x, y)，通过 Math.random() < threshold 判断是否连接这两个节点，其中 threshold 是一个阈值，其值为 1 / size。如果随机数小于阈值，则调用 x.connect(y) 方法将节点 x 和节点 y 连接起来。
  } 
- 
+ //这段代码的逻辑是创建一个包含指定数量节点的随机图。首先创建节点并存储在集合中，然后通过随机连接节点的方式创建图的边。
+
  // 这个方法仅用于调试
- print() { 
- for (const node of this.nodes) { 
+ print() 
+ //一个用于打印随机图结构的函数。
+ { 
+ for (const node of this.nodes)
+ //是一个迭代 this.nodes 集合中所有节点的循环。每次迭代，node 变量代表当前的节点对象。
+ { //创建了一个包含当前节点所有邻居节点的数组。node.neighbors 是一个 Set，通过 ... 操作符将其转换为数组。
+ //将邻居节点数组中的每个节点对象转换为其对应的 id 属性值，并返回一个由这些 id 组成的数组。
+ //将数组中的 id 用逗号连接成一个字符串。
+ // 打印当前节点的 id 和其所有邻居节点的 id。
  const ids = [...node.neighbors] 
  .map((n) => n.id) 
  .join(','); 
  console.log(`${node.id}: ${ids}`); 
  } 
  } 
+ //print() 方法用于打印图的结构。它遍历图中的每个节点，并打印出节点的 id 以及与之相邻的节点的 id。
+ //print() 方法遍历图中的每个节点，对于每个节点，它打印该节点的 id 和所有邻居节点的 id。这样可以展示出图的结构，每行显示一个节点及其邻居节点的列表。
 } 
+//RandomGraph 类代表一个随机图，它由多个节点组成。在构造函数中，首先创建了指定数量的节点，并将它们存储在 nodes 属性中。然后，通过遍历所有节点，并在一定的概率下将节点连接起来，从而创建了一个随机图。连接的过程通过 connect() 方法实现。
+
 const g = new RandomGraph(6); 
+// 创建了一个新的 RandomGraph 类型的对象 g，并传入参数 6，表示图的大小为 6。
 g.print(); 
+// 调用了 RandomGraph 类的 print() 方法，用于打印图的结构。
+//创建了一个 RandomGraph 实例 g，它包含了6个节点。然后调用 g.print() 方法打印出了图的结构。这段代码首先创建了一个大小为 6 的随机图对象 g，然后调用其 print() 方法，打印图的结构，显示每个节点及其邻居节点的列表。
+
 // 示例输出：
 // 0: 2,3,5 
 // 1: 2,3,4,5 
@@ -1024,82 +1052,191 @@ g.print();
 // 3: 0,1,2,4 
 // 4: 2,3 
 // 5: 0,4 
+
+//图像数据结构非常适合遍历=使用递归生成器刚好合适.如下
 ```
 
 ```js
+class Node { 
+ constructor(id) { 
+ ... 
+ } 
+ connect(node) { 
+ ... 
+ } 
+} 
+class RandomGraph { 
+ constructor(size) { 
+ ... 
+ } 
+ print() { 
+ ... 
+ } 
+ isConnected()  
+ { 
+ const visitedNodes = new Set();
+  //首先创建了一个空的 visitedNodes 集合，用于存储已访问过的节点
+ function* traverse(nodes)
+ //定义了一个名为 traverse() 的内部生成器函数，用于递归地遍历图中的节点。  使用了一个生成器函数，通过递归地遍历节点的邻居来遍历整个图。对于传入的节点集合，首先遍历每个节点，如果该节点未被访问过，则将其添加到生成器的迭代器中，然后递归地调用 traverse() 函数遍历该节点的邻居节点。
+ { 
+ for (const node of nodes) { 
+ if (!visitedNodes.has(node)) { 
+ yield node; 
+ yield* traverse(node.neighbors); 
+ } 
+ } 
+ } 
+
+ // 取得集合中的第一个节点
+ const firstNode = this.nodes[Symbol.iterator]().next().value; 
+//通过调用 this.nodes[Symbol.iterator]().next().value 获取了图中的第一个节点，并将其传递给 traverse() 函数进行遍历。
+
+ // 使用递归生成器迭代每个节点
+ for (const node of traverse([firstNode])) { 
+ visitedNodes.add(node); 
+ //遍历过程中，将访问过的节点添加到 visitedNodes 集合中.
+ } 
+ return visitedNodes.size === this.nodes.size; 
+ //最后，通过比较 visitedNodes 集合的大小和图中节点数量的大小来判断图是否连通，如果它们相等，则表示图是连通的。
+ } 
+}
+//该方法使用了 深度优先搜索（DFS）算法 来遍历图，并通过比较访问过的节点数量和图中节点数量的大小来   判断图是否连通。 
+```
+
+### 生成器作为默认迭代器
+
+Using a Generator as the Default Iterator.
+因为生成器实现了可迭代接口,而且生成器函数和默认迭代器被调用后都产生迭代器,所以生成器格外适合当默认迭代器.
+
+```js
+//流程:在对象foo里面有个constructor,还有一个* [Symbol.iterator]() 
+class Foo { 
+ constructor() { 
+ this.values = [1, 2, 3]; 
+ } 
+* [Symbol.iterator]() { 
+ yield* this.values; 
+ } 
+} 
+
+const f = new Foo(); 
+for (const x of f) { 
+ console.log(x); 
+} 
+//for-of 循环调用了默认迭代器（它恰好又是一个生成器函数）并产生了一个生成器对象.其是可以迭代的,可在迭代中使用.
+
+// 1 
+// 2 
+// 3 
+```
+
+### 提前终止生成器
+
+Early Termination of Generators.
+与迭代器类似,生成器也可'关闭'.生成器iterator有三个方法:next return throw
+
+```js
+function* generatorFn() {} 
+const g = generatorFn(); 
+console.log(g); // generatorFn {<suspended>} 
+console.log(g.next); // f next() { [native code] } 
+
+console.log(g.return); // f return() { [native code] } 
+console.log(g.throw); // f throw() { [native code] }
+```
+
+1.return()
+此方法会强制使进入关闭状态.
+
+```js
+function* generatorFn() { 
+ for (const x of [1, 2, 3]) { 
+ yield x; 
+ } 
+} 
+const g = generatorFn(); 
+console.log(g); // generatorFn {<suspended>}悬挂 
+console.log(g.return(4)); // { done: true, value: 4 } 提供给 return()方法的值，就是终止迭代器对象的值.4是return进来的.
+console.log(g); // generatorFn {<closed>} 
 ```
 
 ```js
+//跟迭代器不一样的是,所有生成器对象都有return方法,一进入关闭态,就无法恢复=后续调next会done:true
+function* generatorFn() { 
+ for (const x of [1, 2, 3]) { 
+ yield x; 
+ } 
+} 
+const g = generatorFn(); 
+console.log(g.next()); // { done: false, value: 1 } 
+console.log(g.return(4)); // { done: true, value: 4 } 
+console.log(g.next()); // { done: true, value: undefined } 
+console.log(g.next()); // { done: true, value: undefined } 
+console.log(g.next()); // { done: true, value: undefined } 
 ```
 
 ```js
+//但是forof循环结构会忽略done:true的iteratorobject内部返回值,什么意思???
+function* generatorFn() { 
+ for (const x of [1, 2, 3]) { 
+ yield x; 
+ } 
+}
+
+const g = generatorFn(); 
+for (const x of g) { 
+ if (x > 1) { 
+ g.return(4); 
+ } 
+ console.log(x); 
+} 
+// 1 
+// 2 为什么不是123???
+```
+
+2.throw()
+
+会抛一个错误到生成器对象中,
+
+```js
+function* generatorFn() { 
+ for (const x of [1, 2, 3]) { 
+ yield x; 
+ } 
+} 
+const g = generatorFn(); 
+console.log(g); // generatorFn {<suspended>} 
+try { 
+ g.throw('foo'); 
+} catch (e) { 
+ console.log(e); // foo 
+} 
+console.log(g); // generatorFn {<closed>}如果错误没处理=生成器会被关闭.
 ```
 
 ```js
+//但是假如生成器函数 内部 出现错误,不会关闭.
+function* generatorFn() { 
+ for (const x of [1, 2, 3]) { 
+ try { 
+ yield x; 
+ } catch(e) {} 
+ } 
+} 
+const g = generatorFn(); 
+console.log(g.next()); // { done: false, value: 1} 
+g.throw('foo'); 
+console.log(g.next()); // { done: false, value: 3} 错误是这样被处理的:跳过对应的yield值,这里是2
 ```
 
-```js
-```
+tip:如果生成器对象还没有开始执行，那么调用 throw()抛出的错误不会在函数内部被捕获，因为这相当于在函数块外部抛出了错误。
 
-```js
-```
+## 小结
 
-```js
-```
+ 迭代是一种所有编程语言中都可以看到的模式。ECMAScript 6 正式支持迭代模式并引入了两个新的语言特性：迭代器和生成器。
 
-```js
-```
+ 迭代器是一个可以由任意对象实现的接口，支持连续获取对象产出的每一个值。任何实现 Iterable接口的对象都有一个 Symbol.iterator 属性，这个属性引用默认迭代器。默认迭代器就像一个迭代器工厂，也就是一个函数，调用之后会产生一个实现 Iterator 接口的对象。
 
-```js
-```
+ 迭代器必须通过连续调用 next()方法才能连续取得值，这个方法返回一个 IteratorObject。这个对象包含一个 done 属性和一个 value 属性。前者是一个布尔值，表示是否还有更多值可以访问；后者包含迭代器返回的当前值。这个接口可以通过手动反复调用 next()方法来消费，也可以通过原生消费者，比如 for-of 循环来自动消费。
 
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
+ 生成器是一种特殊的函数，调用之后会返回一个生成器对象。生成器对象实现了 Iterable 接口，因此可用在任何消费可迭代对象的地方。生成器的独特之处在于支持 yield 关键字，这个关键字能够暂停执行生成器函数。使用 yield 关键字还可以通过 next()方法接收输入和产生输出。在加上星号之后，yield 关键字可以将跟在它后面的可迭代对象序列化为一连串值。
