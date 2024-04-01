@@ -856,45 +856,279 @@ console.log(person2 instanceof Person); // true
 ```
 
 1.构造函数也是函数
-Constructors as Functions.与普通函数唯一的区别就是调用方式不同.
+Constructors as Functions.与普通函数唯一的区别就是 !调用方式不同! .任何函数只要使用 new 操作符调用就是构造函数，而不使用 new 操作符调用的函数就是普通函数。
 
 ```js
+//前面的例子中定义的 Person()可以像下面这样调用：
+// 作为构造函数 
+let person = new Person("Nicholas", 29, "Software Engineer"); 
+person.sayName(); // "Nicholas" 
+
+// 作为函数调用
+Person("Greg", 27, "Doctor"); // 添加到 window 对象.作为函数调用了Person构造函数，没有使用new关键字。在非严格模式下，这会导致Person函数中的this绑定到全局对象（在浏览器环境中是window对象），并创建了全局变量sayName，它的值为"Greg"。
+window.sayName(); // "Greg" 
+//调用了全局变量sayName
+
+//在另一个对象的作用域中调用
+let o = new Object(); //创建了一个新的空对象o。
+Person.call(o, "Kristen", 25, "Nurse"); //使用call方法将Person构造函数的上下文设置为对象o，并传入了参数"Kristen"、25和"Nurse"。
+o.sayName(); // "Kristen"  调用了对象o的sayName方法
+//此在上面的调用之后，window 对象上就有了一个 sayName()方法，调用它会返回"Greg"。最后展示的调用方式是通过 call()（或 apply()）调用函数，同时将特定对象指定为作用域。这里的调用将对象 o 指定为 Person()内部的 this 值，因此执行完函数代码后，所有属性和 sayName()方法都会添加到对象 o 上面
+```
+
+关于call的知识
+
+```js
+`call()` 方法是函数对象的一个方法，它允许你在指定的 `this` 值和参数列表的情况下调用函数。
+function.call(thisArg, arg1, arg2, ...)
+- `function` 是要调用的函数；- `thisArg` 是函数执行时的上下文，即在函数内部的 `this` 值；- `arg1`, `arg2`, ... 是函数调用时传入的参数。
+当你调用 `call()` 方法时，函数会立即执行，并且 `this` 的值会被设置为 `thisArg`。这允许你在调用函数时显式地指定函数执行的上下文。
+举个例子，假设有一个函数 `sayName()`：
+function sayName(greeting) {
+    console.log(`${greeting}, ${this.name}!`);
+}
+你可以使用 `call()` 方法以不同的上下文调用它：
+const person1 = { name: 'Alice' };
+const person2 = { name: 'Bob' };
+sayName.call(person1, 'Hello'); // 输出：Hello, Alice!
+sayName.call(person2, 'Hi');    // 输出：Hi, Bob!
+在这个例子中，我们使用 `call()` 方法将函数 `sayName()` 分别绑定到了 `person1` 和 `person2` 对象上，这样函数中的 `this` 就分别指向了这两个对象，从而实现了不同的输出。
+```
+
+### 构造函数的毛病
+
+Problems with Constructors.
+
+```js
+//构造函数的主要毛病在于，其定义的方法会在每个实例上都创建一遍。因此对前面的例子而言，person1 和 person2 都有名为 sayName()的方法，但这两个方法不是同一个 Function 实例。我们知道，ECMAScript 中的函数是对象，因此每次定义函数时，都会初始化一个对象。逻辑上讲，这个构造函数实际上是这样的：
+function Person(name, age, job){ 
+ this.name = name; 
+ this.age = age; 
+ this.job = job; 
+ this.sayName = new Function("console.log(this.name)"); // 逻辑等价
+} 
+//每个 Person 实例都会有自己的 Function 实例用于显示 name 属性。当然了，以这种方式创建函数会带来不同的作用域链和标识符解析。
 ```
 
 ```js
+//但创建新 Function实例的机制是一样的。因此不同实例上的函数虽然同名却不相等，如下所示：
+console.log(person1.sayName == person2.sayName); //false
 ```
 
 ```js
+//因为都是做一样的事，所以没必要定义两个不同的 Function 实例。况且，this 对象可以把函数与对象的绑定推迟到运行时。要解决这个问题，可以把函数定义转移到构造函数外部：
+function Person(name, age, job){ 
+ this.name = name; 
+ this.age = age; 
+ this.job = job; 
+ this.sayName = sayName; 
+} 
+function sayName() { 
+ console.log(this.name); 
+} //sayName()被定义在了构造函数外部。
+//在构造函数内部，sayName 属性等于全局 sayName()函数。因为这一次 sayName 属性中包含的只是一个指向外部函数的指针，所以 person1 和 person2共享了定义在全局作用域上的 sayName()函数。这样虽然解决了相同逻辑的函数重复定义的问题，但全局作用域也因此被搞乱了，因为那个函数实际上只能在一个对象上调用。???如果这个对象需要多个方法，那么就要在全局作用域中定义多个函数。这会导致自定义类型引用的代码不能很好地聚集一起。这个新问题可以通过原型模式来解决.???不懂
+let person1 = new Person("Nicholas", 29, "Software Engineer"); 
+let person2 = new Person("Greg", 27, "Doctor"); 
+person1.sayName(); // Nicholas 
+person2.sayName(); // Greg 
+```
+
+### 原型模式
+
+The Prototype Pattern.
+
+```js
+//每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含应该由特定引用类型的实例共享的属性和方法。实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。原来在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型，如下所示：
+function Person() {}
+
+Person.prototype.name = "Nicholas"; 
+Person.prototype.age = 29; 
+Person.prototype.job = "Software Engineer"; 
+Person.prototype.sayName = function() { 
+ console.log(this.name); 
+};
+
+let person1 = new Person(); 
+person1.sayName(); // "Nicholas" 
+let person2 = new Person(); 
+person2.sayName(); // "Nicholas" 
+console.log(person1.sayName == person2.sayName); // true  ==是转换后再比较值是否相等
+
+
+//以上是构造函数模式.与构造函数模式不同，使用这种原型模式定义的属性和方法是由所有实例共享的如下使用函数表达式也可以：
+let Person = function() {}; //使用函数表达式
+Person.prototype.name = "Nicholas"; 
+Person.prototype.age = 29; 
+Person.prototype.job = "Software Engineer"; 
+Person.prototype.sayName = function() { 
+ console.log(this.name); 
+}; 
+let person1 = new Person(); 
+person1.sayName(); // "Nicholas" 
+let person2 = new Person(); 
+person2.sayName(); // "Nicholas" 
+console.log(person1.sayName == person2.sayName); // true 
+```
+
+原型的本质:
+1.理解原型
+How Prototypes Work.。脚本中没有访问这个[[Prototype]]特性的标准方式
+实例与构造函数原型之间有直接的联系，但实例与构造函数之间没有。
+
+```js
+//这种关系不好可视化，但可以通过下面的代码来理解原型的行为：
+/** 
+ * 构造函数可以是函数表达式
+ * 也可以是函数声明，因此以下两种形式都可以：
+ * function Person() {} 
+ * let Person = function() {} 
+ */ 
+function Person() {} 
+/** 
+ * 声明之后，构造函数就有了一个
+ * 与之关联的原型对象：
+ */ 
+console.log(typeof Person.prototype); 
+console.log(Person.prototype); 
+// { 
+// constructor: f Person(), 
+// __proto__: Object 
+// } 
+/** 
+ * 如前所述，构造函数有一个 prototype 属性
+ * 引用其原型对象，而这个原型对象也有一个
+ * constructor 属性，引用这个构造函数
+ * 换句话说，两者循环引用：
+ */ 
+console.log(Person.prototype.constructor === Person); // true 
+/** 
+ * 正常的原型链都会终止于 Object 的原型对象
+ * Object 原型的原型是 null 
+ */ 
+console.log(Person.prototype.__proto__ === Object.prototype); // true 
+console.log(Person.prototype.__proto__.constructor === Object); // true 
+console.log(Person.prototype.__proto__.__proto__ === null); // true 
+console.log(Person.prototype.__proto__); 
+// { 
+// constructor: f Object(), 
+// toString: ... 
+// hasOwnProperty: ... 
+// isPrototypeOf: ... 
+// ... 
+// } 
+let person1 = new Person(), 
+ person2 = new Person(); 
+/** 
+ * 构造函数、原型对象和实例
+ * 是 3 个完全不同的对象：
+ */ 
+console.log(person1 !== Person); // true 
+console.log(person1 !== Person.prototype); // true 
+console.log(Person.prototype !== Person); // true 
+/** 
+ * 实例通过__proto__链接到原型对象，
+ * 它实际上指向隐藏特性[[Prototype]] 
+ * 
+ * 构造函数通过 prototype 属性链接到原型对象
+ * 
+ * 实例与构造函数没有直接联系，与原型对象有直接联系
+ */ 
+console.log(person1.__proto__ === Person.prototype); // true 
+conosle.log(person1.__proto__.constructor === Person); // true 
+/** 
+ * 同一个构造函数创建的两个实例
+ * 共享同一个原型对象：
+ */ 
+console.log(person1.__proto__ === person2.__proto__); // true 
+/** 
+ * instanceof 检查实例的原型链中
+ * 是否包含指定构造函数的原型：
+ */ 
+console.log(person1 instanceof Person); // true 
+console.log(person1 instanceof Object); // true 
+console.log(Person.prototype instanceof Object); // true 
+```
+
+![Person 构造函数和 Person.prototype各个对象之间的对象](oop1.png)
+就是无论是person还person1还是person2,都走person prototype,但是person prototype又指向原型person.  这里面到底是什么东西,怎么使用的???
+Person.prototype 指向原型对象，而 Person.prototype.contructor 指回 Person 构造函数。原型对象包含 constructor 属性和其他后来添加的属性。Person 的两个实例 person1 和 person2 都只有一个内部属性指回 Person.prototype，而且两者都与构造函数没有直接联系。另外要注意，虽然这两个实例都没有属性和方法，但 person1.sayName()可以正常调用。这是由于对象属性查找机制的原因。
+
+```js
+//虽然不是所有实现都对外暴露了[[Prototype]]，但可以使用 isPrototypeOf()方法确定两个对象之间的这种关系。本质上，isPrototypeOf()会在传入参数的[[Prototype]]指向调用它的对象时返回 true，如下所示：
+console.log(Person.prototype.isPrototypeOf(person1)); // true 
+console.log(Person.prototype.isPrototypeOf(person2)); // true 
+//以上通过原型对象调用 isPrototypeOf()方法检查了 person1 和 person2。
 ```
 
 ```js
+//ECMA 的 Object 类型有一个方法叫 Object.getPrototypeOf()，返回参数的内部特性[[Prototype]]的值。例如：
+console.log(Object.getPrototypeOf(person1) == Person.prototype); // true 
+console.log(Object.getPrototypeOf(person1).name); // "Nicholas" 
 ```
 
 ```js
+//Object 类型还有一个 setPrototypeOf()方法，可以向实例的私有特性[[Prototype]]写入一个新值。这样就可以重写一个对象的原型继承关系：
+let biped = { 
+ numLegs: 2 
+}; 
+let person = { 
+ name: 'Matt' 
+}; 
+Object.setPrototypeOf(person, biped); //使用 Object.setPrototypeOf() 方法将 person 对象的原型设置为 biped 对象。这意味着 person 对象继承了 biped 对象的属性和方法。
+console.log(person.name); // Matt 
+console.log(person.numLegs); // 2 
+console.log(Object.getPrototypeOf(person) === biped); // true  使用 Object.getPrototypeOf() 方法获取 person 对象的原型，然后与 biped 对象进行比较。
+
+//warning:Object.setPrototypeOf()可能会严重影响代码性能。Mozilla 文档说得很清楚：“在所有浏览器和 JavaScript 引擎中，修改继承关系的影响都是微妙且深远的。这种影响并不仅是执行 Object.setPrototypeOf()语句那么简单，而是会涉及所有访问了那些修改过[[Prototype]]的对象的代码。”
+//为了避免上述:为避免使用 Object.setPrototypeOf()可能造成的性能下降，可以通过 Object.create()来创建一个新对象，同时为其指定原型：
+let biped = { 
+ numLegs: 2 
+}; 
+let person = Object.create(biped); //使用object.create
+person.name = 'Matt'; 
+console.log(person.name); // Matt 
+console.log(person.numLegs); // 2 
+console.log(Object.getPrototypeOf(person) === biped); // true 
+```
+
+2.原型层级
+
+Understanding the Prototype Hierarchy.理解原型的继承.
+在调用 person1.sayName()时，会发生两步搜索。首先，JavaScript 引擎会问：“person1 实例有 sayName 属性吗？”答案是没有。然后，继续搜索并问：“person1 的原型有 sayName 属性吗？”答案是有。于是就返回了保存在原型上的这个函数。在调用 person2.sayName()时，会发生同样的搜索过程，而且也会返回相同的结果。这就是原型用于在多个对象实例间共享属性和方法的原理.
+即:前面提到的 constructor 属性只存在于原型对象，因此通过实例对象也是可以访问到的。
+
+```js
+//虽然可以通过实例读取原型对象上的值，但不可能通过实例重写这些值。如果在实例上添加了一个与原型对象中同名的属性，那就会在实例上创建这个属性，这个属性会遮住原型对象上的属性。下面看一个例子：
+function Person() {} 
+Person.prototype.name = "Nicholas"; 
+Person.prototype.age = 29; 
+Person.prototype.job = "Software Engineer"; 
+Person.prototype.sayName = function() { 
+ console.log(this.name); 
+}; 
+let person1 = new Person(); 
+let person2 = new Person(); 
+person1.name = "Greg"; 
+console.log(person1.name); // "Greg"，来自实例.访问 person1.name 时，会先在实例上搜索个属性。因为这个属性在实例上存在，所以就不会再搜索原型对象了。只要给对象实例添加一个属性，这个属性就会遮蔽（shadow）原型对象上的同名属性，也就是虽然不会修改它，但会屏蔽对它的访问.
+console.log(person2.name); // "Nicholas"，来自原型
 ```
 
 ```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
-```
-
-```js
+//使用 delete 操作符可以完全删除实例上的这个属性，从而让标识符解析过程能够继续搜索原型对象。
+function Person() {} 
+Person.prototype.name = "Nicholas"; 
+Person.prototype.age = 29; 
+Person.prototype.job = "Software Engineer"; 
+Person.prototype.sayName = function() { 
+ console.log(this.name); 
+}; 
+let person1 = new Person(); 
+let person2 = new Person(); 
+person1.name = "Greg"; 
+console.log(person1.name); // "Greg"，来自实例
+console.log(person2.name); // "Nicholas"，来自原型
+delete person1.name; 
+console.log(person1.name); // "Nicholas"，来自原型
 ```
 
 ```js
