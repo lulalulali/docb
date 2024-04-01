@@ -410,7 +410,639 @@ function recursivelyCheckEqual(x, ...rest) {
 } 
 ```
 
-### 增强的对象语法
+### 增强的 对象语法
+
+Enhanced Object Syntax.
+
+1.属性值填写Property Value Shorthand
+
+```js
+//在给对象添加变量的时候，开发者经常会发现属性名和变量名是一样的
+let name = 'Matt'; 
+let person = { 
+ name: name 
+}; 
+console.log(person); // { name: 'Matt' } 
+
+//以下是以上的解决方案
+
+//代码压缩程序会在不同作用域间保留属性名，以防止找不到引用。以下面的代码为例：
+function makePerson(name) { 
+ return { 
+ name 
+ }; 
+} 
+let person = makePerson('Matt'); 
+console.log(person.name); // Matt 
+
+//即使参数标识符只限定于函数作用域，编译器也会保留初始的 name 标识符.若编译器压缩，那么函数参数会被缩短，而属性名不变
+function makePerson(a) { 
+ return { 
+ name: a 
+ }; 
+} 
+var person = makePerson("Matt"); 
+console.log(person.name); // Matt 
+```
+
+2.可 运算属性Computed Property Keys
+
+即可对属性名字进行操作
+
+引入可计算属性之前，如果想使用变量的值作为属性，那么必须先声明对象，然后使用中括号语法来添加属性=不能在对象字面量中直接动态命名属性。
+
+```js
+const nameKey = 'name'; 
+const ageKey = 'age'; 
+const jobKey = 'job'; 
+//以上是变量,赋了值
+
+//以下是使用上述的变量值作为对象的属性名,属性值顺便一fu
+let person = {}; 
+person[nameKey] = 'Matt'; 
+person[ageKey] = 27; 
+person[jobKey] = 'Software engineer'; 
+console.log(person); // { name: 'Matt', age: 27, job: 'Software engineer' } 
+```
+
+```js
+//以下是以上的一步到位
+//有了可计算属性，就可以在对象字面量中完成动态属性赋值。中括号包围的对象属性键告诉运行时将其作为 JavaScript 表达式而不是字符串来求值
+const nameKey = 'name'; 
+const ageKey = 'age'; 
+const jobKey = 'job'; 
+let person = { 
+ [nameKey]: 'Matt', 
+ [ageKey]: 27, 
+ [jobKey]: 'Software engineer' 
+}; 
+console.log(person); // { name: 'Matt', age: 27, job: 'Software engineer' } 
+```
+
+```js
+//上面的升级版
+
+//接受一个输入参数key，然后将它与一个自增的唯一令牌拼接起来，生成一个唯一的键，并将其作为函数的返回值。
+const nameKey = 'name'; 
+const ageKey = 'age'; 
+const jobKey = 'job'; 
+let uniqueToken = 0; 
+function getUniqueKey(key) { 
+ return `${key}_${uniqueToken++}`; 
+} 
+//获取唯一键的函数.返回值的表达式，这里使用了模板字符串，${}用于嵌入变量key的值;并在其后添加一个下划线;然后紧接着是uniqueToken自增后的值。这个表达式的作用是生成一个唯一的键值。
+let person = { 
+ [getUniqueKey(nameKey)]: 'Matt', 
+ [getUniqueKey(ageKey)]: 27, 
+ [getUniqueKey(jobKey)]: 'Software engineer' 
+}; 
+console.log(person); // { name_0: 'Matt', age_1: 27, job_2: 'Software engineer' } 
+```
+
+3.简写方法名
+Concise Method Syntax.
+
+```js
+//.sayname是下面的例子的方法
+//在给对象定义方法时，要写一个方法名sayname、冒号，然后再引用一个匿名函数表达式function(name)
+let person = { 
+ sayName: function(name) { 
+ console.log(`My name is ${name}`); 
+ } 
+}; 
+person.sayName('Matt'); // My name is Matt 
+```
+
+```js
+//以下代码和之前的代码在行为上是等价的：
+//新的简写方法的语法遵循同样的模式，但开发者要放弃给函数表达式命名（不过给作为方法的函数命名通常没什么用）。相应地，这样也可以明显缩短方法声明。
+let person = { 
+ sayName(name) { 
+ console.log(`My name is ${name}`); 
+ } 
+}; 
+person.sayName('Matt'); // My name is Matt 
+
+//简写方法名对获取函数和设置函数也是适用的：
+let person = { 
+ name_: '', 
+ get name() { 
+ return this.name_; 
+ }, 
+ set name(name) { 
+ this.name_ = name; 
+ }, 
+ sayName() { 
+ console.log(`My name is ${this.name_}`); 
+ } 
+}; 
+
+person.name = 'Matt'; 
+person.sayName(); // My name is Matt 
+```
+
+```js
+//简写方法名与可运算属性键相互兼容：即[methodKey]就是方法名
+const methodKey = 'sayName'; 
+let person = { 
+ [methodKey](name) { 
+ console.log(`My name is ${name}`); 
+ } 
+}
+person.sayName('Matt'); // My name is Matt 
+```
+
+### 对象解构
+
+Object Destructuring.即使用与对象匹配的结构来实现对象属性赋值=可以在一条语句中使用嵌套数据实现一个或多个赋值操作(解构语法)
+
+```js
+//首先是不使用对象解构的：
+// 不使用对象解构
+let person = { 
+ name: 'Matt', 
+ age: 27 
+};
+let personName = person.name, 
+ personAge = person.age; 
+console.log(personName); // Matt 
+console.log(personAge); // 27 
+
+//然后，是使用对象解构的：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+let { name: personName, age: personAge } = person; //不同出现在这里,意思是将person赋给新变量,使用{}里面的对应方式
+console.log(personName); // Matt 
+console.log(personAge); // 27 
+```
+
+```js
+//使用解构，可以在一个类似对象字面量的结构中，声明多个变量，同时执行多个赋值操作。如果想让变量直接使用属性的名称，那么可以使用简写语法，比如：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+let { name, age } = person; //多个赋值操作
+console.log(name); // Matt 
+console.log(age); // 27 
+
+//解构赋值 不一定 与对象的属性 匹配 。赋值的时候可以忽略某些属性，而如果引用的属性不存在，则该变量的值就是 undefined：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+let { name, job } = person; 
+console.log(name); // Matt 
+console.log(job); // undefined
+
+//也可以在 解构 赋值的 同时定义默认值 ，这适用于前面刚提到的引用的属性不存在于源对象中的情况：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+let { name, job='Software engineer' } = person; 
+console.log(name); // Matt 
+console.log(job); // Software engineer 
+
+//解构在内部使用函数 ToObject()（不能在运行时环境中直接访问）把源数据结构转换为对象。这意味着在对象解构的上下文中，原始值会被当成对象。这也意味着（根据 ToObject()的定义），null和 undefined 不能被解构，否则会抛出错误。
+let { length } = 'foobar'; 
+console.log(length); // 6 
+
+let { constructor: c } = 4; 
+console.log(c === Number); // true 
+
+let { _ } = null; // TypeError 
+let { _ } = undefined; // TypeError
+
+//解构并不要求变量必须在解构表达式中声明。不过，如果是给事先声明的变量赋值，则赋值表达式必须包含在一对括号中：
+let personName, personAge; //事先声明的变量
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+({name: personName, age: personAge} = person);//相当于let { name: personName, age: personAge } = person;
+console.log(personName, personAge); // Matt, 27
+```
+
+所谓解构赋值,其实也是赋值,只不过解构了再赋
+
+1.嵌套解构
+
+Nested Destructuring.
+
+```js
+//解构对于引用嵌套的属性或赋值目标没有限制。为此，可以通过解构来复制对象属性：
+let person = { 
+ name: 'Matt', 
+ age: 27, 
+ job: { 
+ title: 'Software engineer' 
+ } 
+}; 
+let personCopy = {}; 
+({ 
+ name: personCopy.name,
+ age: personCopy.age, 
+ job: personCopy.job 
+} = person); 
+
+// 因为一个对象的引用被赋值给 personCopy，所以修改
+// person.job 对象的属性也会影响 personCopy 
+person.job.title = 'Hacker' 
+
+console.log(person); 
+// { name: 'Matt', age: 27, job: { title: 'Hacker' } } 
+console.log(personCopy); 
+// { name: 'Matt', age: 27, job: { title: 'Hacker' } } 
+
+
+//解构赋值可以使用嵌套结构，以匹配嵌套的属性
+let person = { 
+ name: 'Matt', 
+ age: 27, 
+ job: { 
+ title: 'Software engineer' 
+ } 
+}; 
+// 声明 title 变量并将 person.job.title 的值赋给它
+let { job: { title } } = person; 
+console.log(title); // Software engineer 
+
+
+//在外层属性没有定义的情况下不能使用嵌套解构。无论源对象还是目标对象都一样：
+let person = { 
+ job: { 
+ title: 'Software engineer' 
+ } 
+}; 
+let personCopy = {}; 
+
+// foo 在源对象上是 undefined 
+({ 
+ foo: { 
+ bar: personCopy.bar 
+ } 
+} = person); 
+// TypeError: Cannot destructure property 'bar' of 'undefined' or 'null'. 意思是person没有定义bar
+
+// job 在目标对象上是 undefined 
+({ 
+ job: { 
+ title: personCopy.job.title 
+ } 
+} = person); 
+// TypeError: Cannot set property 'title' of undefined 意思是person定义job里面没有.title
+```
+
+2.部分解构
+
+Partial Destructuring Completion.
+
+```js
+//需要注意的是，涉及多个属性的解构赋值是一个输出无关的顺序化操作。如果一个解构表达式涉及多个赋值，开始的赋值成功而后面的赋值出错，则整个解构赋值只会完成一部分：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+let personName, personBar, personAge; 
+try { 
+ // person.foo 是 undefined，因此会抛出错误
+ ({name: personName, foo: { bar: personBar }, age: personAge} = person); 
+} catch(e) {} 
+console.log(personName, personBar, personAge); 
+// Matt, undefined, undefined 错误终止在第二个,所以第三个也没赋出来
+```
+
+3.参数上下文匹配
+
+Parameter Context Matching.
+
+```js
+//在函数参数列表中也可以进行解构赋值。对参数的解构赋值不会影响 arguments 对象，但可以在函数签名中声明在函数体内使用局部变量：
+let person = { 
+ name: 'Matt', 
+ age: 27 
+}; 
+function printPerson(foo, {name, age}, bar) { 
+ console.log(arguments); 
+ console.log(name, age); 
+} 
+
+function printPerson2(foo, {name: personName, age: personAge}, bar) { 
+ console.log(arguments); 
+ console.log(personName, personAge); 
+} 
+
+printPerson('1st', person, '2nd'); 
+// ['1st', { name: 'Matt', age: 27 }, '2nd'] 
+// 'Matt', 27 
+//['1st', { name: 'Matt', age: 27 }, '2nd']: 第一个console.log打印出函数的参数，即调用printPerson时传入的参数数组。'Matt', 27: 第二个console.log打印出从person对象中解构得到的name和age属性值。
+printPerson2('1st', person, '2nd'); 
+// ['1st', { name: 'Matt', age: 27 }, '2nd'] 
+// 'Matt', 27 
+//通过解构赋值，将该对象的name属性赋值给personName变量，将age属性赋值给personAge变量
+```
+
+## 创建对象
+
+OBJECT CREATION.
+创建具有同样接口的多个对象需要重复编写很多代码,所以任何解决呢?
+
+### 概述Overview
+
+支持面向对象的结构，比如类或继承=巧妙地运用原型式继承可以成功地模拟同样的行为
+
+### 工厂模式
+
+The Factory Pattern.用于抽象创建特定对象的过程.
+
+```js
+function createPerson(name, age, job) { 
+ let o = new Object(); 
+ o.name = name; 
+ o.age = age; 
+ o.job = job; 
+ o.sayName = function() { 
+ console.log(this.name); 
+ }; 
+ return o; 
+} //每次都会返回包含 3 个属性和 1 个方法的对象
+let person1 = createPerson("Nicholas", 29, "Software Engineer"); 
+let person2 = createPerson("Greg", 27, "Doctor"); 
+```
+
+### 构造函数模式
+
+The Function Constructor Pattern.用于创建特定类型对象的.像 Object 和 Array 这样的原生直接使用。当然也可以自定义构造函数，以函数的形式为自己的对象类型定义属性和方法
+
+```js
+//前面的例子使用构造函数模式可以这样写：
+function Person(name, age, job){ 
+ this.name = name; 
+ this.age = age; 
+ this.job = job; 
+ this.sayName = function() { 
+ console.log(this.name); 
+ }; 
+} 
+let person1 = new Person("Nicholas", 29, "Software Engineer"); 
+let person2 = new Person("Greg", 27, "Doctor"); 
+person1.sayName(); // Nicholas 
+person2.sayName(); // Greg
+
+//，person1 和 person2 分别保存着 Person 的不同实例。这两个对象都有一个constructor 属性指向 Person，如下所示：
+console.log(person1.constructor == Person); // true 
+console.log(person2.constructor == Person); // true
+
+//constructor 本来是用于标识对象类型的。不过，一般认为 instanceof 操作符是确定对象类型更可靠的方式。前面例子中的每个对象都是Object 的实例(是因为所有自定义对象都继承自 Object)，同时也是 Person 的实例，如下面调用instanceof 操作符的结果所示：
+console.log(person1 instanceof Object); // true 
+console.log(person1 instanceof Person); // true 
+console.log(person2 instanceof Object); // true 
+console.log(person2 instanceof Person); // true 
+```
+
+Person()构造函数代替了 createPerson()工厂函数。实际上，Person()内部的代码跟 createPerson()基本是一样的，只是有如下区别。
+ 没有显式地创建对象。
+ 属性和方法直接赋值给了 this。
+ 没有 return
+另外，要注意函数名 Person 的首字母大写了。按照惯例，构造函数名称的首字母都是要大写的，非构造函数则以小写字母开头。有助于在 ECMA中区分构
+造函数和普通函数。毕竟构造函数就是能创建对象的函数。要创建 Person 的实例，应使用 new 操作符。以这种方式调用构造函数会执行如下操作。
+(1) 在内存中创建一个新对象。
+(2) 这个新对象内部的[[Prototype]]特性被赋值为构造函数的 prototype 属性。
+(3) 构造函数内部的 this 被赋值为这个新对象（即 this 指向新对象）。
+(4) 执行构造函数内部的代码（给新对象添加属性）。
+(5) 如果构造函数返回非空对象，则返回该对象；否则，返回刚创建的新对象。
+
+```js
+//构造函数不一定要写成函数声明的形式。赋值给变量的函数表达式也可以表示构造函数：
+let Person = function(name, age, job)
+//相当于function Person(name, age, job){}的另一形式
+{ 
+ this.name = name; 
+ this.age = age; 
+ this.job = job; 
+ this.sayName = function() { 
+ console.log(this.name); 
+ }; 
+} 
+let person1 = new Person("Nicholas", 29, "Software Engineer"); 
+let person2 = new Person("Greg", 27, "Doctor"); 
+person1.sayName(); // Nicholas 
+person2.sayName(); // Greg 
+console.log(person1 instanceof Object); // true 
+console.log(person1 instanceof Person); // true 
+console.log(person2 instanceof Object); // true 
+console.log(person2 instanceof Person); // true 
+```
+
+```js
+//在实例化时，如果不想传参数，那么构造函数后面的括号可加可不加。只要有 new 操作符，就可以调用相应的构造函数：
+function Person() { 
+ this.name = "Jake"; 
+ this.sayName = function() { 
+ console.log(this.name); 
+ }; 
+} 
+let person1 = new Person(); 
+let person2 = new Person; 
+person1.sayName(); // Jake 
+person2.sayName(); // Jake 
+console.log(person1 instanceof Object); // true 
+console.log(person1 instanceof Person); // true 
+console.log(person2 instanceof Object); // true 
+console.log(person2 instanceof Person); // true 
+```
+
+1.构造函数也是函数
+Constructors as Functions.与普通函数唯一的区别就是调用方式不同.
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
+
+```js
+```
 
 ```js
 ```
