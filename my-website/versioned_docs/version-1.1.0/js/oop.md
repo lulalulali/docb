@@ -1858,10 +1858,464 @@ SubType.prototype.sayAge = function() {
 //这里只调用了一次 SuperType 构造函数，避免了 SubType.prototype 上不必要也用不到的属性，因此可以说这个例子的效率更高。而且，原型链仍然保持不变，因此 instanceof 操作符和isPrototypeOf()方法正常有效。寄生式组合继承可以算是引用类型继承的!!!最佳模式!!!。
 ```
 
+## 类
+
+classes.
+ecma5 的特性来模拟类似于类（class-like）的行为。不难看出，各种策略都有自己的问题，也有相应的妥协。正因为如此，实现继承的代码也显得非常冗长和混乱
+ecma6 类是新的基础语法结构.表面上看起来可以支持正式的面向对象编程，但实际上它背后使用的仍然是原型和构造函数的概念
+
+### 类定义
+
+Class Definition Basics.
+
 ```js
+//与函数类型相似，定义类也有两种主要方式：类声明和类表达式。这两种方式都使用 class 关键
+字加大括号：
+// 类声明
+class Person {} 
+// 类表达式
+const Animal = class {}; 
 ```
 
 ```js
+//与函数表达式类似，类表达式在它们被求值前也不能引用。不过，与函数定义不同的是，虽然函数声明可以提升，但类定义不能：
+console.log(FunctionExpression); // undefined 
+var FunctionExpression = function() {}; 
+console.log(FunctionExpression); // function() {} 
+
+console.log(FunctionDeclaration); // FunctionDeclaration() {} 
+function FunctionDeclaration() {} 
+console.log(FunctionDeclaration); // FunctionDeclaration() {} 
+
+console.log(ClassExpression); // undefined 
+var ClassExpression = class {}; 
+console.log(ClassExpression); // class {}
+
+console.log(ClassDeclaration); // ReferenceError: ClassDeclaration is not defined 
+class ClassDeclaration {} 
+console.log(ClassDeclaration); // class ClassDeclaration {}
+```
+
+```js
+//另一个跟函数声明不同的地方是，函数受函数作用域限制，
+{ 
+ function FunctionDeclaration() {} 
+ class ClassDeclaration {} 
+} 
+console.log(FunctionDeclaration); // FunctionDeclaration() {} 
+console.log(ClassDeclaration); // ReferenceError: ClassDeclaration is not defined 而类受块作用域限制
+```
+
+类的构成Class Composition
+
+```js
+//类可以包含构造函数方法、实例方法、获取函数、设置函数和静态类方法，但这些都不是必需的。空的类定义照样有效。默认情况下，类定义中的代码都在严格模式下执行。与函数构造函数一样，多数编程风格都建议类名的首字母要大写，以区别于通过它创建的实例（比如，通过 class Foo {}创建实例 foo）：
+// 空类定义，有效 
+class Foo {} 
+// 有构造函数的类，有效
+class Bar { 
+ constructor() {} 
+} 
+// 有获取函数的类，有效
+class Baz { 
+ get myBaz() {} 
+} 
+// 有静态方法的类，有效
+class Qux { 
+ static myQux() {} 
+} 
+//类表达式的名称是可选的。在把类表达式赋值给变量后，可以通过 name 属性取得类表达式的名称字符串。但不能在类表达式作用域外部访问这个标识符。
+let Person = class PersonName { 
+ identify() { 
+ console.log(Person.name, PersonName.name); 
+ } 
+} //在把类表达式赋值给变量后,
+let p = new Person(); 
+p.identify(); // PersonName PersonName 
+
+console.log(Person.name); // PersonName 
+console.log(PersonName); // ReferenceError: PersonName is not defined但不能在类表达式作用域外部访问这个标识符。 
+```
+
+### 类构造函数
+
+The Class Constructor. constructor 关键字用于在类定义块!!!内部!!!创建类的构造函数。方法名 constructor 会告诉解释器在使用 new 操作符创建类的新实例时，应该调用这个函数。构造函数的定义不是必需的，不定义构造函数相当于将构造函数定义为空函数。
+
+#### 实例化
+
+Instantiation.使用 new 操作符实例化 Person 的操作等于使用 new 调用其构造函数。唯一可感知的不同之处就是，JavaScript 解释器知道使用 new 和类意味着应该使用 constructor 函数进行实例化。使用 new 调用类的构造函数会执行如下操作。(1) 在内存中创建一个新对象。(2) 这个新对象内部的[[Prototype]]指针被赋值为构造函数的 prototype 属性。(3) 构造函数内部的 this 被赋值为这个新对象（即 this 指向新对象）。(4) 执行构造函数内部的代码（给新对象添加属性）。(5) 如果构造函数返回非空对象，则返回该对象；否则，返回刚创建的新对象。
+
+```js
+class Animal {} //这行代码定义了一个名为 Animal 的类。这个类是一个空类，没有显式定义任何属性或方法
+class Person { 
+ constructor() { 
+ console.log('person ctor');//这条消息表示在创建 Person 类的实例时，构造函数被调用。 
+ } //constructor 方法是 Person 类的构造函数。当创建 Person 类的实例时，这个构造函数会被调用。
+} //这行代码定义了一个名为 Person 的类。在这个类内部，通过构造函数 constructor 定义了一个方法
+class Vegetable { 
+ constructor() { 
+ this.color = 'orange'; 
+ } //constructor 方法是 Vegetable 类的构造函数。在这个构造函数中，将 color 属性设置为 'orange'
+} //这行代码定义了一个名为 Vegetable 的类。
+let a = new Animal(); //这行代码创建了一个 Animal 类的实例对象 a。由于 Animal 类没有定义构造函数，因此创建实例时不会执行任何特定的构造逻辑。
+let p = new Person(); // person ctor 这行代码创建了一个 Person 类的实例对象 p。在创建实例时，会调用 Person 类的构造函数，并输出 "person ctor"
+let v = new Vegetable(); //这行代码创建了一个 Vegetable 类的实例对象 v。在创建实例时，会执行 Vegetable 类的构造函数，并将实例的 color 属性设置为 'orange'
+console.log(v.color); // orange 
+//类实例化时传入的参数会用作构造函数的参数。
+
+//如果不需要参数，则类名后面的括号也是可选的：
+class Person { 
+ constructor(name) { 
+ console.log(arguments.length); 
+ this.name = name || null; 
+ } 
+} 
+let p1 = new Person; // 0 类名后无()
+console.log(p1.name); // null 
+let p2 = new Person(); // 0 
+console.log(p2.name); // null 
+let p3 = new Person('Jake'); // 1 
+console.log(p3.name); // Jake 
+```
+
+```js
+//默认情况下，类构造函数会在执行之后返回 this 对象。构造函数返回的对象会被用作实例化的对象，如果没有什么引用新创建的 this 对象，那么这个对象会被销毁。不过，如果返回的不是 this 对象，而是其他对象，那么这个对象不会通过 instanceof 操作符检测出跟类有关联，因为这个对象的原型指针并没有被修改
+class Person { 
+ constructor(override) { 
+ this.foo = 'foo'; 
+ if (override) { 
+ return { 
+ bar: 'bar' 
+ }; //这会导致构造函数提前结束，不再执行后续的实例化过程。
+ } //如果返回的不是 this 对象，而是其他对象，
+ } 
+} 
+let p1 = new Person(), //p1 实例没有传入参数，默认情况下不会覆盖默认行为
+ p2 = new Person(true); //p2 实例传入了 true，表示要覆盖默认行为。
+
+console.log(p1); // Person{ foo: 'foo' } 
+console.log(p1 instanceof Person); // true 
+
+console.log(p2); // { bar: 'bar' } 
+console.log(p2 instanceof Person); // false 由于传入了参数 override 为 true，构造函数提前返回了一个新对象 { bar: 'bar' }。因此，p2 实例对象不是 Person 类的实例，而是一个普通的对象，其属性为 { bar: 'bar' }。
+```
+
+```js
+//类构造函数与构造函数的主要区别是，调用类构造函数必须使用 new 操作符。而普通构造函数如果不使用 new 调用，那么就会以全局的 this（通常是 window）作为内部对象。调用类构造函数时如果忘了使用 new 则会抛出错误：
+function Person() {} 
+class Animal {} 
+// 把 window 作为 this 来构建实例
+let p = Person(); 
+
+let a = Animal(); 
+// TypeError: class constructor Animal cannot be invoked without 'new' 调用类构造函数时如果忘了使用 new,
+```
+
+```js
+//类构造函数没有什么特殊之处，实例化之后，它会成为普通的实例方法（但作为类构造函数，仍然要使用 new 调用）。因此，实例化之后可以在实例上引用它：
+class Person {} 
+
+// 使用类创建一个新实例
+let p1 = new Person(); 
+
+p1.constructor(); 
+// TypeError: Class constructor Person cannot be invoked without 'new' 
+
+// 使用对类构造函数的引用创建一个新实例
+let p2 = new p1.constructor(); //得使用new调用
+```
+
+#### 把类当成特殊函数
+
+Understanding Classes as Special Functions.
+
+```js
+//ECMAScript 中没有正式的类这个类型。从各方面来看，ECMAScript 类就是一种特殊函数。声明一个类之后，通过 typeof 操作符检测类标识符，表明它是一个函数：
+class Person {} 
+console.log(Person); // class Person {} 
+console.log(typeof Person); // function
+
+//类标识符有 prototype 属性，而这个原型也有一个 constructor 属性指向类自身：
+class Person{} 
+console.log(Person.prototype); // { constructor: f() } 
+console.log(Person === Person.prototype.constructor); // true 
+//与普通构造函数一样，可以使用 instanceof 操作符检查构造函数原型是否存在于实例的原型链中：
+class Person {} 
+let p = new Person(); 
+console.log(p instanceof Person); // true
+//由此可知，可以使用 instanceof 操作符检查一个对象与类构造函数，以确定这个对象是不是类的实例。只不过此时的类构造函数要使用类标识符，比如，在前面的例子中要检查 p 和 Person。
+```
+
+```js
+//如前所述，类本身具有与普通构造函数一样的行为。在类的上下文中，类本身在使用 new 调用时就会被当成构造函数。重点在于，类中定义的constructor 方法!!!不会!!!被当成构造函数，在对它使用instanceof 操作符时会返回 false。但是，如果在创建实例时直接将类构造函数当成普通构造函数来使用，那么 instanceof 操作符的返回值会反转：
+class Person {} 
+let p1 = new Person(); 
+console.log(p1.constructor === Person); // true 
+console.log(p1 instanceof Person); // true 
+console.log(p1 instanceof Person.constructor); // false 
+
+let p2 = new Person.constructor(); //跟p1完全反转了
+
+console.log(p2.constructor === Person); // false 
+console.log(p2 instanceof Person); // false 
+console.log(p2 instanceof Person.constructor); // true 
+```
+
+```js
+//类是 JavaScript 的一等公民，因此可以像其他对象或函数引用一样把类作为参数传递：
+// 类可以像函数一样在任何地方定义，比如在数组中
+let classList = [ 
+ class { 
+ constructor(id) { 
+ this.id_ = id; 
+ console.log(`instance ${this.id_}`); 
+ } 
+ } 
+]; //类可以像函数一样在任何地方定义，比如在数组中
+function createInstance(classDefinition, id) { 
+ return new classDefinition(id); 
+} 
+let foo = createInstance(classList[0], 3141); // instance 3141 
+
+//与立即调用函数表达式相似，类也可以立即实例化：
+// 因为是一个类表达式，所以类名是可选的
+let p = new class Foo {
+ constructor(x) { 
+ console.log(x); 
+ } 
+}('bar'); // bar .使用自执行函数的形式，立即传入参数 'bar'，这个参数将作为构造函数的参数 x。
+console.log(p); // Foo {} 
+```
+
+### 实例\原型\类成员
+
+Instance, Prototype, and Class Members.类的语法可以非常方便地定义应该存在于实例上的成员、应该存在于原型上的成员，以及应该存在于类本身的成员
+
+#### 实例成员
+
+```js
+//每次通过new调用类标识符时，都会执行类构造函数。在这个函数内部，可以为新创建的实例（this）添加“自有”属性。至于添加什么样的属性，则没有限制。另外，在构造函数执行完毕后，仍然可以给实例继续添加新成员。每个实例都对应一个唯一的成员对象，这意味着所有成员都不会在原型上共享：
+class Person { 
+ constructor() { 
+ // 这个例子先使用对象包装类型定义一个字符串
+ // 为的是在下面测试两个对象的相等性
+ this.name = new String('Jack'); 
+ this.sayName = () => console.log(this.name); 
+ this.nicknames = ['Jake', 'J-Dog'] 
+ } 
+} 
+let p1 = new Person(), 
+ p2 = new Person(); 
+p1.sayName(); // Jack 
+p2.sayName(); // Jack 
+
+console.log(p1.name === p2.name); // false 比较 p1 和 p2 的 name 属性，因为它们分别是两个不同的对象，所以返回 false
+console.log(p1.sayName === p2.sayName); // false 比较 p1 和 p2 的 sayName 方法，因为它们分别是两个不同的函数，所以返回 false。
+console.log(p1.nicknames === p2.nicknames); // false 比较 p1 和 p2 的 nicknames 属性，因为它们分别指向两个不同的数组对象，所以返回 false。
+//每个实例都对应一个唯一的成员对象，这意味着所有成员都不会在原型上共享
+
+p1.name = p1.nicknames[0]; 
+p2.name = p2.nicknames[1]; 
+
+p1.sayName(); // Jake 
+p2.sayName(); // J-Dog
+```
+
+#### 原型方法与访问器
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
+```
+
+```js
+//
+
 ```
 
 ```js
