@@ -1,4 +1,6 @@
-# 集合引用类型 collection reference type
+# 集合引用类型
+
+ collection reference type
 
  对象   Object
  数组与定型数组   Array
