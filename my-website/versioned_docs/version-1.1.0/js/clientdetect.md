@@ -488,7 +488,7 @@ Browser and Operating System Identification.特性检测和用户代理字符串
 
 Browser Metadata.  navigator 对象暴露出一些 API，可以提供浏览器和操作系统的状态信息。
 
-#### Geolocation API 
+#### Geolocation API
 
 ```js
 //navigator.geolocation 属性暴露了 Geolocation API，可以让浏览器脚本感知当前设备的地理位
