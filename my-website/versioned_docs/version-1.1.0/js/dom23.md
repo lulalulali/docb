@@ -458,7 +458,7 @@ rule.style.backgroundColor = "red"
 #### 创建规则
 
 DOM 规定，可以使用 insertRule()方法向样式表中添加新规则。这个方法接收两个参数：规则的文本和表示插入位置的索引值。下面是一个例子：
-sheet.insertRule("body { background-color: silver }", 0); // 使用 DOM 方法
+``sheet.insertRule("body { background-color: silver }", 0); // 使用 DOM 方法``
 这个例子插入了一条改变文档背景颜色的规则。这条规则是作为样式表的第一条规则（位置 0）插入的，顺序对规则层叠是很重要的。
 虽然可以这样添加规则，但随着要维护的规则增多，很快就会变得非常麻烦。这时候，更好的方式是使用第 14 章介绍的动态样式加载技术。
 
