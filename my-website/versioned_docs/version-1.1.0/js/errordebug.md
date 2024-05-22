@@ -543,218 +543,292 @@ for (let mod of mods){
 
 ## 调试技术
 
-```js
-//
-```
+DEBUGGING TECHNIQUES
+在 JavaScript 调试器出现以前，开发者必须使用创造性的方法调试代码。结果就出现了各种各样专
+门为输出调试信息而设计的代码。其中最为常用的调试技术是在相关代码中插入 alert()，这种方式既
+费事（调试完之后还得清理）又麻烦（如果有漏洞的警告框出现在产品环境中，会给用户造成不便）。
+已不再推荐将警告框用于调试，因为有其他更好的解决方案。Alerts are no longer recommended for debugging purposes, because several other, more elegant solutions are available.
+
+### 把消息记录到控制台
 
 ```js
-//
+//Logging Messages to a Console
+//所有主流浏览器都有 JavaScript 控制台，该控制台可用于查询 JavaScript 错误。另外，这些浏览器都
+支持通过 console 对象直接把 JavaScript 消息写入控制台，这个对象包含如下方法。
+ error(message)：在控制台中记录错误消息。
+ info(message)：在控制台中记录信息性内容。
+ log(message)：在控制台记录常规消息。
+ warn(message)：在控制台中记录警告消息。
+记录消息时使用的方法不同，消息显示的样式也不同。错误消息包含一个红叉图标，而警告消息包
+含一个黄色叹号图标。可以像下面这样使用控制台消息：
+function sum(num1, num2){ 
+ console.log('Entering sum(), arguments are ${num1},${num2}'); 
+ console.log("Before calculation"); 
+ const result = num1 + num2; 
+ console.log("After calculation"); 
+ console.log("Exiting sum()"); 
+ return result; 
+}
+在调用 sum()函数时，会有一系列消息输出到控制台以辅助调试。
+把消息输出到 JavaScript 控制台可以辅助调试代码，但在产品环境下应该删除所有相关代码。这可以在部署时使用代码自动完成清理，也可以手动删除。
+
+注意:相比于使用警告框，打印日志消息是更好的调试方法。这是因为警告框会阻塞代码
+执行，从而影响对异步操作的计时，进而影响代码的结果。打印日志也可以随意输出任意
+多个参数并检查对象实例（警告框只能将对象序列化为一个字符串再展示出来，因此经常
+会看到 Object[Object]。
 ```
 
-```js
-//
-```
+### 理解控制台运行时
+
+Understanding the Console Runtime
+浏览器控制台是个读取求值打印循环（REPL，read-eval-print-loop），与页面的 JavaScript 运行
+时并发。这个运行时就像浏览器对新出现在 DOM 中的``<script>``标签求值一样。在控制台中执行的命
+令可以像页面级 JavaScript 一样访问全局和各种 API。控制台中可以执行任意数量的代码，与它可能会
+阻塞的任何页面级代码一样。修改、对象和回调都会保留在 DOM 和运行时中。
+JavaScript 运行时会限制不同窗口可以访问哪些内容，因而在所有主流浏览器中都可以选择在哪个
+窗口中执行 JavaScript 控制台输入。你所执行的代码不会有特权提升，仍会受跨源限制和其他浏览器施
+加的控制规则约束。
+
+控制台运行时也会集成开发者工具，提供常规 JavaScript 开发中所没有的上下文调试工具。
+
+其中一个非常有用的工具是最后点击选择器，所有主流浏览器都会提供。在开发者工具的 Element（元素）标签页内，单击 DOM 树中一个节点，就可以在 Console（控制台）标签页中使用$0 引用该节点的 JavaScript
+实例。它就跟普通的 JavaScript 实例一样，因此可以读取属性（如$0.scrollWidth），或者调用成员方
+法（如$0.remove()）。
+
+### 使用JavaScript调试器
 
 ```js
-//
+//Using the JavaScript Debugger
+//在所有主流浏览器中都可以使用的还有 JavaScript 调试器。ECMAScript 5.1 规范定义了 debugger
+关键字，用于调用可能存在的调试功能。如果没有相关的功能，这条语句会被简单地跳过。可以像下面
+这样使用 debugger 关键字：
+function pauseExecution(){ 
+ console.log("Will print before breakpoint"); 
+ debugger; //这是一个 JavaScript 关键字。当浏览器的调试工具打开时，代码执行会在这一行暂停，并进入调试模式。这允许开发人员检查当前的调用栈、变量值等。
+ console.log("Will not print until breakpoint continues"); //在 debugger; 语句之后的代码，在断点暂停期间不会执行。只有当开发者工具中的断点继续执行时，才会输出到控制台。
+
+ //就是说 然后代码会停在 debugger; 语句处，直到开发者手动继续执行。此时才会输出 "Will not print until breakpoint continues" 到控制台。
+} 
+在运行时碰到这个关键字时，所有主流浏览器都会打开开发者工具面板，并在指定位置显示断点。
+然后，可以通过单独的浏览器控制台在断点所在的特定词法作用域中执行代码。此外，还可以执行标准的代码调试器操作（单步进入、单步跳过、继续，等等）。
+
+浏览器也支持在开发者工具的源代码标签页中选择希望设置断点的代码行来手动设置断点（不使用debugger 关键字）。这样设置的断点与使用 debugger 关键字设置的一样，只是不会在不同浏览器会话之间保持。
 ```
 
-```js
-//
-```
+### 在页面中打印消息
 
 ```js
-//
+//Logging Messages to the Page
+//另一种常见的打印调试消息的方式是把消息写到页面中指定的区域。这个区域可以是所有页面中都包含的元素，但仅用于调试目的；也可以是在需要时临时创建的元素。例如，可以定义这样 log()函数：
+function log(message) { 
+    //定义了一个名为 log 的函数，用于在页面上动态创建一个调试信息框，并将日志消息显示在这个框内。    它通过检查和创建一个 div 元素（如果它不存在），然后将日志消息追加到该元素中。
+ // 这个函数的词法作用域会使用这个实例
+ // 而不是 window.console 
+ const console = document.getElementById("debuginfo"); //注意，这里的 console 变量并不是全局的 window.console，而是局部变量。
+ if (console === null){
+ console = document.createElement("div"); 
+
+ console.id = "debuginfo"; //如果页面上没有 ID 为 "debuginfo" 的元素（即 console 为 null），则创建一个新的 div 元素。
+ console.style.background = "#dedede"; 
+ console.style.border = "1px solid silver"; 
+ console.style.padding = "5px"; 
+ console.style.width = "400px"; 
+ console.style.position = "absolute"; 
+ console.style.right = "0px"; 
+ console.style.top = "0px"; 
+ document.body.appendChild(console);
+ //设置新创建的 div 元素的各种样式属性，使其具有特定的外观和位置。然后将这个 div 元素添加到 document.body 中，以便显示在页面上。 
+ } 
+ console.innerHTML += '<p> ${message}</p>'; //在 console 元素（即 ID 为 "debuginfo" 的 div 元素）内部追加一段新的 HTML，其中包含日志消息 message。
+}
+//在 const console = document.getElementById("debuginfo"); 之后，console 是常量，不应该被重新赋值为新创建的 div 元素。因此，可以将 console 改为 let。同时，还需修正字符串模板语法。
+在这个 log()函数中，代码先检测是否已创建了调试用的元素。如果没有，就创建一个新<div>元素并给它添加一些样式，以便与页面其他部分区分出来。此后，再使用 innerHTML 属性把消息写到这
+个<div>中。结果就是在页面的一个小区域内显示日志信息。
+
+注意:与在控制台输出消息一样，在页面中输入消息的代码也需要从生产环境中删除。
 ```
 
-```js
-//
-```
+### 补充控制台方法
 
 ```js
-//
+//Shimming Console Methods
+//记住使用哪个日志方法（原生的 console.log()和自定义的 log()方法），对开发者来说是一种负担。因为 console 是一个全局对象，所以可以为这个对象添加方法，也可以用自定义的函数重写已有的方法，这样无论在哪里用到的日志打印方法，都会按照自定义的方式行事。
+//比如，可以这样重新定义 console.log 函数： 就是说重写console.log方法
+// 把所有参数拼接为一个字符串，然后打印出结果
+console.log = function() { 
+ // 'arguments'并没有 join 方法，这里先把它转换为数组
+ const args = Array.prototype.slice.call(arguments); //arguments 是一个类数组对象，没有数组的 join 方法，因此使用 Array.prototype.slice.call(arguments) 将其转换为一个真正的数组。
+ console.log(args.join(', ')); //使用 originalConsoleLog.call(console, ...) 调用原始的 console.log 方法，并传递参数 args.join(', ')，即将所有参数转换为一个逗号分隔的字符串。
+} 
+//这样，其他代码调用的将是这个函数，而不是通用的日志方法。这样的修改在页面刷新后会失效，因此只是调试或拦截日志的一个有用而轻量的策略。
 ```
 
-```js
-//
-```
+### 抛 出 错 误
 
 ```js
-//
+//Throwing Errors
+//如前所述，抛出错误是调试代码的很好方式。如果错误消息足够具体，只要看一眼错误就可以确定
+原因。好的错误消息包含关于错误原因的确切信息，因此可以减少额外调试的工作量。比如下面的函数：
+function divide(num1, num2) { 
+ return num1 / num2; 
+} 
+这个简单的函数执行两个数的除法，但如果任何一个参数不是数值，则返回 NaN。当 Web 应用程序
+意外返回 NaN 时，简单的计算可能就会出问题。此时，可以检查每个参数的类型是不是数值，然后再进
+行计算。来看下面的例子：
+function divide(num1, num2) { 
+ if (typeof num1 != "number" || typeof num2 != "number"){ 
+ throw new Error("divide(): Both arguments must be numbers."); 
+ }
+ return num1 / num2; 
+} 
+这里，任何一个参数不是数值都会抛出错误。错误消息中包含函数名和错误的具体原因。当浏览器报告这个错误消息时，你立即就能根据它包含的信息定位到问题，包括问题的解决方案。相对于没那么具体的浏览器错误消息，这个错误消息显示更有价值。
+在大型应用程序中，自定义错误通常使用 assert()函数抛出错误。这个函数接收一个应该为 true的条件，并在条件为 false 时抛出错误。下面是一个基本的 assert()函数：
+function assert(condition, message) { 
+ if (!condition) { 
+ throw new Error(message); 
+ } 
+} 
+这个 assert()函数可用于代替多个 if 语句，同时也是记录错误的好地方。
+
+下面的代码演示了如何使用它： 即如何使用 divide 函数，并且在参数类型不正确时，如何捕获和处理抛出的错误。
+function divide(num1, num2) {
+ assert(typeof num1 == "number" && typeof num2 == "number", 
+ "divide(): Both arguments must be numbers."); 
+ return num1 / num2; 
+}
+相比于之前的例子，使用 assert()函数可以减少抛出自定义错误所需的代码量，并且让代码更好理解。
 ```
 
-```js
-//
-```
+## 旧版IE的常见错误
+
+COMMON LEGACY INTERNET EXPLORER ERRORS
+IE 曾是最难调试 JavaScript 错误的浏览器之一。该浏览器的旧版本抛出的错误通常比较短，比较含糊，缺少上下文。接下来几节分别讨论旧版 IE 中可能会出现的常见且难于调试的 JavaScript 错误。因为
+这些浏览器不支持 ES6，所以代码会考虑向后兼容。
+
+### 无效字符
+
+Invalid Character
+JavaScript 文件中的代码必须由特定字符构成。在检测到 JavaScript 文件中存在无效字符时，IE 会抛
+出"invalid character"错误。所谓无效字符，指的是 JavaScript 语法中没有定义过的字符。例如，
+一个看起来像减号而实际上并不是减号的字符（Unicode 值为\u2013  就是说短横线-。这个字符不能用于代替减号
+（ASCII 码为 45），因为它不是 JavaScript 语法定义的减号。这个特殊字符经常会被自动插入 Word 文档，
+因此如果把它从 Word 文档复制到文本编辑器然后在 IE 中运行，IE 就会报告文件中包含非法字符。其他浏览器也类似，Firefox 抛出"illegal character"错误，Safari 报告语法错误，而 Opera 则报告
+ReferenceError（因为把这个字符当成了未定义标识符来解释）
+
+### 找不到对象
 
 ```js
-//
+//Member Not Found
+//如前所述，旧版 IE 中所有 DOM 对象都是用 COM 对象实现的，并非原生 JavaScript 对象。在涉及垃圾回收时，这可能会导致很多奇怪的行为。其中，"member not found"错误是 IE 中垃圾回收程序常报告的错误。
+这个错误通常会在给一个已被销毁的对象赋值时发生。这个对象必须是 COM 对象才会出现这个消息。最好的一个例子就是 event 对象。IE 的 event 对象是作为 window 的一个属性存在的，会在事件发生时创建，在事件处理程序执行完毕后销毁。因此，如果你想在稍后会执行的闭包中使用 event 对象，尝试给 event 对象赋值就会导致这个错误，如下面的例子所示：
+document.onclick = function() { 
+ var event = window.event; 
+ setTimeout(function(){ 
+ event.returnValue = false; // 未找到成员   ,在 setTimeout 中访问 event 对象会导致 event 对象在 setTimeout 回调中可能已经失效。
+ }, 1000); 
+}; 
+在这个例子中，文档被添加了单击事件处理程序。事件处理程序把 window.event 对象保存在一个名为 event 的本地变量中。然后，在传递给 setTimeout()的闭包中引用这个事件变量。当 onclick事件处理程序退出后，event 对象会被销毁，因此闭包中对它的引用也就不存在了，于是就会报告未找到成员错误。之所以给 event.returnValue 赋值会导致"member not found"错误，是因为不能给已将其成员销毁的 COM 对象赋值。
+
+没搞懂,具体什么应用???
 ```
 
-```js
-//
-```
+### 未知运行时错误
 
 ```js
-//
+//Unknown Runtime Error
+//使用 innerHTML 或 outerHTML 属性以下面一种方式添加 HTML 时会发生未知运行时错误：比如将块级元素插入行内元素，或者在表格的任何部分（<table>、<tbody>等）访问了其中一个属性。例如，从技术角度来说，<p>标签不能包含另一个块级元素，如<div>，因此以下代码会导致未知运行时错误：
+p.innerHTML = "<div>Hi</div>"; // where p contains a <p> element 
+在将块级元素插入不恰当的位置时，其他浏览器会尝试纠正，这样就不会发生错误，但 IE 在这种情况下要严格得多。Other browsers attempt to error-correct when block elements are inserted in invalid places so that no 
+error occurs, but Internet Explorer is much stricter in this regard.
 ```
 
-```js
-//
-```
+### 语法错误
+
+Syntax Error
+通常，当 IE 报告语法错误时，原因是很清楚的。一般来说，可以通过错误消息追踪到少了一个分号或括号错配。不过，有一种情况下报告的语法错误并不清楚。
+
+如果网页中引用的一个外部 JavaScript 文件由于某种原因返回了非 JavaScript 代码，则 IE 会抛出语法错误。If you are referencing an external JavaScript file that for some reason returns non-JavaScript code, Internet Explorer throws a syntax error. 例如，错误地把``<script>``标签的 src 属性设置为指向一个 HTML 文件，就会导致语法错误。通常会报告该语法错误发生在脚本第一行的第一个字符。
+
+Opera 和 Safari 此时也会报告语法错误，但它们也会报告是引用文件不当导致的问题。IE 没有这些信息，因此需要仔细检查引用的每个外部 JavaScript文件。Firefox 会忽略作为 JavaScript 引用的非 JavaScript 文件导致的解析错误。
+
+这种错误通常发生在服务器端动态生成 JavaScript 的情况下。很多服务器端语言会在发生运行时错误时，自动向输出中插入 HTML。这种输出显然会导致 JavaScript 语法错误。如果你碰到了难以排除的语法错误，可以仔细检查所有外部文件，确保没有文件包含服务器由于错误而插入的 HTML。
+
+### 系统找不到指定资源
 
 ```js
-//
+//The System Cannot Locate the Resource Specified
+//还有一个可能最没用的消息：“The system cannot locate the resource specified”（系统找不到指定资源）。这个错误会在 JavaScript向某个 URL发送请求，而该 URL长度超过了 IE允许的最大 URL长度（2083个字符）时发生。这个长度限制不仅针对 JavaScript，而且针对 IE 本身。（其他浏览器没有这么严格地限制 URL 长度。）另外，IE 对 URL 路径还有 2048 个字符的限制。下面的代码会导致这个错误：
+function createLongUrl(url) { 
+ var s = "?"; 
+ for (var i = 0, len = 2500; i < len; i++){ 
+ s += "a"; 
+ } 
+ return url + s; 
+} 
+var x = new XMLHttpRequest(); 
+x.open("get", createLongUrl("http://www.somedomain.com/"), true); 
+x.send(null); 
+//使用 open 方法配置 GET 请求，目标 URL 是通过 createLongUrl 生成的长 URL，并设置请求为异步。使用 send 方法发送配置好的请求。
+//创建 XMLHttpRequest 对象：使用 new XMLHttpRequest() 创建一个新的 XMLHttpRequest 对象 x。配置请求：调用 x.open 方法，设置请求方法为 "get"，目标 URL 由 createLongUrl 函数生成，且设置为异步请求（true）。发送请求：调用 x.send 方法发送请求，参数为 null 表示没有请求体（适用于 GET 请求）。
+在这个例子中，XMLHttpRequest 对象尝试向超过 URL 长度限制的地址发送请求。在调用 open()方法时，错误会发生。为避免这种错误，一个办法是缩短请求成功所需的查询字符串，比如缩短参数名或去掉不必要的数据。另一个办法是改为使用 POST 请求，不用查询字符串而通过请求体发送数据。
+
+改为以下,即添加 onreadystatechange 事件处理程序：在请求状态变化时，检查 readyState 是否为 4（表示请求完成），然后检查 status 是否表示成功（状态码在 200 到 299 之间）。根据请求结果，输出成功或失败的信息。
+x.onreadystatechange = function() {
+    if (x.readyState === 4) { // 检查请求是否完成。
+
+    //检查状态码是否在成功范围内。如果成功，输出响应文本；否则，输出错误信息和状态码。
+        if (x.status >= 200 && x.status < 300) {
+            console.log("请求成功，响应：", x.responseText);
+        } else {
+            console.error("请求失败，状态码：", x.status);
+        }
+    }
+};
+x.send(null);
+
+x.readystate:
+0 (UNSENT): 请求被创建，但尚未调用 open 方法。
+1 (OPENED): open 方法已经被调用。
+2 (HEADERS_RECEIVED): send 方法已经被调用，并且头部和状态已经可获得。
+3 (LOADING): 请求正在处理中；通常，这意味着响应体正在接收中。
+4 (DONE): 请求完成，数据传输已经彻底完成。
+
+x.status:
+1xx (信息响应):
+100 Continue: 客户端应继续请求。
+101 Switching Protocols: 服务器已理解请求，并将协议切换。
+2xx (成功响应):
+200 OK: 请求成功，服务器返回请求的数据。
+201 Created: 请求成功，服务器创建了新的资源。
+204 No Content: 请求成功，但服务器不返回任何内容。
+3xx (重定向):
+301 Moved Permanently: 请求的资源已永久移动到新位置。
+302 Found: 请求的资源临时移动到新位置。
+304 Not Modified: 资源未修改，可以使用缓存的版本。
+4xx (客户端错误):
+400 Bad Request: 请求无效，服务器无法处理。
+401 Unauthorized: 请求需要用户认证。
+403 Forbidden: 服务器拒绝请求。
+404 Not Found: 请求的资源未找到。
+5xx (服务器错误):
+500 Internal Server Error: 服务器内部错误。
+502 Bad Gateway: 服务器作为网关或代理时收到无效响应。
+503 Service Unavailable: 服务器当前无法处理请求，可能是暂时超载或维护。
 ```
 
-```js
-//
-```
+## 小结
 
-```js
-//
-```
+对于今天复杂的 Web 应用程序而言，JavaScript 中的错误处理十分重要。未能预测什么时候会发生错误以及如何从错误中恢复，会导致糟糕的用户体验，甚至造成用户流失。大多数浏览器默认不向用户报告 JavaScript 错误，因此在开发和调试时需要自己实现错误报告。不过在生产环境中，不应该以这种方式报告错误。
 
-```js
-//
-```
+下列方法可用于阻止浏览器对 JavaScript 错误作出反应。
 
-```js
-//
-```
+ 使用 try/catch 语句，可以通过更合适的方式对错误做出处理，避免浏览器处理。
 
-```js
-//
-```
+ 定义 window.onerror 事件处理程序，所有没有通过 try/catch 处理的错误都会被该事件处理程序接收到（仅限 IE、Firefox 和 Chrome）。
 
-```js
-//
-```
+开发 Web 应用程序时，应该认真考虑可能发生的错误，以及如何处理这些错误。
 
-```js
-//
-```
+ 首先，应该分清哪些算重大错误，哪些不算重大错误。何为重大,何为不重大.
 
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
-
-```js
-//
-```
+ 然后，要通过分析代码预测很可能发生哪些错误。由于以下因素，JavaScript 中经常出现错误： 类型转换； 数据类型检测不足； 向服务器发送错误数据或从服务器接收到错误数据。
+IE、Firefox、Chrome、Opera 和 Safari 都有 JavaScript 调试器，有的内置在浏览器中，有的是作为扩展，需另行下载。所有调试器都能够设置断点、控制代码执行和在运行时检查变量值。
