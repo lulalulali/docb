@@ -10,76 +10,59 @@
 
  通过服务工作者线程管理请求➤ Managing requests with service workers
 
-前端开发者常说：“JavaScript 是单线程的。”这种说法虽然有些简单，但描述了 JavaScript 在浏览器
-中的一般行为。因此，作为帮助 Web 开发人员理解 JavaScript 的教学工具，它非常有用The statement “JavaScript is single-threaded” is practically a mantra for the frontend development community. This assertion, although it makes some simplifying assumptions, effectively describes how the JavaScript environment generally behaves inside a browser. Therefore, it is useful as a pedagogical tool for helping web developers understand JavaScript.。
+前端开发者常说：“JavaScript 是单线程的。”这种说法虽然有些简单，但描述了 JavaScript 在浏览器中的一般行为。因此，作为帮助 Web 开发人员理解 JavaScript 的教学工具，它非常有用The statement “JavaScript is single-threaded” is practically a mantra for the frontend development community. This assertion, although it makes some simplifying assumptions, effectively describes how the JavaScript environment generally behaves inside a browser. Therefore, it is useful as a pedagogical tool for helping web developers understand JavaScript.。
 
-单线程就意味着不能像多线程语言那样把工作委托给独立的线程或进程去做。JavaScript 的单线程
-可以保证它与不同浏览器 API 兼容。假如 JavaScript 可以多线程执行并发更改，那么像 DOM 这样的 API
-就会出现问题。因此，POSIX 线程或 Java 的 Thread 类等传统并发结构都不适合 JavaScriptThis single-threaded paradigm is inherently restrictive as it prevents programming patterns that are otherwise feasible in languages capable of delegating work to separate threads or processes. JavaScript is bound to this single-threaded paradigm to preserve compatibility with the various browser APIs that it must interact with. Constructs such as the Document Object Model would encounter problems if subjected to concurrent mutations via multiple JavaScript threads. Therefore, traditional concurrency constructs such as POSIX threads or Java’s Thread class are non-starters for augmenting JavaScript.。
+单线程就意味着不能像多线程语言那样把工作委托给独立的线程或进程去做。JavaScript 的单线程可以保证它与不同浏览器 API 兼容。假如 JavaScript 可以多线程执行并发更改，那么像 DOM 这样的 API就会出现问题。因此，POSIX 线程或 Java 的 Thread 类等传统并发结构都不适合 JavaScriptThis single-threaded paradigm is inherently restrictive as it prevents programming patterns that are otherwise feasible in languages capable of delegating work to separate threads or processes. JavaScript is bound to this single-threaded paradigm to preserve compatibility with the various browser APIs that it must interact with. Constructs such as the Document Object Model would encounter problems if subjected to concurrent mutations via multiple JavaScript threads. Therefore, traditional concurrency constructs such as POSIX threads or Java’s Thread class are non-starters for augmenting JavaScript.。
 
-而这也正是工作者线程的价值所在：允许把主线程的工作转嫁给独立的实体，而不会改变现有的单
-线程模型。虽然本章要介绍的各种工作者线程有不同的形式和功能，但它们的共同的特点是都独立于
-JavaScript 的主执行环境Therein lies the core value proposition of workers: Allow the primary execution thread to delegate work to a separate entity without changing the existing single-threaded model. Although the various worker types covered in this chapter all have different forms and functions, they are unified in their separation from the primary JavaScript environment.。
+而这也正是工作者线程的价值所在：允许把主线程的工作转嫁给独立的实体，而不会改变现有的单线程模型。虽然本章要介绍的各种工作者线程有不同的形式和功能，
+
+!!!但它们的共同的特点是都独立于JavaScript 的主执行环境!!!.Therein lies the core value proposition of workers: Allow the primary execution thread to delegate work to a separate entity without changing the existing single-threaded model. Although the various worker types covered in this chapter all have different forms and functions, they are unified in their separation from the primary JavaScript environment.。
 
 ## 工作者线程简介
 
-JavaScript 环境实际上是运行在托管操作系统中的虚拟环境。在浏览器中每打开一个页面，就会分
-配一个它自己的环境。这样，每个页面都有自己的内存、事件循环、DOM，等等。每个页面就相当于
-一个沙盒，不会干扰其他页面。对于浏览器来说，同时管理多个环境是非常简单的，因为所有这些环境
-都是并行执行的。
-使用工作者线程，浏览器可以在原始页面环境之外再分配一个完全独立的二级子环境。这个子环境
-不能与依赖单线程交互的 API（如 DOM）互操作，但可以与父环境并行执行代码。
+JavaScript 环境实际上是运行在托管操作系统中的虚拟环境。在浏览器中每打开一个页面，就会分配一个它自己的环境。这样，每个页面都有自己的内存、事件循环、DOM，等等。每个页面就相当于一个沙盒，不会干扰其他页面。对于浏览器来说，同时管理多个环境是非常简单的，因为所有这些环境都是并行执行的。
+
+使用工作者线程，浏览器可以在原始页面环境之外再分配一个完全独立的二级子环境。这个子环境不能与依赖单线程交互的 API（如 DOM）互操作，但可以与父环境并行执行代码。
 
 ### 工作者线程与线程
 
-作为介绍，通常需要将工作者线程与执行线程进行比较。在许多方面，这是一个恰当的比较，因为
-工作者线程和线程确实有很多共同之处。
- 工作者线程是以实际线程实现的。例如，Blink 浏览器引擎实现工作者线程的 WorkerThread 就
-对应着底层的线程。
- 工作者线程并行执行。虽然页面和工作者线程都是单线程 JavaScript 环境，每个环境中的指令则
-可以并行执行。
- 工作者线程可以共享某些内存。工作者线程能够使用 SharedArrayBuffer 在多个环境间共享
-内容。虽然线程会使用锁实现并发控制，但 JavaScript 使用 Atomics 接口实现并发控制。
-工作者线程与线程有很多类似之处，但也有重要的区别。
- 工作者线程不共享全部内存。在传统线程模型中，多线程有能力读写共享内存空间。除了 SharedArrayBuffer 外，从工作者线程进出的数据需要复制或转移。
- 工作者线程不一定在同一个进程里。通常，一个进程可以在内部产生多个线程。根据浏览器引
-擎的实现，工作者线程可能与页面属于同一进程，也可能不属于。例如，Chrome 的 Blink 引擎对
-共享工作者线程和服务工作者线程使用独立的进程。
- 创建工作者线程的开销更大。工作者线程有自己独立的事件循环、全局对象、事件处理程序和
-其他 JavaScript 环境必需的特性。创建这些结构的代价不容忽视
-无论形式还是功能，工作者线程都不是用于替代线程的。HTML Web 工作者线程规范是这样说的：
-工作者线程相对比较重，不建议大量使用。例如，对一张 400 万像素的图片，为每个像素
-都启动一个工作者线程是不合适的。通常，工作者线程应该是长期运行的，启动成本比较高，
-每个实例占用的内存也比较大。
+Comparing Workers and Threads
+作为介绍，通常需要将工作者线程与执行线程进行比较。在许多方面，这是一个恰当的比较，因为工作者线程和线程确实有很多共同之处。
+ 工作者线程是以实际线程实现的。例如，Blink 浏览器引擎实现工作者线程的 WorkerThread 就对应着底层的线程。
+ 工作者线程并行执行。虽然页面和工作者线程都是单线程 JavaScript 环境，每个环境中的指令则可以并行执行。
+
+ 工作者线程可以共享某些内存。工作者线程能够使用 SharedArrayBuffer 在多个环境间共享内容。虽然线程会使用锁实现并发控制，但 JavaScript 使用 Atomics 接口实现并发控制。工作者线程与线程有很多类似之处，但也有重要的区别。
+ 工作者线程不共享全部内存。在传统线程模型中，多线程有能力读写共享内存空间。除了 SharedArrayBuffer 外，从工作者线程进出的数据需要复制或转移。
+
+ 工作者线程不一定在同一个进程里。通常，一个进程可以在内部产生多个线程。根据浏览器引擎的实现，工作者线程可能与页面属于同一进程，也可能不属于。例如，Chrome 的 Blink 引擎对共享工作者线程和服务工作者线程使用独立的进程。
+ 创建工作者线程的开销更大。工作者线程有自己独立的事件循环、全局对象、事件处理程序和其他 JavaScript 环境必需的特性。创建这些结构的代价不容忽视.
+
+无论形式还是功能，工作者线程都不是用于替代线程的。HTML Web 工作者线程规范是这样说的：工作者线程相对比较重，不建议大量使用。例如，对一张 400 万像素的图片，为每个像素都启动一个工作者线程是不合适的。通常，工作者线程应该是长期运行的，启动成本比较高，每个实例占用的内存也比较大。
 
 ### 工作者线程的类型
 
-Web 工作者线程规范中定义了三种主要的工作者线程：专用工作者线程、共享工作者线程和服务工
-作者线程。现代浏览器都支持这些工作者线程。
-注意 Web 工作者线程规范参见 HTML Standard 网站。
+Types of Workers
+Web 工作者线程规范中定义了三种主要的工作者线程：专用工作者线程、共享工作者线程和服务工作者线程。现代浏览器都支持这些工作者线程。
 
-1. 专用工作者线程
-专用工作者线程，通常简称为工作者线程、Web Worker 或 Worker，是一种实用的工具，可以让脚
-本单独创建一个 JavaScript 线程，以执行委托的任务。专用工作者线程，顾名思义，只能被创建它的页
-面使用。
-2. 共享工作者线程
-共享工作者线程与专用工作者线程非常相似。主要区别是共享工作者线程可以被多个不同的上下文
-使用，包括不同的页面。任何与创建共享工作者线程的脚本同源的脚本，都可以向共享工作者线程发送
-消息或从中接收消息。
-3. 服务工作者线程
-服务工作者线程与专用工作者线程和共享工作者线程截然不同。它的主要用途是拦截、重定向和修
-改页面发出的请求，充当网络请求的仲裁者的角色。
-注意 还有其他一些工作者线程规范，比如 ChromeWorker 或 Web Audio API，但它们并未
-得到广泛支持，或者定位于小众应用程序，因此本书没有包含与之相关的内容。
+注意:Web 工作者线程规范参见 HTML Standard 网站。
+
+1. 专用工作者线程Dedicated Web Worker
+专用工作者线程，通常简称为工作者线程、Web Worker 或 Worker，是一种实用的工具，可以让脚本单独创建一个 JavaScript 线程，以执行委托的任务。专用工作者线程，顾名思义，只能被创建它的页面使用。
+
+2. 共享工作者线程Shared Web Worker
+共享工作者线程与专用工作者线程非常相似。主要区别是共享工作者线程可以被多个不同的上下文使用，包括不同的页面。任何与创建共享工作者线程的脚本同源的脚本，都可以向共享工作者线程发送消息或从中接收消息。
+
+3. 服务工作者线程Service Worker
+服务工作者线程与专用工作者线程和共享工作者线程截然不同。它的主要用途是拦截、重定向和修改页面发出的请求，充当网络请求的仲裁者的角色。
+
+注意:还有其他一些工作者线程规范，比如 ChromeWorker 或 Web Audio API，但它们并未得到广泛支持，或者定位于小众应用程序，因此本书没有包含与之相关的内容。
 
 ### WorkerGlobalScope
 
-在网页上，window 对象可以向运行在其中的脚本暴露各种全局变量。在工作者线程内部，没有 window
-的概念。这里的全局对象是 WorkerGlobalScope 的实例，通过 self 关键字暴露出来。
+在网页上，window 对象可以向运行在其中的脚本暴露各种全局变量。在工作者线程内部，没有 window的概念。这里的全局对象是 WorkerGlobalScope 的实例，通过 self 关键字暴露出来。
 
-1. WorkerGlobalScope 属性和方法
-self 上可用的属性是 window 对象上属性的严格子集。其中有些属性会返回特定于工作者线程的
-版本。
+1. WorkerGlobalScope 属性和方法WorkerGlobalScope Properties and Methods
+self 上可用的属性是 window 对象上属性的严格子集。其中有些属性会返回特定于工作者线程的版本。
  navigator：返回与工作者线程关联的 WorkerNavigator。
  self：返回 WorkerGlobalScope 对象。
  location：返回与工作者线程关联的 WorkerLocation。
@@ -89,8 +72,8 @@ self 上可用的属性是 window 对象上属性的严格子集。其中有些�
  indexedDB：返回 IDBFactory 对象。
  isSecureContext：返回布尔值，表示工作者线程上下文是否安全。
  origin：返回 WorkerGlobalScope 的源。
-类似地，self 对象上暴露的一些方法也是 window 上方法的子集。这些 self 上的方法也与 window
-上对应的方法操作一样。
+
+类似地，self 对象上暴露的一些方法也是 window 上方法的子集。这些 self 上的方法也与 window上对应的方法操作一样。
  atob()
  btoa()
  clearInterval()
@@ -99,10 +82,9 @@ self 上可用的属性是 window 对象上属性的严格子集。其中有些�
  fetch()
  setInterval()
  setTimeout()
-WorkerGlobalScope 还增加了新的全局方法 importScripts()，只在工作者线程内可用。本章
-稍后会介绍该方法。
+WorkerGlobalScope 还增加了新的全局方法 importScripts()，只在工作者线程内可用。本章稍后会介绍该方法。
 
-2. WorkerGlobalScope 的子类
+2.WorkerGlobalScope 的子类Subclasses of WorkerGlobalScope
 实际上并不是所有地方都实现了 WorkerGlobalScope。每种类型的工作者线程都使用了自己特定
 的全局对象，这继承自 WorkerGlobalScope。
  专用工作者线程使用 DedicatedWorkerGlobalScope。
@@ -112,36 +94,35 @@ WorkerGlobalScope 还增加了新的全局方法 importScripts()，只在工作�
 
 ## 专用工作者线程
 
-专用工作者线程是最简单的 Web 工作者线程，网页中的脚本可以创建专用工作者线程来执行在页面
-线程之外的其他任务。这样的线程可以与父页面交换信息、发送网络请求、执行文件输入/输出、进行密
-集计算、处理大量数据，以及实现其他不适合在页面执行线程里做的任务（否则会导致页面响应迟钝）。
+专用工作者线程是最简单的 Web 工作者线程，网页中的脚本可以创建专用工作者线程来执行在页面线程之外的其他任务。   这样的线程可以与父页面交换信息、发送网络请求、执行文件输入/输出、进行密集计算、处理大量数据，以及实现其他不适合在页面执行线程里做的任务（否则会导致页面响应迟钝）A dedicated worker is the simplest type of web worker. Dedicated workers are created by a web page to execute scripts outside the page’s thread of execution. These workers are capable of exchanging information with the parent page, sending network requests, performing file I/O, executing intense computation, processing data in bulk, or any other number of computational tasks that are unsuited for the page execution thread (where they would introduce latency issues)。
 
-注意 在使用工作者线程时，脚本在哪里执行、在哪里加载是非常重要的概念。除非另有
+注意:在使用工作者线程时，脚本在哪里执行、在哪里加载是非常重要的概念。除非另有
 说明，否则本章假定 main.js 是从 ``https://example.com`` 域的根路径加载并执行的顶级脚本。
 
 ### 专用工作者线程的基本概念
 
-可以把专用工作者线程称为后台脚本（background script）。JavaScript 线程的各个方面，包括生命周
-期管理、代码路径和输入/输出，都由初始化线程时提供的脚本来控制。该脚本也可以再请求其他脚本，
-但一个线程总是从一个脚本源开始。
+Dedicated Worker Basics
+可以把专用工作者线程称为后台脚本（background script）。JavaScript 线程的各个方面，包括生命周期管理、代码路径和输入/输出，都由初始化线程时提供的脚本来控制。该脚本也可以再请求其他脚本，但一个线程总是从一个脚本源开始。
 
 ```js
-//1. 创建专用工作者线程
-创建专用工作者线程最常见的方式是加载 JavaScript 文件。把文件路径提供给 Worker 构造函数，
-然后构造函数再在后台异步加载脚本并实例化工作者线程。传给构造函数的文件路径可以是多种形式。
+//1. 创建专用工作者线程Creating a Dedicated Worker
+创建专用工作者线程最常见的方式是加载 JavaScript 文件。把文件路径提供给 Worker 构造函数，然后构造函数再在后台异步加载脚本并实例化工作者线程。传给构造函数的文件路径可以是多种形式。
+
 下面的代码演示了如何创建空的专用工作者线程：
 emptyWorker.js
 // 空的 JS 工作者线程文件
+
 main.js
 console.log(location.href); // "https://example.com/" 
-const worker = new Worker(location.href + 'emptyWorker.js');
+const worker = new Worker(location.href + 'emptyWorker.js'); //加粗
 console.log(worker); // Worker {} 
+
 这个例子非常简单，但涉及几个基本概念。
  emptyWorker.js 文件是从绝对路径加载的。根据应用程序的结构，使用绝对 URL 经常是多余的。
  这个文件是在后台加载的，工作者线程的初始化完全独立于 main.js。
- 工作者线程本身存在于一个独立的 JavaScript 环境中，因此 main.js 必须以 Worker 对象为代理实
-现与工作者线程通信。在上面的例子中，该对象被赋值给了 worker 变量。
+ 工作者线程本身存在于一个独立的 JavaScript 环境中，因此 main.js 必须以 Worker 对象为代理实现与工作者线程通信。在上面的例子中，该对象被赋值给了 worker 变量。
  虽然相应的工作者线程可能还不存在，但该 Worker 对象已在原始环境中可用了。
+
 前面的例子可修改为使用相对路径。不过，这要求 main.js 必须与 emptyWorker.js 在同一个路径下：
 const worker = new Worker('./emptyWorker.js');
 console.log(worker); // Worker {} 
@@ -149,42 +130,37 @@ console.log(worker); // Worker {}
 ```
 
 ```js
-//2. 工作者线程安全限制
-工作者线程的脚本文件只能从与父页面相同的源加载。从其他源加载工作者线程的脚本文件会导致
-错误，如下所示：
+//2. 工作者线程安全限制Worker Security Restrictions
+工作者线程的脚本文件只能从与父页面相同的源加载。从其他源加载工作者线程的脚本文件会导致错误，如下所示：
 // 尝试基于 https://example.com/worker.js 创建工作者线程
 const sameOriginWorker = new Worker('./worker.js'); 
+
 // 尝试基于 https://untrusted.com/worker.js 创建工作者线程
 const remoteOriginWorker = new Worker('https://untrusted.com/worker.js'); 
 // Error: Uncaught DOMException: Failed to construct 'Worker': 
 // Script at https://untrusted.com/main.js cannot be accessed 
 // from origin https://example.com 
-注意 不能使用非同源脚本创建工作者线程，并不影响执行其他源的脚本。在工作者线程
+
+注意:不能使用非同源脚本创建工作者线程，并不影响执行其他源的脚本。在工作者线程
 内部，使用 importScripts()可以加载其他源的脚本。本章稍后会介绍。
-基于加载脚本创建的工作者线程不受文档的内容安全策略限制，因为工作者线程在与父文档不同的
-上下文中运行。不过，如果工作者线程加载的脚本带有全局唯一标识符（与加载自一个二进制大文件一
-样），就会受父文档内容安全策略的限制。
-注意 27.2.5 节会介绍基于二进制大文件创建工作者线程。
+
+基于加载脚本创建的工作者线程不受文档的内容安全策略限制，因为工作者线程在与父文档不同的上下文中运行。不过，如果工作者线程加载的脚本带有全局唯一标识符（与加载自一个二进制大文件一样），就会受父文档内容安全策略的限制。
+
+注意:27.2.5 节会介绍基于二进制大文件创建工作者线程。
 ```
 
 ```js
-//3. 使用 Worker 对象
-Worker()构造函数返回的 Worker 对象是与刚创建的专用工作者线程通信的连接点。它可用于在
-工作者线程和父上下文间传输信息，以及捕获专用工作者线程发出的事件。
-注意 要管理好使用 Worker()创建的每个 Worker 对象。在终止工作者线程之前，它不
+//3. 使用 Worker 对象Using the Worker Object
+Worker()构造函数返回的 Worker 对象是与刚创建的专用工作者线程通信的连接点。它可用于在工作者线程和父上下文间传输信息，以及捕获专用工作者线程发出的事件。
+
+注意:要管理好使用 Worker()创建的每个 Worker 对象。在终止工作者线程之前，它不
 会被垃圾回收，也不能通过编程方式恢复对之前 Worker 对象的引用。
+
 Worker 对象支持下列事件处理程序属性。
- onerror：在工作者线程中发生 ErrorEvent 类型的错误事件时会调用指定给该属性的处理程序。
- 该事件会在工作者线程中抛出错误时发生。
- 该事件也可以通过 worker.addEventListener('error', handler)的形式处理。
- onmessage：在工作者线程中发生 MessageEvent 类型的消息事件时会调用指定给该属性的处
-理程序。
- 该事件会在工作者线程向父上下文发送消息时发生。
- 该事件也可以通过使用 worker.addEventListener('message', handler)处理。
- onmessageerror：在工作者线程中发生 MessageEvent 类型的错误事件时会调用指定给该属
-性的处理程序。
- 该事件会在工作者线程收到无法反序列化的消息时发生。
- 该事件也可以通过使用 worker.addEventListener('messageerror', handler)处理。
+ onerror：在工作者线程中发生 ErrorEvent 类型的错误事件时会调用指定给该属性的处理程序。  该事件会在工作者线程中抛出错误时发生。 该事件也可以通过 worker.addEventListener('error', handler)的形式处理。
+ onmessage：在工作者线程中发生 MessageEvent 类型的消息事件时会调用指定给该属性的处理程序。    该事件会在工作者线程向父上下文发送消息时发生。  该事件也可以通过使用 worker.addEventListener('message', handler)处理。
+ onmessageerror：在工作者线程中发生 MessageEvent 类型的错误事件时会调用指定给该属性的处理程序。    该事件会在工作者线程收到无法反序列化的消息时发生。   该事件也可以通过使用 worker.addEventListener('messageerror', handler)处理。
+
 Worker 对象还支持下列方法。
  postMessage()：用于通过异步消息事件向工作者线程发送信息。
  terminate()：用于立即终止工作者线程。没有为工作者线程提供清理的机会，脚本会突然停止。
@@ -192,56 +168,45 @@ Worker 对象还支持下列方法。
 
 ```js
 //4. DedicatedWorkerGlobalScope
-在专用工作者线程内部，全局作用域是 DedicatedWorkerGlobalScope 的实例。因为这继承自
-WorkerGlobalScope，所以包含它的所有属性和方法。工作者线程可以通过 self 关键字访问该全局
-作用域。
+在专用工作者线程内部，全局作用域是 DedicatedWorkerGlobalScope 的实例。因为这继承自WorkerGlobalScope，所以包含它的所有属性和方法。工作者线程可以通过 self 关键字访问该全局作用域。
 globalScopeWorker.js
-console.log('inside worker:', self); 
+console.log('inside worker:', self);
+
 main.js
 const worker = new Worker('./globalScopeWorker.js'); 
 console.log('created worker:', worker); 
 // created worker: Worker {} 
 // inside worker: DedicatedWorkerGlobalScope {} 
-如此例所示，顶级脚本和工作者线程中的 console 对象都将写入浏览器控制台，这对于调试非常
-有用。因为工作者线程具有不可忽略的启动延迟，所以即使 Worker 对象存在，工作者线程的日志也会
-在主线程的日志之后打印出来。
-注意 这里两个独立的 JavaScript 线程都在向一个 console 对象发消息，该对象随后将消
-息序列化并在浏览器控制台打印出来。浏览器从两个不同的 JavaScript 线程收到消息，并
-按照自己认为合适的顺序输出这些消息。为此，在多线程应用程序中使用日志确定操作顺
-序时必须要当心。
+如此例所示，顶级脚本和工作者线程中的 console 对象都将写入浏览器控制台，这对于调试非常有用。因为工作者线程具有不可忽略的启动延迟，所以即使 Worker 对象存在，工作者线程的日志也会在主线程的日志之后打印出来。
+
+注意:这里两个独立的 JavaScript 线程都在向一个 console 对象发消息，该对象随后将消息序列化并在浏览器控制台打印出来。浏览器从两个不同的 JavaScript 线程收到消息，并按照自己认为合适的顺序输出这些消息。为此，在多线程应用程序中使用日志确定操作顺
+序时必须要当心。  就是说你要标记好,哪个是哪个的打印???
+
 DedicatedWorkerGlobalScope 在 WorkerGlobalScope 基础上增加了以下属性和方法。
  name：可以提供给 Worker 构造函数的一个可选的字符串标识符。
- postMessage()：与 worker.postMessage()对应的方法，用于从工作者线程内部向父上下
-文发送消息。
- close()：与 worker.terminate()对应的方法，用于立即终止工作者线程。没有为工作者线
-程提供清理的机会，脚本会突然停止。
+ postMessage()：与 worker.postMessage()对应的方法，用于从工作者线程内部向父上下文发送消息。
+ close()：与 worker.terminate()对应的方法，用于立即终止工作者线程。没有为工作者线程提供清理的机会，脚本会突然停止。
  importScripts()：用于向工作者线程中导入任意数量的脚本。
 ```
 
 ### 专用工作者线程与隐式 MessagePorts
 
-专用工作者线程的 Worker 对象和 DedicatedWorkerGlobalScope 与 MessagePorts 有一些相
-同接口处理程序和方法：onmessage、onmessageerror、close()和 postMessage()。这不是偶然
-的，因为专用工作者线程隐式使用了 MessagePorts 在两个上下文之间通信。
-父上下文中的 Worker 对象和 DedicatedWorkerGlobalScope 实际上融合了 MessagePort，并
-在自己的接口中分别暴露了相应的处理程序和方法。换句话说，消息还是通过 MessagePort 发送，只
-是没有直接使用 MessagePort 而已。
-也有不一致的地方，比如 start()和 close()约定。专用工作者线程会自动发送排队的消息，因
-此 start()也就没有必要了。另外，close()在专用工作者线程的上下文中没有意义，因为这样关闭
-MessagePort 会使工作者线程孤立。因此，在工作者线程内部调用 close()（或在外部调用
-terminate()）不仅会关闭 MessagePort，也会终止线程。
+Dedicated Workers and Implicit MessagePorts
+专用工作者线程的 Worker 对象和 DedicatedWorkerGlobalScope 与 MessagePorts 有一些相同接口处理程序和方法：onmessage、onmessageerror、close()和 postMessage()。这不是偶然的，因为专用工作者线程隐式使用了 MessagePorts 在两个上下文之间通信。
+
+父上下文中的 Worker 对象和 DedicatedWorkerGlobalScope 实际上融合了 MessagePort，并在自己的接口中分别暴露了相应的处理程序和方法。换句话说，消息还是通过 MessagePort 发送，只是没有直接使用 MessagePort 而已。
+
+也有不一致的地方，比如 start()和 close()约定。专用工作者线程会自动发送排队的消息，因此 start()也就没有必要了。另外，close()在专用工作者线程的上下文中没有意义，因为这样关闭MessagePort 会使工作者线程孤立。因此，在工作者线程内部调用 close()（或在外部调用terminate()）不仅会关闭 MessagePort，也会终止线程。
 
 ### 专用工作者线程的生命周期
 
-调用 Worker()构造函数是一个专用工作者线程生命的起点。调用之后，它会初始化对工作者线程
-脚本的请求，并把 Worker 对象返回给父上下文。虽然父上下文中可以立即使用这个 Worker 对象，但
-与之关联的工作者线程可能还没有创建，因为存在请求脚本的网格延迟和初始化延迟。
+Understanding the Dedicated Worker Lifecycle
+调用 Worker()构造函数是一个专用工作者线程生命的起点。调用之后，它会初始化对工作者线程脚本的请求，并把 Worker 对象返回给父上下文。虽然父上下文中可以立即使用这个 Worker 对象，但与之关联的工作者线程可能还没有创建，因为存在请求脚本的网格延迟和初始化延迟。
+
 一般来说，专用工作者线程可以非正式区分为处于下列三个状态：初始化（initializing）、活动（active）
-和终止（terminated）。这几个状态对其他上下文是不可见的。虽然 Worker 对象可能会存在于父上下文
-中，但也无法通过它确定工作者线程当前是处理初始化、活动还是终止状态。换句话说，与活动的专用
-工作者线程关联的 Worker 对象和与终止的专用工作者线程关联的 Worker 对象无法分别。
-初始化时，虽然工作者线程脚本尚未执行，但可以先把要发送给工作者线程的消息加入队列。这些
-消息会等待工作者线程的状态变为活动，再把消息添加到它的消息队列。下面的代码演示了这个过程。
+和终止（terminated）。这几个状态对其他上下文是不可见的。虽然 Worker 对象可能会存在于父上下文中，但也无法通过它确定工作者线程当前是处理初始化、活动还是终止状态。换句话说，与活动的专用工作者线程关联的 Worker 对象和与终止的专用工作者线程关联的 Worker 对象无法分别。
+
+初始化时，虽然工作者线程脚本尚未执行，但可以先把要发送给工作者线程的消息加入队列。这些消息会等待工作者线程的状态变为活动，再把消息添加到它的消息队列。下面的代码演示了这个过程。
 
 ```js
 //initializingWorker.js
@@ -256,27 +221,27 @@ worker.postMessage('baz');
 // foo 
 // bar 
 // baz 
-创建之后，专用工作者线程就会伴随页面的整个生命期而存在，除非自我终止（self.close()）
-或通过外部终止（worker.terminate()）。即使线程脚本已运行完成，线程的环境仍会存在。只要工
-作者线程仍存在，与之关联的 Worker 对象就不会被当成垃圾收集掉。
-自我终止和外部终止最终都会执行相同的工作者线程终止例程。来看下面的例子，其中工作者线程
-在发送两条消息中间执行了自我终止：
+创建之后，专用工作者线程就会伴随页面的整个生命期而存在，除非自我终止（self.close()）或通过外部终止（worker.terminate()）。即使线程脚本已运行完成，线程的环境仍会存在。只要工作者线程仍存在，与之关联的 Worker 对象就不会被当成垃圾收集掉。
+
+自我终止和外部终止最终都会执行相同的工作者线程终止例程。来看下面的例子，其中工作者线程在发送两条消息中间执行了自我终止：
 closeWorker.js
 self.postMessage('foo'); 
 self.close(); 
 self.postMessage('bar'); 
 setTimeout(() => self.postMessage('baz'), 0); 
+
 main.js
 const worker = new Worker('./closeWorker.js'); 
 worker.onmessage = ({data}) => console.log(data); 
 // foo 
 // bar 
-虽然调用了 close()，但显然工作者线程的执行并没有立即终止。close()在这里会通知工作者线
-程取消事件循环中的所有任务，并阻止继续添加新任务。这也是为什么"baz"没有打印出来的原因。工
-作者线程不需要执行同步停止，因此在父上下文的事件循环中处理的"bar"仍会打印出来。
+
+虽然调用了 close()，但显然工作者线程的执行并没有立即终止。close()在这里会通知工作者线程取消事件循环中的所有任务，并阻止继续添加新任务。这也是为什么"baz"没有打印出来的原因。!!!工作者线程不需要执行同步停止，因此在父上下文的事件循环中处理的"bar"仍会打印出来!!!。
+
 下面来看外部终止的例子。
 terminateWorker.js
 self.onmessage = ({data}) => console.log(data); 
+
 main.js
 const worker = new Worker('./terminateWorker.js'); 
 // 给 1000 毫秒让工作者线程初始化
@@ -285,33 +250,33 @@ setTimeout(() => {
  worker.terminate(); 
  worker.postMessage('bar'); 
  setTimeout(() => worker.postMessage('baz'), 0); 
+    //这里，外部先给工作者线程发送了带"foo"的 postMessage，这条消息可以在外部终止之前处理。一旦调用了 terminate()，工作者线程的消息队列就会被清理并锁住，这也是只是打印"foo"的原因。
 }, 1000); 
 // foo 
-这里，外部先给工作者线程发送了带"foo"的 postMessage，这条消息可以在外部终止之前处理。
-一旦调用了 terminate()，工作者线程的消息队列就会被清理并锁住，这也是只是打印"foo"的原因。
-注意 close()和 terminate()是幂等操作，多次调用没有问题。这两个方法仅仅是将
+
+注意:close()和 terminate()是幂等操作，多次调用没有问题。这两个方法仅仅是将
 Worker 标记为 teardown，因此多次调用不会有不好的影响。
-在整个生命周期中，一个专用工作者线程只会关联一个网页（Web 工作者线程规范称其为一个文档）。
-除非明确终止，否则只要关联文档存在，专用工作者线程就会存在。如果浏览器离开网页（通过导航或
-关闭标签页或关闭窗口），它会将与其关联的工作者线程标记为终止，它们的执行也会立即停止。
+
+在整个生命周期中，一个专用工作者线程只会关联一个网页（Web 工作者线程规范称其为一个文档）。除非明确终止，否则只要关联文档存在，专用工作者线程就会存在。如果浏览器离开网页（通过导航或关闭标签页或关闭窗口），它会将与其关联的工作者线程标记为终止，它们的执行也会立即停止。
 ```
 
 ### 配置 Worker 选项
 
+Configuring Worker Options
 Worker()构造函数允许将可选的配置对象作为第二个参数。该配置对象支持下列属性。
+
  name：可以在工作者线程中通过 self.name 读取到的字符串标识符。
- type：表示加载脚本的运行方式，可以是"classic"或"module"。"classic"将脚本作为常
-规脚本来执行，"module"将脚本作为模块来执行。
- credentials：在 type 为"module"时，指定如何获取与传输凭证数据相关的工作者线程模块
-脚本。值可以是"omit"、"same-orign"或"include"。这些选项与 fetch()的凭证选项相同。
-在 type 为"classic"时，默认为"omit"。
-注意 有的现代浏览器还不完全支持模块工作者线程或可能需要修改标志才能支持。
+ type：表示加载脚本的运行方式，可以是"classic"或"module"。"classic"将脚本作为常规脚本来执行，"module"将脚本作为模块来执行。
+ credentials：在 type 为"module"时，指定如何获取与传输凭证数据相关的工作者线程模块脚本。值可以是"omit"、"same-orign"或"include"。这些选项与 fetch()的凭证选项相同。在 type 为"classic"时，默认为"omit"。
+
+注意:有的现代浏览器还不完全支持模块工作者线程或可能需要修改标志才能支持。
 
 ### 在 JavaScript 行内创建工作者线程
 
 ```js
-//工作者线程需要基于脚本文件来创建，但这并不意味着该脚本必须是远程资源。专用工作者线程也
-可以通过 Blob 对象 URL 在行内脚本创建。这样可以更快速地初始化工作者线程，因为没有网络延迟。
+//Creating a Worker from Inline JavaScript
+//工作者线程需要基于脚本文件来创建，但这并不意味着该脚本必须是远程资源。专用工作者线程也可以通过 Blob 对象 URL 在行内脚本创建。这样可以更快速地初始化工作者线程，因为没有网络延迟。
+
 下面展示了一个在行内创建工作者线程的例子。
 // 创建要执行的 JavaScript 代码字符串
 const workerScript = ` 
@@ -319,70 +284,83 @@ const workerScript = `
 `;
 // 基于脚本字符串生成 Blob 对象
 const workerScriptBlob = new Blob([workerScript]); 
+
 // 基于 Blob 实例创建对象 URL 
 const workerScriptBlobUrl = URL.createObjectURL(workerScriptBlob); 
+
 // 基于对象 URL 创建专用工作者线程
 const worker = new Worker(workerScriptBlobUrl); 
+
 worker.postMessage('blob worker script'); 
 // blob worker script 
-在这个例子中，通过脚本字符串创建了 Blob，然后又通过 Blob 创建了对象 URL，最后把对象 URL
-传给了 Worker()构造函数。该构造函数同样创建了专用工作者线程。
+在这个例子中，通过脚本字符串创建了 Blob，然后又通过 Blob 创建了对象 URL，最后把对象 URL传给了 Worker()构造函数。该构造函数同样创建了专用工作者线程。
+
 如果把所有代码写在一块，可以浓缩为这样：
 const worker = new Worker(URL.createObjectURL(new Blob([`self.onmessage = 
 ({data}) => console.log(data);`]))); 
 worker.postMessage('blob worker script'); 
 // blob worker script 
-工作者线程也可以利用函数序列化来初始化行内脚本。这是因为函数的 toString()方法返回函数
-代码的字符串，而函数可以在父上下文中定义但在子上下文中执行。来看下面这个简单的例子：
+```
+
+工作者线程也可以利用函数序列化来初始化行内脚本。这是因为函数的 toString()方法返回函数代码的字符串，而函数可以在父上下文中定义但在子上下文中执行。来看下面这个简单的例子：
+
+```js
 function fibonacci(n) { 
  return n < 1 ? 0 
  : n <= 2 ? 1 
  : fibonacci(n - 1) + fibonacci(n - 2); 
-} 
+    //定义一个递归函数 fibonacci，用于计算第 n 个 Fibonacci 数。
+    //该函数使用三元运算符，根据 n 的值返回相应的 Fibonacci 数：
+    //如果 n 小于 1，返回 0。
+    //如果 n 小于等于 2，返回 1。
+    //否则，返回 fibonacci(n - 1) 与 fibonacci(n - 2) 之和。
+    //注释:斐波那契数列即第n项=前两项之和.   兔子对数问题、树的分枝、叶在枝条上的排列、菠萝聚花果上小单果的排列、雅枝竹的花蕾、正在舒展的蕨叶、松球的鳞的排列、蜜蜂的家族树。
 const workerScript = ` 
  self.postMessage( 
  (${fibonacci.toString()})(9) 
- ); 
+ );   
 `; 
+   //创建 Web Worker 的脚本内容:使用模板字符串定义 workerScript，这是 Web Worker 将要执行的脚本内容。workerScript 内包含了 fibonacci 函数的字符串形式和对其的调用。self.postMessage 方法将计算结果发送回主线程。
 const worker = new Worker(URL.createObjectURL(new Blob([workerScript]))); 
-worker.onmessage = ({data}) => console.log(data); 
-// 34 
-这里有意使用了斐波那契数列的实现，将其序列化之后传给了工作者线程。该函数作为 IIFE 调用
-并传递参数，结果则被发送回主线程。虽然计算斐波那契数列比较耗时，但所有计算都会委托到工作者
-线程，因此并不会影响父上下文的性能。
-注意 像这样序列化函数有个前提，就是函数体内不能使用通过闭包获得的引用，也包括
-全局变量，比如 window，因为这些引用在工作者线程中执行时会出错。
+   // 创建一个新的 Web Worker。使用 Blob 和 URL.createObjectURL.将 workerScript 作为 Blob 的内容，并创建一个 URL 对象，以此来生成 Worker。
+worker.onmessage = ({data}) => console.log(data);   
+   //接受webworker的消息:定义 Web Worker 的 onmessage 事件处理程序。当 Web Worker 完成计算并发送消息时，这个事件处理程序会被触发，并将结果输出到控制台。  就是说onmessage是有消息发送了就触发的事件.
+// 34  。执行代码后，Web Worker 会计算第 9 个 Fibonacci 数并将结果（34）发送回主线程。主线程接收消息并在控制台打印出结果：34。
 ```
+
+这里有意使用了斐波那契数列的实现，将其序列化之后传给了工作者线程。该函数作为 IIFE 调用并传递参数，结果则被发送回主线程。虽然计算斐波那契数列比较耗时，但所有计算都会委托到工作者线程，因此并不会影响父上下文的性能。
+
+注意:像这样序列化函数有个前提，就是函数体内不能使用通过闭包获得的引用，也包括全局变量，比如 window，因为这些引用在工作者线程中执行时会出错。
 
 ### 在工作者线程中动态执行脚本
 
 ```js
-//工作者线程中的脚本并非铁板一块，而是可以使用 importScripts()方法通过编程方式加载和执
-行任意脚本。该方法可用于全局 Worker 对象。这个方法会加载脚本并按照加载顺序同步执行。比如，
-下面的例子加载并执行了两个脚本：
+//Dynamic Script Execution Inside a Worker
+//工作者线程中的脚本并非铁板一块，而是可以使用 importScripts()方法通过编程方式加载和执行任意脚本。该方法可用于全局 Worker 对象。这个方法会加载脚本并按照加载顺序同步执行。比如，下面的例子加载并执行了两个脚本：
 main.js
 const worker = new Worker('./worker.js'); 
 // importing scripts 
 // scriptA executes 
 // scriptB executes 
 // scripts imported 
+
 scriptA.js
 console.log('scriptA executes'); 
 scriptB.js
 console.log('scriptB executes'); 
 worker.js
-console.log('importing scripts'); 
+console.log('importing scripts');
+
 importScripts('./scriptA.js'); 
 importScripts('./scriptB.js'); 
 console.log('scripts imported'); 
-importScripts()方法可以接收任意数量的脚本作为参数。浏览器下载它们的顺序没有限制，但
-执行则会严格按照它们在参数列表的顺序进行。因此，下面的代码与前面的效果一样：
+
+importScripts()方法可以接收任意数量的脚本作为参数。浏览器下载它们的顺序没有限制，但执行则会严格按照它们在参数列表的顺序进行。因此，下面的代码与前面的效果一样：
 console.log('importing scripts'); 
 importScripts('./scriptA.js', './scriptB.js'); 
 console.log('scripts imported'); 
-脚本加载受到常规 CORS 的限制，但在工作者线程内部可以请求来自任何源的脚本。这里的脚本导
-入策略类似于使用生成的<script>标签动态加载脚本。在这种情况下，所有导入的脚本也会共享作用
-域。下面的代码演示了这个事实：
+
+脚本加载受到常规 CORS (Cross-Origin Resource Sharing)的限制，但在工作者线程内部可以请求来自任何源的脚本。这里的脚本导入策略类似于使用生成的<script>标签动态加载脚本。在这种情况下，所有导入的脚本也会共享作用域。下面的代码演示了这个事实：
 main.js
 const worker = new Worker('./worker.js', {name: 'foo'}); 
 // importing scripts in foo with bar 
@@ -402,11 +380,12 @@ console.log('scripts imported');
 
 ### 委托任务到子工作者线程
 
-有时候可能需要在工作者线程中再创建子工作者线程。在有多个 CPU 核心的时候，使用多个子工
-作者线程可以实现并行计算。使用多个子工作者线程前要考虑周全，确保并行计算的投入确实能够得到
-收益，毕竟同时运行多个子线程会有很大计算成本。
-除了路径解析不同，创建子工作者线程与创建普通工作者线程是一样的。子工作者线程的脚本路径
-根据父工作者线程而不是相对于网页来解析。来看下面的例子（注意额外的 js 目录）：
+Delegating Tasks to Subworkers
+有时候可能需要在工作者线程中再创建子工作者线程。在有多个 CPU 核心的时候，使用多个子工作者线程可以实现并行计算。使用多个子工作者线程前要考虑周全，确保并行计算的投入确实能够得到收益，毕竟同时运行多个子线程会有很大计算成本。
+
+除了路径解析不同，创建子工作者线程与创建普通工作者线程是一样的。子工作者线程的脚本路径根据父工作者线程而不是相对于网页来解析。
+
+来看下面的例子（注意额外的 js 目录）：
 
 ```js
 //main.js
@@ -418,14 +397,15 @@ console.log('worker');
 const worker = new Worker('./subworker.js'); 
 js/subworker.js
 console.log('subworker'); 
-注意 顶级工作者线程的脚本和子工作者线程的脚本都必须从与主页相同的源加载
+
+注意:顶级工作者线程的脚本和子工作者线程的脚本都必须从与主页相同的源加载.
 ```
 
 ### 处理工作者线程错误
 
 ```js
-//如果工作者线程脚本抛出了错误，该工作者线程沙盒可以阻止它打断父线程的执行。如下例所示，
-其中的 try/catch 块不会捕获到错误：
+//Handling Worker Errors
+//如果工作者线程脚本抛出了错误，该工作者线程沙盒可以阻止它打断父线程(父线程或主线程是创建并控制工作者线程的线程。父线程负责发送消息给工作者线程，并接收工作者线程返回的消息)的执行If an error is thrown inside a worker script, the worker’s sandboxing will serve to prevent it from interrupting the parent thread of execution.。如下例所示，其中的 try/catch 块不会捕获到错误：
 main.js
 try { 
  const worker = new Worker('./worker.js'); 
@@ -433,21 +413,64 @@ try {
 } catch(e) { 
  console.log('caught error'); 
 } 
-// no error 
+// no error
+
 worker.js
 throw Error('foo'); 
-不过，相应的错误事件仍然会冒泡到工作者线程的全局上下文，因此可以通过在 Worker 对象上设
-置错误事件侦听器访问到。下面看这个例子：
+
+不过，相应的错误事件仍然会冒泡到工作者线程的全局上下文，因此可以通过在 Worker 对象上设置错误事件侦听器访问到。下面看这个例子：
 main.js
 const worker = new Worker('./worker.js'); 
 worker.onerror = console.log; 
 // ErrorEvent {message: "Uncaught Error: foo"} 
+
 worker.js
 throw Error('foo'); 
 ```
 
+```js
+//何为父线程,工作者线程,以下示例:
+// worker.js
+onmessage = function(e) {
+    console.log('Worker: Message received from main script');
+    const result = e.data[0] * e.data[1];
+    if (isNaN(result)) {
+        postMessage('Please write two numbers');
+    } else {
+        const workerResult = 'Result: ' + result;
+        console.log('Worker: Posting message back to main script');
+        postMessage(workerResult);
+    }
+}
+// main.js
+const myWorker = new Worker('worker.js');
+
+const firstNumber = 10;
+const secondNumber = 20;
+
+console.log('Main: Posting message to worker');
+myWorker.postMessage([firstNumber, secondNumber]);
+
+myWorker.onmessage = function(e) {
+    console.log('Main: Message received from worker');
+    console.log(e.data);
+}
+
+myWorker.onerror = function(e) {
+    console.log('Main: Error received from worker');
+    console.error(e.message);
+}
+父线程（主线程）：这里的父线程是运行main.js的主线程:
+创建了一个Worker实例，并将worker.js作为参数传递。使用postMessage方法向工作者线程发送消息。通过onmessage事件处理函数接收工作者线程发送回来的消息。通过onerror事件处理函数处理工作者线程中发生的错误。
+
+工作者线程：在worker.js文件中定义:使用onmessage事件处理函数接收父线程发送的消息。执行乘法运算并将结果通过postMessage方法发送回父线程。
+
+在这个示例中，父线程发送两个数字到工作者线程，工作者线程接收这两个数字进行乘法运算并将结果返回给父线程。这样可以让耗时的计算在工作者线程中进行，而不阻塞父线程的执行。
+```
+
 ### 与专用工作者线程通信
 
+Communicating with a Dedicated Worker
 与工作者线程的通信都是通过异步消息完成的，但这些消息可以有多种形式。
 
 ```js
@@ -458,40 +481,41 @@ function factorial(n) {
  let result = 1; 
  while(n) { result *= n--; } 
  return result; 
+    //定义了一个名为 factorial 的(阶乘)函数，用于计算 n 的阶乘。使用 while 循环将 result 变量依次乘以 n 并递减 n，直到 n 为 0。
 } 
 self.onmessage = ({data}) => { 
  self.postMessage(`${data}! = ${factorial(data)}`); 
+    //设置消息处理程序.   为 Worker 设置 onmessage 事件处理程序。当 Worker 接收到主线程发送的消息时，这个事件处理程序会被触发，并调用 factorial 函数计算阶乘。计算结果通过 self.postMessage 方法发送回主线程，格式为 ${data}! = ${factorial(data)}
 }; 
+
 main.js
-const factorialWorker = new Worker('./factorialWorker.js'); 
-factorialWorker.onmessage = ({data}) => console.log(data); 
+const factorialWorker = new Worker('./factorialWorker.js'); //创建一个新的 Web Worker，指定脚本文件为 factorialWorker.js。
+factorialWorker.onmessage = ({data}) => console.log(data); //设置消息处理程序.  为 Worker 设置 onmessage 事件处理程序。当 Worker 完成计算并发送消息时，这个事件处理程序会被触发，并将结果输出到控制台。
 factorialWorker.postMessage(5); 
 factorialWorker.postMessage(7); 
 factorialWorker.postMessage(10); 
-// 5! = 120 
+// 5! = 120   .使用 postMessage 方法向 Worker 发送数据。依次发送 5、7 和 10，表示计算 5 的阶乘、7 的阶乘和 10 的阶乘。
 // 7! = 5040 
-// 10! = 3628800 
-对于传递简单的消息，使用 postMessage()在主线程和工作者线程之间传递消息，与在两个窗口
-间传递消息非常像。主要区别是没有 targetOrigin 的限制，该限制是针对 Window.prototype. 
-postMessage 的，对 WorkerGlobalScope.prototype.postMessage 或 Worker.prototype. 
-postMessage 没有影响。这样约定的原因很简单：工作者线程脚本的源被限制为主页的源，因此没有
-必要再去过滤了。
+// 10! = 3628800   当代码运行时，main.js 会向 factorialWorker.js 中的 Worker 发送三个消息：5、7 和 10。Worker 收到每个消息后计算相应的阶乘并将结果发送回主线程。主线程接收结果并在控制台打印出：5! = 120   7! = 5040   10! = 3628800这样，主线程在不被阻塞的情况下，能同时处理多个阶乘计算任务，并将结果显示给用户。
+
+对于传递简单的消息，使用 postMessage()在主线程和工作者线程之间传递消息，与在两个窗口间传递消息非常像。主要区别是没有 targetOrigin 的限制，该限制是针对 Window.prototype. postMessage 的，对 WorkerGlobalScope.prototype.postMessage 或 Worker.prototype. postMessage 没有影响。这样约定的原因很简单：工作者线程脚本的源被限制为主页的源，因此没有必要再去过滤了。
 ```
 
 ```js
 //2. 使用 MessageChannel
-无论主线程还是工作者线程，通过 postMessage()进行通信涉及调用全局对象上的方法，并定义
-一个临时的传输协议。这个过程可以被 Channel Messaging API 取代，基于该 API 可以在两个上下文间明
-确建立通信渠道。
+无论主线程还是工作者线程，通过 postMessage()进行通信涉及调用全局对象上的方法，并定义一个临时的传输协议。这个过程可以被 Channel Messaging API 取代，基于该 API 可以在两个上下文间明确建立通信渠道。
+
 MessageChannel 实例有两个端口，分别代表两个通信端点。要让父页面和工作线程通过
 MessageChannel 通信，需要把一个端口传到工作者线程中，如下所示：
 worker.js
 // 在监听器中存储全局 messagePort 
 let messagePort = null; 
+   //声明一个全局变量 messagePort 用于存储传入的 MessagePort
 function factorial(n) { 
  let result = 1; 
  while(n) { result *= n--; } 
  return result; 
+   //定义了一个名为 factorial 的函数，用于计算 n 的阶乘。
 } 
 // 在全局对象上添加消息处理程序
 self.onmessage = ({ports}) => { 
@@ -506,108 +530,123 @@ messagePort = ports[0];
  // 收到消息后发送数据
  messagePort.postMessage(`${data}! = ${factorial(data)}`); 
  }; 
- } 
+ }   
+     //初始消息处理程序:设置 Worker 的 onmessage 事件处理程序。
+     //当 Worker 收到主线程发送的消息时，会检查 messagePort 是否已初始化。
+     //如果 messagePort 尚未初始化，则将传入的 ports[0] 赋值给 messagePort 并重置 self.onmessage。
+     //然后设置 messagePort 的 onmessage 事件处理程序，当收到数据时计算阶乘并通过 messagePort.postMessage 返回结果。
 }; 
+
 main.js
-const channel = new MessageChannel(); 
-const factorialWorker = new Worker('./worker.js'); 
+const channel = new MessageChannel();
+    //创建一个新的 MessageChannel，它包含两个端口 port1 和 port2，用于双向通信。 
+const factorialWorker = new Worker('./worker.js'); //创建一个新的 Web Worker，指定脚本文件为 worker.js。
+
 // 把`MessagePort`对象发送到工作者线程
-// 工作者线程负责处理初始化信道
+// 工作者线程负责处理初始化信道,将 MessagePort 的一个端口 port1 发送给 Worker。Worker 负责接收这个端口并通过它与主线程通信。
 factorialWorker.postMessage(null, [channel.port1]); 
-// 通过信道实际发送数据
+
+// 通过信道实际发送\收数据 ,设置 port2 的 onmessage 事件处理程序，用于接收 Worker 发送的消息并在控制台输出结果。
 channel.port2.onmessage = ({data}) => console.log(data); 
-// 工作者线程通过信道响应
+
+// 工作者线程通过信道响应  ,使用 port2 发送消息给 Worker，请求计算 5 的阶乘。   
 channel.port2.postMessage(5); 
-// 5! = 120 
-在这个例子中，父页面通过 postMessage 与工作者线程共享 MessagePort。使用数组语法是为
-了在两个上下文间传递可转移对象。本章稍后会介绍可转移对象（Transferable）。工作者线程维护
-着对该端口的引用，并使用它代替通过全局对象传递消息。当然，消息的格式也需要临时约定：工作者
-线程收到的第一条消息包含端口，后续的消息才是数据。
-使用 MessageChannel 实例与父页面通信很大程度上是多余的。这是因为全局 postMessage()
-方法本质上与 channel.postMessage()执行的是同样的操作（不考虑 MessageChannel 接口的其他
-特性）。MessageChannel 真正有用的地方是让两个工作者线程之间直接通信。这可以通过把端口传给
-另一个工作者线程实现。下面的例子把一个数组传给了一个工作者线程，这个线程又把它传另一个工作
-者线程，然后再传回主页：
+// 5! = 120    
+//当代码运行时，主线程将通过 port2 发送消息给 Worker，Worker 接收到消息后通过 port1 计算阶乘并将结果发送回主线程。主线程接收结果并在控制台输出：5! = 120  这种双向通信方式通过 MessageChannel 提供了更灵活的消息传递机制，适用于复杂的交互场景。
+在这个例子中，父页面通过 postMessage 与工作者线程共享 MessagePort。使用数组语法是为了在两个上下文间传递可转移对象。本章稍后会介绍可转移对象（Transferable）。工作者线程维护着对该端口的引用，并使用它代替通过全局对象传递消息。当然，消息的格式也需要临时约定：工作者线程收到的第一条消息包含端口，后续的消息才是数据。
+
+使用 MessageChannel 实例与父页面通信很大程度上是多余的。这是因为全局 postMessage()方法本质上与 channel.postMessage()执行的是同样的操作（不考虑 MessageChannel 接口的其他特性）。MessageChannel 真正有用的地方是让两个工作者线程之间直接通信。这可以通过把端口传给另一个工作者线程实现。下面的例子把一个数组传给了一个工作者线程，这个线程又把它传另一个工作者线程，然后再传回主页： 展示了两个 Web Workers 之间的通信。通过使用 MessageChannel，两个 Worker 可以互相传递消息，并将其上下文标识符附加到消息中:
 main.js
 const channel = new MessageChannel(); 
+    //创建一个新的 MessageChannel，它包含两个端口 port1 和 port2，用于双向通信
 const workerA = new Worker('./worker.js'); 
-const workerB = new Worker('./worker.js'); 
-workerA.postMessage('workerA', [channel.port1]); 
-workerB.postMessage('workerB', [channel.port2]); 
-workerA.onmessage = ({data}) => console.log(data); 
-workerB.onmessage = ({data}) => console.log(data); 
-workerA.postMessage(['page']); 
-// ['page', 'workerA', 'workerB'] 
-workerB.postMessage(['page']) 
-// ['page', 'workerB', 'workerA'] 
+const workerB = new Worker('./worker.js'); //创建两个新的 Web Workers，指定脚本文件为 worker.js
+workerA.postMessage('workerA', [channel.port1]); //初始化信道并发送端口和标识符.
+workerB.postMessage('workerB', [channel.port2]);   //将 MessagePort 的两个端口分别发送给 Worker A 和 Worker B，并附加各自的标识符 'workerA' 和 'workerB'。
+workerA.onmessage = ({data}) => console.log(data); //设置 Workers 的消息处理程序.
+workerB.onmessage = ({data}) => console.log(data);   //设置 Worker A 和 Worker B 的 onmessage 事件处理程序，用于接收和输出处理后的数据。
+workerA.postMessage(['page']);   // ['page', 'workerA', 'workerB'] .分别发送初始消息 ['page'] 给 Worker A 和 Worker B.   加粗
+workerB.postMessage(['page'])    // ['page', 'workerB', 'workerA']    加粗
+
 worker.js
 let messagePort = null; 
-let contextIdentifier = null; 
+let contextIdentifier = null; //声明两个全局变量 messagePort 用于存储传入的 MessagePort，contextIdentifier 用于存储当前 Worker 的标识符。
 function addContextAndSend(data, destination) { 
- // 添加标识符以标识当前工作者线程
+    // 添加标识符以标识当前工作者线程
  data.push(contextIdentifier); 
- // 把数据发送到下一个目标
+    // 把数据发送到下一个目标
  destination.postMessage(data); 
+       //添加上下文并发送消息函数:定义了一个函数 addContextAndSend，它将当前 Worker 的标识符附加到数据中，并将数据发送到指定目标.
 } 
 self.onmessage = ({data, ports}) => { 
- // 如果消息里存在端口（ports）
- // 则初始化工作者线程
+   // 如果消息里存在端口（ports） 则初始化工作者线程
  if (ports.length) { 
- // 记录标识符
+   // 记录标识符
  contextIdentifier = data; 
- // 获取 MessagePort 
+
+   // 获取 MessagePort 
  messagePort = ports[0]; 
- // 添加处理程序把接收的数据
- // 发回到父页面
+
+   // 添加处理程序把接收的数据
+   // 发回到父页面
  messagePort.onmessage = ({data}) => { 
  addContextAndSend(data, self); 
  } 
  } else { 
  addContextAndSend(data, messagePort); 
+    //消息处理程序:当 Worker 接收到消息时，首先检查是否包含端口（ports.length）。如果包含端口，则初始化 Worker：记录标识符，存储 MessagePort，并设置 messagePort 的 onmessage 事件处理程序，将接收到的数据返回给父页面。如果不包含端口，则将接收到的数据和标识符发送到 messagePort
  } 
 }; 
-在这个例子中，数组的每一段旅程都会添加一个字符串，标识自己到过哪里。数组从父页面发送到
-工作者线程，工作者线程会加上自己的上下文标识符。然后，数组又从一个工作者线程发送到另一个工
-作者线程。第二个线程又加上自己的上下文标识符，随即将数组发回主页，主页把数组打印出来。这个
-例子中的两个工作者线程使用了同一个脚本，因此要注意数组可以双向传递。
+//当代码运行时，初始消息 ['page'] 会从主线程发送到 Worker A 和 Worker B。然后，Worker A 和 Worker B 会将各自的标识符附加到消息中并通过信道传递给对方。最终消息的输出顺序如下：
+// 一 Worker A
+//  ['page', 'workerA', 'workerB'] 
+// Worker A 接收到 ['page']，附加 workerA，然后通过信道传递给 Worker B，Worker B 再附加 workerB 并返回给主线程。
+// 二 Worker B
+//  ['page', 'workerB', 'workerA'] 
+// Worker B 接收到 ['page']，附加 workerB，然后通过信道传递给 Worker A，Worker A 再附加 workerA 并返回给主线程。
+// 这展示了两个 Worker 如何在相互通信的过程中标识自己的上下文并正确处理消息。
+在这个例子中，数组的每一段旅程都会添加一个字符串，标识自己到过哪里。数组从父页面发送到工作者线程，工作者线程会加上自己的上下文标识符。然后，数组又从一个工作者线程发送到另一个工作者线程。第二个线程又加上自己的上下文标识符，随即将数组发回主页，主页把数组打印出来。这个例子中的两个工作者线程使用了同一个脚本，因此要注意数组可以双向传递。
+
+//没看懂,具体什么操作???
 ```
 
 ```js
 //3. 使用 BroadcastChannel
-同源脚本能够通过 BroadcastChannel 相互之间发送和接收消息。这种通道类型的设置比较简单，
-不需要像 MessageChannel 那样转移乱糟糟的端口。这可以通过以下方式实现：
+同源脚本能够通过 BroadcastChannel 相互之间发送和接收消息。这种通道类型的设置比较简单，不需要像 MessageChannel 那样转移乱糟糟的端口。这可以通过以下方式实现：  如何使用 BroadcastChannel 实现 Web Worker 和主线程之间的通信。BroadcastChannel 提供了一种广播消息的方式，允许同一页面或多个页面中的脚本相互通信:
 main.js
 const channel = new BroadcastChannel('worker_channel'); 
 const worker = new Worker('./worker.js'); 
+    //创建一个新的 BroadcastChannel 实例，频道名称为 'worker_channel'
+    //创建一个新的 Web Worker，指定脚本文件为 worker.js。
 channel.onmessage = ({data}) => { 
  console.log(`heard ${data} on page`); 
 } 
-setTimeout(() => channel.postMessage('foo'), 1000); 
+setTimeout(() => channel.postMessage('foo'), 1000); //设置 channel 的 onmessage 事件处理程序，用于接收来自频道的消息并输出到控制台. 使用 setTimeout 在 1 秒后向 channel 发送消息 'foo'到BroadcastChannel
 // heard foo in worker 
 // heard bar on page 
+
 worker.js
 const channel = new BroadcastChannel('worker_channel'); 
 channel.onmessage = ({data}) => { 
  console.log(`heard ${data} in worker`); 
  channel.postMessage('bar'); 
 } 
-这里，页面在通过 BroadcastChannel 发送消息之前会先等 1 秒钟。因为这种信道没有端口所有
-权的概念，所以如果没有实体监听这个信道，广播的消息就不会有人处理。在这种情况下，如果没有
-setTimeout()，则由于初始化工作者线程的延迟，就会导致消息已经发送了，但工作者线程上的消息
-处理程序还没有就位。
+  //创建一个新的 BroadcastChannel 实例，频道名称同样为 'worker_channel'
+  //设置 channel 的 onmessage 事件处理程序，当 Worker 接收到消息时，输出收到的消息并向频道发送消息 'bar'。
+这里，页面在通过 BroadcastChannel 发送消息之前会先等 1 秒钟。因为这种信道没有端口所有权的概念，所以如果没有实体监听这个信道，广播的消息就不会有人处理。在这种情况下，如果没有setTimeout()，则由于初始化工作者线程的延迟，就会导致消息已经发送了，但工作者线程上的消息处理程序还没有就位Note here that the page waits 1,000 milliseconds before sending the initial message on the BroadcastChannel. Because there is no concept of port ownership with this type of channel, messages broadcasted will not be handled if there is no other entity listening on the channel. In this case, without the setTimeout, the latency of the worker initialization is sufficiently long to prevent the worker’s message handler from being set before the message is actually sent.。
+
+//搞不懂,什么流程???
 ```
 
 ### 工作者线程数据传输
 
-使用工作者线程时，经常需要为它们提供某种形式的数据负载。工作者线程是独立的上下文，因此
-在上下文之间传输数据就会产生消耗。在支持传统多线程模型的语言中，可以使用锁、互斥量，以及
-volatile 变量。在 JavaScript 中，有三种在上下文间转移信息的方式：结构化克隆算法（structured clone algorithm）、可转移对象（transferable objects）和共享数组缓冲区（shared array buffers）。
+Worker Data Transfer
+使用工作者线程时，经常需要为它们提供某种形式的数据负载。工作者线程是独立的上下文，因此在上下文之间传输数据就会产生消耗。在支持传统多线程模型的语言中，可以使用锁、互斥量，以及volatile 变量。在 JavaScript 中，有三种在上下文间转移信息的方式：结构化克隆算法（structured clone algorithm）、可转移对象（transferable objects）和共享数组缓冲区（shared array buffers）。
 
 ```js
-//1. 结构化克隆算法
+//1. 结构化克隆算法Structured Clone Algorithm
 结构化克隆算法可用于在两个独立上下文间共享数据。该算法由浏览器在后台实现，不能直接调用。
-在通过 postMessage()传递对象时，浏览器会遍历该对象，并在目标上下文中生成它的一个副本。
-下列类型是结构化克隆算法支持的类型。
+在通过 postMessage()传递对象时，浏览器会遍历该对象，并在目标上下文中生成它的一个副本。下列类型是结构化克隆算法支持的类型。
  除 Symbol 之外的所有原始类型
  Boolean 对象
  String 对象
@@ -631,22 +670,21 @@ volatile 变量。在 JavaScript 中，有三种在上下文间转移信息的�
  对象属性描述符、获取方法和设置方法不会克隆，必要时会使用默认值。
  原型链不会克隆。
  RegExp.prototype.lastIndex 属性不会克隆。
-注意 结构化克隆算法在对象比较复杂时会存在计算性消耗。因此，实践中要尽可能避免
+
+注意:结构化克隆算法在对象比较复杂时会存在计算性消耗。因此，实践中要尽可能避免
 过大、过多的复制。
 ```
 
 ```js
-//2. 可转移对象
-使用可转移对象（transferable objects）可以把所有权从一个上下文转移到另一个上下文。在不太可
-能在上下文间复制大量数据的情况下，这个功能特别有用。只有如下几种对象是可转移对象：
+//2. 可转移对象transferable objects
+使用可转移对象（transferable objects）可以把所有权从一个上下文转移到另一个上下文。在不太可能在上下文间复制大量数据的情况下，这个功能特别有用。只有如下几种对象是可转移对象：
  ArrayBuffer
  MessagePort
  ImageBitmap
  OffscreenCanvas
-postMessage()方法的第二个可选参数是数组，它指定应该将哪些对象转移到目标上下文。在遍
-历消息负载对象时，浏览器根据转移对象数组检查对象引用，并对转移对象进行转移而不复制它们。这
-意味着被转移的对象可以通过消息负载发送，消息负载本身会被复制，比如对象或数组。
-下面的例子演示了工作者线程对 ArrayBuffer 的常规结构化克隆。这里没有对象转移：
+postMessage()方法的第二个可选参数是数组，它指定应该将哪些对象转移到目标上下文。在遍历消息负载对象时，浏览器根据转移对象数组检查对象引用，并对转移对象进行转移而不复制它们。这意味着被转移的对象可以通过消息负载发送，消息负载本身会被复制，比如对象或数组。
+
+下面的例子演示了工作者线程对ArrayBuffer 的常规结构化克隆。这里没有对象转移：
 main.js
 const worker = new Worker('./worker.js'); 
 // 创建 32 位缓冲区
@@ -654,115 +692,153 @@ const arrayBuffer = new ArrayBuffer(32);
 console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 32
 worker.postMessage(arrayBuffer); 
 console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 32
+
 worker.js
 self.onmessage = ({data}) => { 
  console.log(`worker's buffer size: ${data.byteLength}`); // 32
 }; 
-如果把 ArrayBuffer 指定为可转移对象，那么对缓冲区内存的引用就会从父上下文中抹去，然后
-分配给工作者线程。下面的例子演示了这个操作，结果分配给 ArrayBuffer 的内存从父上下文转移到
-了工作者线程：
+
+如果把 ArrayBuffer 指定为可转移对象，那么对缓冲区内存的引用就会从父上下文中抹去，然后分配给工作者线程。下面的例子演示了这个操作，结果分配给 ArrayBuffer 的内存从父上下文转移到了工作者线程：
 main.js
 const worker = new Worker('./worker.js'); 
 // 创建 32 位缓冲区
 const arrayBuffer = new ArrayBuffer(32); 
 console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 32
-worker.postMessage(arrayBuffer, [arrayBuffer]); 
+worker.postMessage(arrayBuffer, [arrayBuffer]);   //加粗
 console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 0
 worker.js
 self.onmessage = ({data}) => { 
- console.log(`worker's buffer size: ${data.byteLength}`); // 32
+ console.log(`worker's buffer size: ${data.byteLength}`); // 32  ,({data}) => {:这是一个箭头函数，接收一个事件对象作为参数。这个事件对象包含一个属性 data，即从主线程传递过来的消息内容。花括号 {data} 是对象解构赋值语法，用来直接提取 data 属性的值。
 }; 
-在其他类型的对象中嵌套可转移对象也完全没有问题。包装对象会被复制，而嵌套的对象会被转移：
+
+在其他类型的对象中嵌套可转移对象也完全没有问题。包装对象会被复制，而嵌套的对象会被转移：在 JavaScript 中使用 ArrayBuffer 和 Web Worker 传递数据:
 main.js
 const worker = new Worker('./worker.js'); 
 // 创建 32 位缓冲区
 const arrayBuffer = new ArrayBuffer(32); 
 console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 32
 worker.postMessage({foo: {bar: arrayBuffer}}, [arrayBuffer]); 
-console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 0
+console.log(`page's buffer size: ${arrayBuffer.byteLength}`); // 0 
+   //创建一个新的 Web Worker，运行在 worker.js 文件中的脚本。
+   //创建一个 32 字节大小的 ArrayBuffer 对象。
+   //打印 arrayBuffer 的字节长度，此时应该是 32。
+   //将一个包含 arrayBuffer 的对象 {foo: {bar: arrayBuffer}} 发送给 Web Worker，并将 arrayBuffer 作为第二个参数传递。第二个参数表明这个 arrayBuffer 将被转移给 Web Worker，而不是复制。
+   //再次打印 arrayBuffer 的字节长度，此时应该是 0，因为 arrayBuffer 已经被转移给 Web Worker，页面中不再拥有这个缓冲区。
+
 worker.js
 self.onmessage = ({data}) => { 
  console.log(`worker's buffer size: ${data.foo.bar.byteLength}`); // 32
 }; 
+  //定义 Web Worker 的 onmessage 事件处理程序，当 Web Worker 收到消息时将执行此函数。
+  //打印接收到的 ArrayBuffer 的字节长度，应该是 32，因为缓冲区已被转移给 Web Worker。
+//main.js 中创建了一个 32 字节的缓冲区，并将其发送给 Web Worker。由于使用了 Transferable 对象，缓冲区在发送后 main.js 中的缓冲区大小变为 0。worker.js 接收到缓冲区，并打印其大小为 32。
 ```
 
 ```js
 //3. SharedArrayBuffer
-注意 由于 Spectre 和 Meltdown 的漏洞，所有主流浏览器在 2018 年 1 月就禁用了
+
+注意:由于 Spectre 和 Meltdown 的漏洞，所有主流浏览器在 2018 年 1 月就禁用了
 SharedArrayBuffer。从 2019 年开始，有些浏览器开始逐步重新启用这一特性。
-既不克隆，也不转移，SharedArrayBuffer 作为 ArrayBuffer 能够在不同浏览器上下文间共享。
-在把 SharedArrayBuffer 传给 postMessage()时，浏览器只会传递原始缓冲区的引用。结果是，两
-个不同的 JavaScript 上下文会分别维护对同一个内存块的引用。每个上下文都可以随意修改这个缓冲区，
-就跟修改常规 ArrayBuffer 一样。来看下面的例子：
+
+既不克隆，也不转移，SharedArrayBuffer 作为 ArrayBuffer 能够在不同浏览器上下文间共享。在把 SharedArrayBuffer 传给 postMessage()时，浏览器只会传递原始缓冲区的引用。结果是，两个不同的 JavaScript 上下文会分别维护对同一个内存块的引用。每个上下文都可以随意修改这个缓冲区，就跟修改常规 ArrayBuffer 一样。来看下面的例子： 使用 SharedArrayBuffer 在主线程和 Web Worker 之间共享内存:
 main.js
-const worker = new Worker('./worker.js'); 
-// 创建 1 字节缓冲区
+const worker = new Worker('./worker.js'); //创建一个新的 Web Worker，运行在 worker.js 文件中的脚本。
+// 创建 1 字节缓冲区. 创建一个 1 字节大小的 SharedArrayBuffer 对象。与 ArrayBuffer 不同，SharedArrayBuffer 允许多个线程共享同一个内存块
 const sharedArrayBuffer = new SharedArrayBuffer(1); 
-// 创建 1 字节缓冲区的视图
+
+// 创建 1 字节缓冲区的视图.创建一个 Uint8Array 视图，用于操作 sharedArrayBuffer 中的数据。
 const view = new Uint8Array(sharedArrayBuffer); 
-// 父上下文赋值 1 
+
+// 父上下文赋值 1  .将缓冲区的第一个字节设为 1   .当 Web Worker 发送消息回主线程时，打印缓冲区的当前值
 view[0] = 1; 
 worker.onmessage = () => { 
  console.log(`buffer value after worker modification: ${view[0]}`); 
 }; 
-// 发送对 sharedArrayBuffer 的引用
+
+// 发送对 sharedArrayBuffer 的引用 .将 sharedArrayBuffer 的引用发送给 Web Worker。注意这里是传递引用，而不是复制数据
 worker.postMessage(sharedArrayBuffer); 
 // buffer value before worker modification: 1 
 // buffer value after worker modification: 2 
+
 worker.js
 self.onmessage = ({data}) => { 
+    //定义 Web Worker 的 onmessage 事件处理程序，当 Web Worker 收到消息时将执行此函数. 创建一个 Uint8Array 视图，用于操作接收到的 SharedArrayBuffer。
  const view = new Uint8Array(data);
-  console.log(`buffer value before worker modification: ${view[0]}`); 
- // 工作者线程为共享缓冲区赋值
+  console.log(`buffer value before worker modification: ${view[0]}`); //打印缓冲区的当前值，此时应该是 1
+
+ // 工作者线程为共享缓冲区赋值.将缓冲区的第一个字节值加 1
  view[0] += 1; 
- // 发送空消息，通知赋值完成
+
+ // 发送空消息，通知赋值完成.发送一个空消息通知主线程，修改已完成
  self.postMessage(null); 
 }; 
-当然，在两个并行线程中共享内存块有资源争用的风险。换句话说，SharedArrayBuffer 实例实
-际上会被当成易变（volatile）内存。下面的例子演示了这一点：
+//这个例子展示了如何在主线程和 Web Worker 之间共享和修改内存数据
+//main.js 创建了一个 SharedArrayBuffer，并将其第一个字节设为 1。main.js 将 SharedArrayBuffer 的引用发送给 Web Worker。
+//Web Worker 接收到缓冲区，并打印当前值，然后将其值加 1。Web Worker 发送一个空消息通知主线程修改已完成。
+//主线程收到消息后，打印缓冲区的新值，此时值为 2。
+
+当然，在两个并行线程中共享内存块有资源争用的风险。换句话说，SharedArrayBuffer 实例实际上会被当成易变（volatile）内存。下面的例子演示了这一点：  使用 SharedArrayBuffer 在多线程（由 Web Workers 创建的线程池）之间共享内存，并对共享数据进行并发修改(并发修改的问题:竞态条件（Race Condition）\数据不一致\ 死锁（Deadlock互相等对方完成,结果是无法运行）\饥饿（Starvation一些进程得不到资源被饿死）):
 main.js
 // 创建包含 4 个线程的线程池
 const workers = []; 
 for (let i = 0; i < 4; ++i) { 
- workers.push(new Worker('./worker.js')); 
+ workers.push(new Worker('./worker.js')); //创建一个包含 4 个 Web Worker 的线程池，每个 Web Worker 运行 worker.js 中的代码
 } 
-// 在最后一个工作者线程完成后打印最终值
+
+ // 在最后一个工作者线程完成后打印最终值
 let responseCount = 0; 
 for (const worker of workers) { 
  worker.onmessage = () => { 
  if (++responseCount == workers.length) { 
  console.log(`Final buffer value: ${view[0]}`); 
+ //设置每个 Web Worker 的 onmessage 事件处理程序。当每个 Web Worker 完成任务并发送消息时，响应计数器加一。当所有 Web Worker 完成后，打印共享缓冲区的最终值。
  } 
  }; 
 } 
-// 初始化 SharedArrayBuffer 
+
+// 初始化 SharedArrayBuffer,把 SharedArrayBuffer 发给每个线程.创建一个大小为 4 字节的 SharedArrayBuffer，并创建一个 Uint32Array 视图来操作这个缓冲区。初始化缓冲区的第一个值为 1。
 const sharedArrayBuffer = new SharedArrayBuffer(4); 
 const view = new Uint32Array(sharedArrayBuffer); 
 view[0] = 1; 
-// 把 SharedArrayBuffer 发给每个线程
+
 for (const worker of workers) { 
  worker.postMessage(sharedArrayBuffer); 
+ //发送共享缓冲区,将 SharedArrayBuffer 的引用发送给每个 Web Worker
 } 
 // （期待结果为 4000001。实际输出类似于：）
 // Final buffer value: 2145106 
+
 worker.js 
 self.onmessage = ({data}) => { 
  const view = new Uint32Array(data); 
+
  // 执行 100 万次加操作
  for (let i = 0; i < 1E6; ++i) { 
  view[0] += 1; 
  } 
  self.postMessage(null); 
+ //接收共享缓冲区,Web Worker 接收到 SharedArrayBuffer 后，将其转换为 Uint32Array 视图。执行 100 万次加操作，将缓冲区的第一个值加 100 万。加操作完成后，发送空消息通知主线程。
 }; 
-这里，每个工作者线程都顺序执行了 100 万次加操作，每次都读取共享数组的索引、执行一次加操
-作，然后再把值写回数组索引。在所有工作者线程读/写操作交织的过程中就会发生资源争用。例如：
+//这个例子演示了多线程并发修改共享内存的复杂性，通常需要同步机制（例如原子操作或锁）来确保数据一致性。
+//主线程 创建了一个共享缓冲区，并将其发送给 4 个 Web Worker。每个 Web Worker 接收到共享缓冲区后，对其进行 100 万次加操作。
+//由于没有同步机制，缓冲区的最终值会因为竞争条件而不同。理论上应为 4000001（初始值 1 加上 4 个线程各 100 万次加 1），但实际输出可能会不同（例如：2145106），因为多个线程同时访问和修改共享缓冲区时会发生冲突。
+
+这里，每个工作者线程都顺序执行了 100 万次加操作，每次都读取共享数组的索引、执行一次加操作，然后再把值写回数组索引。在所有工作者线程读/写操作交织的过程中就会发生资源争用。例如：
 (1) 线程 A 读取到值 1；
 (2) 线程 B 读取到值 1；
 (3) 线程 A 加 1 并将 2 写回数组；
 (4) 线程 B 仍然使用陈旧的数组值 1，同样把 2 写回数组。
-为解决该问题，可以使用 Atomics 对象让一个工作者线程获得 SharedArrayBuffer 实例的锁，
-在执行完全部读/写/读操作后，再允许另一个工作者线程执行操作。把 Atomics.add()放到这个例子中
-就可以得到正确的最终值：
+
+为解决该问题，
+
+控制并发修改的方法:
+锁（Lock）：使用互斥锁（mutex）、读写锁（read-write lock）等机制来确保同一时刻只有一个线程或进程可以访问和修改共享资源。例如，在 Java 中，可以使用 synchronized 关键字来实现互斥锁。
+信号量（Semaphore）：使用信号量来控制访问共享资源的线程或进程的数量。
+原子操作（Atomic Operation）：使用原子操作来确保对共享资源的访问和修改是不可分割的，不会被中断。例如，在 Java 中，可以使用 AtomicInteger、AtomicLong 等类来实现原子操作。
+条件变量（Condition Variable）：使用条件变量来协调线程或进程之间的同步，使得线程或进程可以等待特定条件的满足。
+乐观锁和悲观锁：乐观锁：假设不会发生冲突，只有在提交时检测是否有冲突，如果有冲突则重试。常用的方法是版本号控制或比较和交换（Compare-and-Swap, CAS）。悲观锁：假设会发生冲突，在每次操作数据前都加锁，确保只有一个线程或进程能够修改数据。
+
+原子操作:可以使用 Atomics 对象让一个工作者线程获得 SharedArrayBuffer 实例的锁，在执行完全部读/写/读操作后，再允许另一个工作者线程执行操作。把 Atomics.add()放到这个例子中就可以得到正确的最终值：
 main.js 
 // 创建包含 4 个线程的线程池
 const workers = []; 
@@ -793,66 +869,74 @@ self.onmessage = ({data}) => {
  const view = new Uint32Array(data); 
  // 执行 100 万次加操作
  for (let i = 0; i < 1E6; ++i) { 
- Atomics.add(view, 0, 1); 
+ Atomics.add(view, 0, 1); //加粗
 } 
  self.postMessage(null); 
 }; 
-注意 第 20 章详细介绍了 SharedArrayBuffer 和 Atomics API。
+
+注意:第 20 章详细介绍了SharedArrayBuffer 和 Atomics API。
 ```
 
 ### 线程池
 
 ```js
-//因为启用工作者线程代价很大，所以某些情况下可以考虑始终保持固定数量的线程活动，需要时就
-把任务分派给它们。工作者线程在执行计算时，会被标记为忙碌状态。直到它通知线程池自己空闲了，
-才准备好接收新任务。这些活动线程就称为“线程池”或“工作者线程池”。
-线程池中线程的数量多少合适并没有权威的答案，不过可以参考 navigator.hardware Concurrency
-属性返回的系统可用的核心数量。因为不太可能知道每个核心的多线程能力，所以最好把这个数字作为
-线程池大小的上限。
-一种使用线程池的策略是每个线程都执行同样的任务，但具体执行什么任务由几个参数来控制。通
-过使用特定于任务的线程池，可以分配固定数量的工作者线程，并根据需要为他们提供参数。工作者线
-程会接收这些参数，执行耗时的计算，并把结果返回给线程池。然后线程池可以再将其他工作分派给工
-作者线程去执行。接下来的例子将构建一个相对简单的线程池，但可以涵盖上述思路的所有基本要求。
-首先是定义一个 TaskWorker 类，它可以扩展 Worker 类。TaskWorker 类负责两件事：跟踪线程
-是否正忙于工作，并管理进出线程的信息与事件。另外，传入给这个工作者线程的任务会封装到一个期
-约中，然后正确地解决和拒绝。这个类的定义如下：
+//Worker Pools
+//因为启用工作者线程代价很大，所以某些情况下可以考虑始终保持固定数量的线程活动，需要时就把任务分派给它们。工作者线程在执行计算时，会被标记为忙碌状态。直到它通知线程池自己空闲了，才准备好接收新任务。这些活动线程就称为“线程池”或“工作者线程池”Because starting a worker is quite expensive, there may be situations where it is more efficient to keep a fixed number of workers alive and dispatch work to them as necessary. When a worker is performing computation, it is marked as busy and will only be ready to take on another task once it notifies the pool that it is available again. This is commonly referred to as a "thread pool" or "worker pool."
+
+!!!线程池中线程的数量多少合适并没有权威的答案!!!，不过可以参考 navigator.hardware Concurrency属性返回的系统可用的核心数量。因为不太可能知道每个核心的多线程能力，所以最好把这个数字作为线程池大小的上限。
+
+一种使用线程池的策略是每个线程都执行同样的任务，但具体执行什么任务由几个参数来控制。通过使用特定于任务的线程池，可以分配固定数量的工作者线程，并根据需要为他们提供参数。工作者线程会接收这些参数，执行耗时的计算，并把结果返回给线程池。然后线程池可以再将其他工作分派给工作者线程去执行。接下来的例子将构建一个相对简单的线程池，但可以涵盖上述思路的所有基本要求。
+
+首先是定义一个 TaskWorker 类，它可以扩展 Worker 类。TaskWorker 类负责两件事：
+
+一是跟踪线程是否正忙于工作，并管理进出线程的信息与事件。
+
+第二，传入给这个工作者线程的任务会封装到一个期约中，然后正确地解决和拒绝。这个类的定义如下：定义了一个名为 TaskWorker 的类，该类继承自 Worker。它的目的是创建一个可用于处理任务的工作者线程，并管理其可用状态:
 class TaskWorker extends Worker { 
  constructor(notifyAvailable, ...workerArgs) { 
- super(...workerArgs); 
+ super(...workerArgs); //调用父类 Worker 的构造函数，传递剩余参数 workerArgs。这些参数通常包括工作者线程的脚本路径和选项。
+
  // 初始化为不可用状态
  this.available = false; 
  this.resolve = null; 
- this.reject = null; 
- // 线程池会传递回调
- // 以便工作者线程发出它需要新任务的信号
+ this.reject = null; //以上这两个属性用于存储任务完成后的回调函数
+
+ // 线程池会传递回调以便工作者线程发出它需要新任务的信号. 保存传递过来的回调函数，用于通知线程池工作者线程可用。
  this.notifyAvailable = notifyAvailable; 
- // 线程脚本在完全初始化之后
- // 会发送一条"ready"消息
+
+ // 线程脚本在完全初始化之后会发送一条"ready"消息.设置工作者线程的消息处理函数，当收到“ready”消息时，调用 setAvailable 方法，表示工作者线程已准备好。
  this.onmessage = () => this.setAvailable(); 
  } 
+
  // 由线程池调用，以分派新任务
  dispatch({ resolve, reject, postMessageArgs }) { 
- this.available = false; 
+ this.available = false; //将 available 属性设置为 false，表示工作者线程当前正在处理任务。
  this.onmessage = ({ data }) => { 
  resolve(data); 
  this.setAvailable(); 
+ //设置消息处理函数，当任务完成并收到消息时，调用 resolve(data) 传递任务结果，并调用 setAvailable 方法表示工作者线程可用。
  }; 
  this.onerror = (e) => { 
  reject(e); 
  this.setAvailable(); 
+ //设置错误处理函数，当任务出错时，调用 reject(e) 传递错误信息，并调用 setAvailable 方法表示工作者线程可用。
  }; 
- this.postMessage(...postMessageArgs); 
+ this.postMessage(...postMessageArgs); //向工作者线程发送消息，开始处理任务。
  } 
+
  setAvailable() { 
  this.available = true; 
  this.resolve = null; 
  this.reject = null; 
  this.notifyAvailable(); 
+ //将 available 属性设置为 true，表示工作者线程当前可用。
+ //重置 resolve 和 reject 属性为 null。
+ //调用 notifyAvailable 回调函数，通知线程池工作者线程已准备好接受新任务。
  } 
 } 
-然后是定义使用 TaskWorker 类的 WorkerPool 类。它还必须维护尚未分派给工作者线程的任务
-队列。两个事件可以表明应该分派一个新任务：新任务被添加到队列中，或者工作者线程完成了一个任
-务，应该再发送另一个任务。WorkerPool 类定义如下：
+//总的来说，这段代码实现了一个任务工作者类 TaskWorker，该类在完成初始化后会通知线程池自己可用，并且可以接受新的任务进行处理。当任务完成或出错时，工作者线程会通知线程池自己重新可用。
+
+然后是定义使用 TaskWorker 类的 WorkerPool 类。它还必须维护尚未分派给工作者线程的任务队列。两个事件可以表明应该分派一个新任务：新任务被添加到队列中，或者工作者线程完成了一个任务，应该再发送另一个任务。WorkerPool 类定义如下：  定义了一个名为 WorkerPool 的类，用于管理多个工作者线程（TaskWorker），以实现任务的并行处理和资源的高效利用:
 class WorkerPool { 
  constructor(poolSize, ...workerArgs) { 
  this.taskQueue = []; 
@@ -861,6 +945,9 @@ class WorkerPool {
  for (let i = 0; i < poolSize; ++i) { 
  this.workers.push( 
  new TaskWorker(() => this.dispatchIfAvailable(), ...workerArgs)); 
+    //初始化任务队列，存储待处理的任务。
+    //初始化工作者线程数组，存储所有的工作者线程。
+    //根据指定的线程池大小 poolSize，循环创建 TaskWorker 实例并将其添加到 workers 数组中。每个 TaskWorker 都会传递一个回调函数 () => this.dispatchIfAvailable()，用于通知线程池该工作者线程可用，并传递其余的工作者参数 workerArgs.
  } 
  } 
  // 把任务推入队列
@@ -869,7 +956,10 @@ class WorkerPool {
  this.taskQueue.push({ resolve, reject, postMessageArgs }); 
  this.dispatchIfAvailable(); 
  }); 
+ //返回一个新的 Promise，在 Promise 构造函数中，任务被推入 taskQueue 队列。
+ //调用 this.dispatchIfAvailable() 方法，尝试将任务分派给可用的工作者线程。
  } 
+
  // 把任务发送给下一个空闲的线程（如果有的话）
  dispatchIfAvailable() { 
  if (!this.taskQueue.length) { 
@@ -880,52 +970,68 @@ class WorkerPool {
  let a = this.taskQueue.shift(); 
  worker.dispatch(a); 
  break; 
+ //首先检查 taskQueue 是否为空。如果为空，则直接返回。
+ //遍历所有的工作者线程 this.workers，寻找一个可用的工作者线程（worker.available）。
+ //如果找到可用的工作者线程，从 taskQueue 中取出第一个任务并将其分派给该工作者线程，调用 worker.dispatch(a)。
+ //一旦任务被分派，立即退出循环。
  } 
  } 
  } 
+
  // 终止所有工作者线程
  close() { 
  for (const worker of this.workers) { 
  worker.terminate(); 
+ //终止所有工作者线程，遍历 this.workers 数组，调用每个工作者线程的 terminate() 方法。
  } 
  } 
 } 
-定义了这两个类之后，现在可以把任务分派到线程池，并在工作者线程可用时执行它们。在这个例
-子中，假设我们想计算 1000 万个浮点值之和。为节省转移成本，我们使用 SharedArrayBuffer。工
-作者线程的脚本（worker.js）大致如下：
+//总的来说，这段代码实现了一个线程池类 WorkerPool，它可以将任务排队并分派给多个工作者线程进行处理，以提高并行处理能力和资源利用效率。当线程池中的某个工作者线程变为可用时，它会自动从任务队列中获取下一个任务并开始处理。此外，还提供了 close() 方法，用于终止所有工作者线程。
+
+定义了这两个类之后，现在可以把任务分派到线程池，并在工作者线程可用时执行它们。在这个例子中，假设我们想计算 1000 万个浮点值之和。为节省转移成本，我们使用SharedArrayBuffer。  
+工作者线程的脚本（worker.js）大致如下：利用 WorkerPool 和 TaskWorker 类，通过线程池并行处理任务。它使用 Web Worker 来计算一个大型数组的部分和，并最终求出整个数组的和:
 self.onmessage = ({data}) => { 
+    //设置消息处理函数，当收到主线程的消息时开始处理任务。
  let sum = 0; 
- let view = new Float32Array(data.arrayBuffer) 
- // 求和
+ let view = new Float32Array(data.arrayBuffer)  //将传递的 SharedArrayBuffer 转换为 Float32Array。
+
  for (let i = data.startIdx; i < data.endIdx; ++i) { 
- // 不需要原子操作，因为只需要读
+    //循环从 data.startIdx 到 data.endIdx 计算部分和。
+    // 不需要原子操作，因为只需要读
  sum += view[i]; 
  } 
+
  // 把结果发送给工作者线程
  self.postMessage(sum); 
 }; 
-// 发送消息给 TaskWorker 
-// 通知工作者线程准备好接收任务了
+
+// 发送消息给 TaskWorker , 通知工作者线程:准备好接收任务了
 self.postMessage('ready'); 
+
 有了以上代码，利用线程池分派任务的代码可以这样写：
 Class TaskWorker { 
  ... 
-] 
+  // TaskWorker 类定义
+} 
 Class WorkerPool { 
  ... 
+ // WorkerPool 类定义
 } 
 const totalFloats = 1E8; 
 const numTasks = 20; 
 const floatsPerTask = totalFloats / numTasks; 
-const numWorkers = 4; 
-// 创建线程池
+const numWorkers = 4; //总共需要处理的浮点数。  将任务划分为 20 个部分。  每个任务处理的浮点数。   使用 4 个工作者线程。
+
+// 创建线程池,一个包含 4 个工作者线程的线程池，工作者线程的脚本路径为 ./worker.js。
 const pool = new WorkerPool(numWorkers, './worker.js'); 
-// 填充浮点值数组
+
+// 创建一个 SharedArrayBuffer 用于存储浮点数，并填充随机浮点数.
 let arrayBuffer = new SharedArrayBuffer(4 * totalFloats); 
 let view = new Float32Array(arrayBuffer); 
 for (let i = 0; i < totalFloats; ++i) { 
  view[i] = Math.random(); 
 } 
+
 let partialSumPromises = []; 
 for (let i = 0; i < totalFloats; i += floatsPerTask) { 
  partialSumPromises.push( 
@@ -935,37 +1041,36 @@ for (let i = 0; i < totalFloats; i += floatsPerTask) {
  arrayBuffer: arrayBuffer 
  }) 
  ); 
+ //将任务分割成多个部分，每个部分的范围从 startIdx 到 endIdx，并将任务推入 partialSumPromises 数组中。
 } 
-// 等待所有期约完成，然后求和
+
+// 等待所有部分和的 Promise 完成，然后将它们相加，最后打印总和。
 Promise.all(partialSumPromises) 
  .then((partialSums) => partialSums.reduce((x, y) => x + y)) 
  .then(console.log); 
 //（在这个例子中，和应该约等于 1E8/2）
 // 49997075.47203197 
-注意 草率地采用并行计算不一定是最好的办法。线程池的调优策略会因计算任务不同和
-系统硬件不同而不同。
+//这个例子展示了如何利用 WorkerPool 和 TaskWorker 并行处理大量数据，从而提高计算效率。
+
+注意:草率地采用并行计算不一定是最好的办法。线程池的调优策略会因计算任务不同和系统硬件不同而不同。
 ```
 
 ## 共享工作者线程
 
-共享工作者线程或共享线程与专用工作者线程类似，但可以被多个可信任的执行上下文访问。例如，
-同源的两个标签页可以访问同一个共享工作者线程。SharedWorker 与 Worker 的消息接口稍有不同，
-包括外部和内部。
-共享线程适合开发者希望通过在多个上下文间共享线程减少计算性消耗的情形。比如，可以用一个
-共享线程管理多个同源页面 WebSocket 消息的发送与接收。共享线程也可以用在同源上下文希望通过一
-个线程通信的情形。
+SHARED WORKERS
+共享工作者线程或共享线程与专用工作者线程类似，但可以被多个可信任的执行上下文访问。例如，同源的两个标签页可以访问同一个共享工作者线程。SharedWorker 与 Worker 的消息接口稍有不同，包括外部和内部。
+
+共享线程适合开发者希望通过在多个上下文间共享线程减少计算性消耗的情形。比如，可以用一个共享线程管理多个同源页面 WebSocket 消息的发送与接收。共享线程也可以用在同源上下文希望通过一个线程通信的情形。
 
 ### 共享工作者线程简介
 
-从行为上讲，共享工作者线程可以看作是专用工作者线程的一个扩展。线程创建、线程选项、安全
-限制和 importScripts()的行为都是相同的。与专用工作者线程一样，共享工作者线程也在独立执行
-上下文中运行，也只能与其他上下文异步通信。
+Shared Worker Basics
+从行为上讲，共享工作者线程可以看作是专用工作者线程的一个扩展Behaviorally speaking, shared workers can be considered an extension of dedicated workers。线程创建、线程选项、安全限制和 importScripts()的行为都是相同的。与专用工作者线程一样，共享工作者线程也在独立执行上下文中运行，也只能与其他上下文异步通信。
 
 ```js
-//1. 创建共享工作者线程
-与专用工作者线程一样，创建共享工作者线程非常常用的方式是通过加载 JavaScript 文件创建。此
-时，需要给 SharedWorker 构造函数传入文件路径，该构造函数在后台异步加载脚本并实例化共享工
-作者线程。
+//1. 创建共享工作者线程Creating a Shared Worker
+与专用工作者线程一样，创建共享工作者线程非常常用的方式是通过加载 JavaScript 文件创建。此时，需要给 SharedWorker 构造函数传入文件路径，该构造函数在后台异步加载脚本并实例化共享工作者线程。
+
 下面的例子演示了如何基于绝对路径创建空共享工作者线程：
 emptySharedWorker.js
 // 空的 JavaScript 线程文件
@@ -977,16 +1082,14 @@ console.log(sharedWorker); // SharedWorker {}
 前面的例子可以修改为使用相对路径，不过这需要 main.js 和 emptySharedWorker.js在同一个目录下：
 const worker = new Worker('./emptyWorker.js'); 
 console.log(worker); // Worker {} 
-也可以在行内脚本中创建共享工作者线程，但这样做没什么意义。因为每个基于行内脚本字符串创
-建的 Blob 都会被赋予自己唯一的浏览器内部 URL，所以行内脚本中创建的共享工作者线程始终是唯一
-的。这里的原因将在下一节介绍。
+
+也可以在行内脚本中创建共享工作者线程，但这样做没什么意义。因为每个基于行内脚本字符串创建的 Blob 都会被赋予自己唯一的浏览器内部 URL，所以行内脚本中创建的共享工作者线程始终是唯一的。这里的原因将在下一节介绍。
 ```
 
 ```js
-//2. SharedWorker 标识与独占
-共享工作者线程与专用工作者线程的一个重要区别在于，虽然 Worker()构造函数始终会创建新实
-例，而 SharedWorker()则只会在相同的标识不存在的情况下才创建新实例。如果的确存在与标识匹配
-的共享工作者线程，则只会与已有共享者线程建立新的连接。
+//2. SharedWorker 标识与独占SharedWorker Identity and Single Occupancy
+共享工作者线程与专用工作者线程的一个重要区别在于，虽然 Worker()构造函数始终会创建新实例，而 SharedWorker()则只会在相同的标识不存在的情况下才创建新实例。如果的确存在与标识匹配的共享工作者线程，则只会与已有共享者线程建立新的连接。
+
 共享工作者线程标识源自解析后的脚本 URL、工作者线程名称和文档源。例如，下面的脚本将实例化一个共享工作者线程并添加两个连接：
 // 实例化一个共享工作者线程
 // - 全部基于同源调用构造函数
@@ -995,6 +1098,7 @@ console.log(worker); // Worker {}
 new SharedWorker('./sharedWorker.js'); 
 new SharedWorker('./sharedWorker.js'); 
 new SharedWorker('./sharedWorker.js'); 
+
 类似地，因为下面三个脚本字符串都解析到相同的 URL，所以也只会创建一个共享工作者线程：
 // 实例化一个共享工作者线程
 // - 全部基于同源调用构造函数
@@ -1003,9 +1107,8 @@ new SharedWorker('./sharedWorker.js');
 new SharedWorker('./sharedWorker.js'); 
 new SharedWorker('sharedWorker.js'); 
 new SharedWorker('https://www.example.com/sharedWorker.js'); 
-因为可选的工作者线程名称也是共享工作者线程标识的一部分，所以不同的线程名称会强制浏览器
-创建多个共享工作者线程。对下面的例子而言，一个名为'foo'，另一个名为'bar'，尽管它们同源且
-脚本 URL 相同：
+
+因为可选的工作者线程名称也是共享工作者线程标识的一部分，所以不同的线程名称会强制浏览器创建多个共享工作者线程。对下面的例子而言，一个名为'foo'，另一个名为'bar'，尽管它们同源且脚本 URL 相同：
 // 实例化一个共享工作者线程
 // - 全部基于同源调用构造函数
 // - 所有脚本解析为相同的 URL 
@@ -1013,63 +1116,59 @@ new SharedWorker('https://www.example.com/sharedWorker.js');
 new SharedWorker('./sharedWorker.js', {name: 'foo'}); 
 new SharedWorker('./sharedWorker.js', {name: 'foo'}); 
 new SharedWorker('./sharedWorker.js', {name: 'bar'}); 
-共享线程，顾名思义，可以在不同标签页、不同窗口、不同内嵌框架或同源的其他工作者线程之间
-共享。因此，下面的脚本如果在多个标签页运行，只会在第一次执行时创建一个共享工作者线程，后续
-执行会连接到该线程：
+
+共享线程，顾名思义，可以在不同标签页、不同窗口、不同内嵌框架或同源的其他工作者线程之间共享。因此，下面的脚本如果在多个标签页运行，只会在第一次执行时创建一个共享工作者线程，后续执行会连接到该线程：
 // 实例化一个共享工作者线程
 // - 全部基于同源调用构造函数
 // - 所有脚本解析为相同的 URL 
 // - 所有线程都有相同的名称
 new SharedWorker('./sharedWorker.js'); 
-初始化共享线程的脚本只会限制 URL，因此下面的代码会创建两个共享工作者线程，尽管加载了相
-同的脚本：
+
+初始化共享线程的脚本只会限制 URL，因此下面的代码会创建两个共享工作者线程，尽管加载了相同的脚本：
 // 实例化一个共享工作者线程
 // - 全部基于同源调用构造函数
 // - '?'导致了两个不同的 URL 
 // - 所有线程都有相同的名称
 new SharedWorker('./sharedWorker.js'); 
 new SharedWorker('./sharedWorker.js?'); 
-如果该脚本在两个不同的标签页中运行，同样也只会创建两个共享工作者线程。每个构造函数都会
-检查匹配的共享工作者线程，然后连接到已存在的那个。
+如果该脚本在两个不同的标签页中运行，同样也只会创建两个共享工作者线程。每个构造函数都会检查匹配的共享工作者线程，然后连接到已存在的那个。
 ```
 
 ```js
-//3. 使用 SharedWorker 对象
-SharedWorker()构造函数返回的 SharedWorker 对象被用作与新创建的共享工作者线程通信的
-连接点。它可以用来通过 MessagePort 在共享工作者线程和父上下文间传递信息，也可以用来捕获共
-享线程中发出的错误事件。
+//3. 使用 SharedWorker 对象Using the SharedWorker Object
+SharedWorker()构造函数返回的 SharedWorker 对象被用作与新创建的共享工作者线程通信的连接点。它可以用来通过 MessagePort 在共享工作者线程和父上下文间传递信息，也可以用来捕获共享线程中发出的错误事件。
+
 SharedWorker 对象支持以下属性。
  onerror：在共享线程中发生 ErrorEvent 类型的错误事件时会调用指定给该属性的处理程序。
- 此事件会在共享线程抛出错误时发生。
- 此事件也可以通过使用 sharedWorker.addEventListener('error', handler)处理。
+ 此事件会在共享线程抛出错误时发生。
+ 此事件也可以通过使用 sharedWorker.addEventListener('error', handler)处理。
  port：专门用来跟共享线程通信的 MessagePort。
 ```
 
 ```js
 //4. SharedWorkerGlobalScope
-在共享线程内部，全局作用域是 SharedWorkerGlobalScope 的实例。SharedWorkerGlobalScope 继承自 WorkerGlobalScope，因此包括它所有的属性和方法。与专用工作者线程一样，共享工
-作者线程也可以通过 self 关键字访问该全局上下文。
+在共享线程内部，全局作用域是 SharedWorkerGlobalScope 的实例。SharedWorkerGlobalScope 继承自 WorkerGlobalScope，因此包括它所有的属性和方法。与专用工作者线程一样，共享工作者线程也可以通过 self 关键字访问该全局上下文。
+
 SharedWorkerGlobalScope 通过以下属性和方法扩展了 WorkerGlobalScope。
  name：可选的字符串标识符，可以传给 SharedWorker 构造函数。
  importScripts()：用于向工作者线程中导入任意数量的脚本。
- close()：与 worker.terminate()对应，用于立即终止工作者线程。没有给工作者线程提供
-终止前清理的机会；脚本会突然停止。
+ close()：与 worker.terminate()对应，用于立即终止工作者线程。没有给工作者线程提供终止前清理的机会；脚本会突然停止。
  onconnect：与共享线程建立新连接时，应将其设置为处理程序。connect 事件包括
 MessagePort 实例的 ports 数组，可用于把消息发送回父上下文。
- 在通过 worker.port.onmessage 或 worker.port.start()与共享线程建立连接时都会触
-发 connect 事件。
- connect 事件也可以通过使用 sharedWorker.addEventListener('connect', handler)
+ 在通过 worker.port.onmessage 或 worker.port.start()与共享线程建立连接时都会触发 connect 事件。
+ connect 事件也可以通过使用 sharedWorker.addEventListener('connect', handler)
 处理。
-注意 根据浏览器实现，在 SharedWorker 中把日志打印到控制台不一定能在浏览器默
-认的控制台中看到。
+
+注意:根据浏览器实现，在 SharedWorker 中把日志打印到控制台不一定能在浏览器默认的控制台中看到。
 ```
 
 ### 理解共享工作者线程的生命周期
 
-共享工作者线程的生命周期具有与专用工作者线程相同的阶段的特性。不同之处在于，专用工作者
-线程只跟一个页面绑定，而共享工作者线程只要还有一个上下文连接就会持续存在。
+Understanding the Shared Worker Lifecycle
+共享工作者线程的生命周期具有与专用工作者线程相同的阶段的特性。不同之处在于，专用工作者线程只跟一个页面绑定，而共享工作者线程只要还有一个上下文连接就会持续存在 a dedicated worker is inextricably bound to a single page, a shared worker will persist as long as a context remains connected to it。
 比如下面的脚本，每次调用它都会创建一个专用工作者线程：
 new Worker('./worker.js');
+
 下表详细列出了当三个包含此脚本的标签页按顺序打开和关闭时会发生什么。
 
 | 事件 | 结果 | 事件发生后的线程数 |
@@ -1081,8 +1180,7 @@ new Worker('./worker.js');
 | 标签页 2 | 关闭 专用线程 2 终止 | 1 |
 | 标签页 3 | 关闭 专用线程 3 终止 | 0 |
 
-如上表所示，脚本执行次数、打开标签页数和运行的线程数是对等关系。下面再来看看这个简单的
-脚本，每次执行它都会创建或者连接到共享线程：
+如上表所示，脚本执行次数、打开标签页数和运行的线程数是对等关系。下面再来看看这个简单的脚本，每次执行它都会创建或者连接到共享线程：
 ``new SharedWorker('./sharedWorker.js');``
 下表列出了当三个包含此脚本的标签页按顺序打开和关闭时会发生什么。
 
@@ -1095,23 +1193,21 @@ new Worker('./worker.js');
 | 标签页 2 | 关闭 断开与共享线程 1 的连接 | 1 |
 | 标签页 3 | 关闭 断开与共享线程 1 的连接。没有连接了，因此终止共享线程 1 | 0 |
 
-如上表所示，标签页 2 和标签页 3 再次调用 new SharedWorker()会连接到已有线程。随着连接
-的增加和移除，浏览器会记录连接总数。在连接数为 0 时，线程被终止。
-关键在于，没有办法以编程方式终止共享线程。前面已经交代过，SharedWorker 对象上没有
-terminate()方法。在共享线程端口（稍后讨论）上调用 close()时，只要还有一个端口连接到该线
-程就不会真的终止线程。
-SharedWorker 的“连接”与关联 MessagePort 或 MessageChannel 的状态无关。只要建立了
-连接，浏览器会负责管理该连接。建立的连接会在页面的生命周期内持续存在，只有当页面销毁且没有
-连接时，浏览器才会终止共享线程。
+如上表所示，标签页 2 和标签页 3 再次调用 new SharedWorker()会连接到已有线程。随着连接的增加和移除，浏览器会记录连接总数。在连接数为 0 时，线程被终止。
+
+关键在于，没有办法以编程方式终止共享线程。前面已经交代过，SharedWorker 对象上没有terminate()方法。在共享线程端口（稍后讨论）上调用 close()时，只要还有一个端口连接到该线程就不会真的终止线程。
+
+SharedWorker 的“连接”与关联 MessagePort 或 MessageChannel 的状态无关。只要建立了连接，浏览器会负责管理该连接。建立的连接会在页面的生命周期内持续存在，只有当页面销毁且没有连接时，浏览器才会终止共享线程。
 
 ### 连接到共享工作者线程
 
 ```js
-//每次调用 SharedWorker()构造函数，无论是否创建了工作者线程，都会在共享线程内部触发
-connect 事件。下面的例子演示了这一点，在循环中调用 SharedWorker()构造函数：
+//Connecting to a Shared Worker
+//每次调用 SharedWorker()构造函数，无论是否创建了工作者线程，都会在共享线程内部触发connect 事件。下面的例子演示了这一点，在循环中调用 SharedWorker()构造函数：
 sharedWorker.js 
 let i = 0; 
 self.onconnect = () => console.log(`connected ${++i} times`); 
+
 main.js 
 for (let i = 0; i < 5; ++i) { 
  new SharedWorker('./sharedWorker.js'); 
@@ -1122,9 +1218,8 @@ for (let i = 0; i < 5; ++i) {
 // connected 4 times 
 // connected 5 times 
 发生 connect 事件时，SharedWorker()构造函数会隐式创建 MessageChannel 实例，并把
-MessagePort 实例的所有权唯一地转移给该 SharedWorker 的实例。这个 MessagePort 实例会保存
-在 connect 事件对象的 ports 数组中。一个连接事件只能代表一个连接，因此可以假定 ports 数组
-的长度等于 1。
+MessagePort 实例的所有权唯一地转移给该 SharedWorker 的实例。这个 MessagePort 实例会保存在 connect 事件对象的 ports 数组中。一个连接事件只能代表一个连接，因此可以假定 ports 数组的长度等于 1。
+
 下面的代码演示了访问事件对象的 ports 数组。这里使用了 Set 来保证只跟踪唯一的对象实例：
 sharedWorker.js 
 const connectedPorts = new Set(); 
@@ -1141,131 +1236,114 @@ for (let i = 0; i < 5; ++i) {
 // 3 unique connected ports 
 // 4 unique connected ports 
 // 5 unique connected ports 
-关键在于，共享线程与父上下文的启动和关闭不是对称的。每个新 SharedWorker 连接都会触发
-一个事件，但没有事件对应断开 SharedWorker 实例的连接（如页面关闭）。
-在前面的例子中，随着与相同共享线程连接和断开连接的页面越来越多，connectedPorts 集合中
-会受到死端口的污染，没有办法识别它们。一个解决方案是在 beforeunload 事件即将销毁页面时，
-明确发送卸载消息，让共享线程有机会清除死端口。
+关键在于，共享线程与父上下文的启动和关闭不是对称的。每个新 SharedWorker 连接都会触发一个事件，但没有事件对应断开 SharedWorker 实例的连接（如页面关闭）。
+
+在前面的例子中，随着与相同共享线程连接和断开连接的页面越来越多，connectedPorts 集合中会受到死端口的污染，没有办法识别它们。一个解决方案是在 beforeunload 事件即将销毁页面时，明确发送卸载消息，让共享线程有机会清除死端口。
 ```
 
 ## 服务工作者线程
 
-服务工作者线程（service worker）是一种类似浏览器中代理服务器的线程，可以拦截外出请求和缓
-存响应。这可以让网页在没有网络连接的情况下正常使用，因为部分或全部页面可以从服务工作者线程
-缓存中提供服务。服务工作者线程也可以使用 Notifications API、Push API、Background Sync API 和
+SERVICE WORKERS
+服务工作者线程（service worker）是一种类似浏览器中代理服务器的线程，可以拦截外出请求和缓存响应。这可以让网页在没有网络连接的情况下正常使用，因为部分或全部页面可以从服务工作者线程缓存中提供服务。服务工作者线程也可以使用 Notifications API、Push API、Background Sync API 和
 Channel Messaging API。
-与共享工作者线程类似，来自一个域的多个页面共享一个服务工作者线程。不过，为了使用 Push API
-等特性，服务工作者线程也可以在相关的标签页或浏览器关闭后继续等待到来的推送事件。
-无论如何，对于大多数开发者而言，服务工作者线程在两个主要任务上最有用：充当网络请求的
-缓存层和启用推送通知。在这个意义上，服务工作者线程就是用于把网页变成像原生应用程序一样的
-工具。
-注意 服务工作者线程涉及的内容极其广泛，几乎可以单独写一本书。为了更好地理解这
-一话题，推荐有条件的读者学一下 Udacity 的课程“Offline Web Applications”。除此之外，
-也可以参考 Mozilla 维护的 Service Worker Cookbook 网站，其中包含了常见的服务工作者
+
+与共享工作者线程类似，来自一个域的多个页面共享一个服务工作者线程。不过，为了使用 Push API等特性，服务工作者线程也可以在相关的标签页或浏览器关闭后继续等待到来的推送事件。
+
+无论如何，对于大多数开发者而言，服务工作者线程在两个主要任务上最有用：充当网络请求的缓存层和启用推送通知Ultimately, most developers will find that service workers are most useful for two primary tasks: acting as a caching layer for network requests, and enabling push notifications。在这个意义上，服务工作者线程就是用于把网页变成像原生应用程序一样的工具。
+
+注意:服务工作者线程涉及的内容极其广泛，几乎可以单独写一本书。为了更好地理解这
+一话题，推荐有条件的读者学一下 Udacity 的课程“Offline Web Applications”。除此之外，也可以参考 Mozilla 维护的 Service Worker Cookbook 网站，其中包含了常见的服务工作者
 线程模式。
 
-注意 服务工作者线程的生命周期取决于打开的同源标签页（称为“客户端”）数量、页
-面是否发生导航，以及服务脚本是否改变（以及其他一些因素）。如果对服务工作者线程
-的生命周期认识不够，本节的一些例子可能会让人觉得出乎意料。27.4.5 节详细解释了服
-务工作者线程的生命周期。
-另外，在调试服务工作者线程时，要谨慎使用浏览器的强制刷新功能（Ctrl+Shift+R）。强
-制刷新会强制浏览器忽略所有网络缓存，而服务工作者线程对大多数主流浏览器而言就是
-网络缓存。
+注意:服务工作者线程的生命周期取决于打开的同源标签页（称为“客户端”）数量、页面是否发生导航，以及服务脚本是否改变（以及其他一些因素）。如果对服务工作者线程的生命周期认识不够，本节的一些例子可能会让人觉得出乎意料。27.4.5 节详细解释了服务工作者线程的生命周期。
+
+另外，在调试服务工作者线程时，要谨慎使用浏览器的强制刷新功能（Ctrl+Shift+R）。!!!强制刷新会强制浏览器忽略所有网络缓存，而服务工作者线程对大多数主流浏览器而言就是网络缓存!!!。
 
 ### 服务工作者线程基础
 
-作为一种工作者线程，服务工作者线程与专用工作者线程和共享工作者线程拥有很多共性。比如，
-在独立上下文中运行，只能通过异步消息通信。不过，服务工作者线程与专用工作者线程和共享工作者
-线程还是有很多本质区别的。
+Service Worker Basics
+作为一种工作者线程，服务工作者线程与专用工作者线程和共享工作者线程拥有很多共性。比如，在独立上下文中运行，只能通过异步消息通信。不过，服务工作者线程与专用工作者线程和共享工作者线程还是有很多本质区别的。
 
 ```js
-//1. ServiceWorkerContainer
-服务工作者线程与专用工作者线程或共享工作者线程的一个区别是没有全局构造函数。服务工作者
-线程是通过 ServiceWorkerContainer 来管理的，它的实例保存在 navigator.serviceWorker 属
+//1. ServiceWorkerContainer 提供服务的???
+服务工作者线程与专用工作者线程或共享工作者线程的一个区别是没有全局构造函数。服务工作者线程是通过 ServiceWorkerContainer 来管理的，它的实例保存在 navigator.serviceWorker 属
 性中。该对象是个顶级接口，通过它可以让浏览器创建、更新、销毁或者与服务工作者线程交互。
 console.log(navigator.serviceWorker); 
 // ServiceWorkerContainer { ... } 
+//navigator 是 Web API 中的一个全局对象，表示用户代理（通常是浏览器）的状态和身份。它提供了许多有用的属性和方法，用于获取浏览器的信息和与用户代理交互。
 ```
 
 ```js
-//2. 创建服务工作者线程
-与共享工作者线程类似，服务工作者线程同样是在还不存在时创建新实例，在存在时连接到已有实
-例。ServiceWorkerContainer 没有通过全局构造函数创建，而是暴露了 register()方法，该方法
-以与 Worker()或 SharedWorker()构造函数相同的方式传递脚本 URL：
+//2. 创建服务工作者线程Creating a Service Worker
+与共享工作者线程类似，服务工作者线程同样是在还不存在时创建新实例，在存在时连接到已有实例。ServiceWorkerContainer 没有通过全局构造函数创建，而是暴露了 register()方法，该方法以与 Worker()或 SharedWorker()构造函数相同的方式传递脚本 URL：
 emptyServiceWorker.js
 // 空服务脚本
 main.js
 navigator.serviceWorker.register('./emptyServiceWorker.js'); 
-register()方法返回一个期约，该期约解决为 ServiceWorkerRegistration 对象，或在注册
-失败时拒绝。
+
+register()方法返回一个期约，该期约解决为 ServiceWorkerRegistration 对象，或在注册失败时拒绝。
 emptyServiceWorker.js
 // 空服务脚本
 main.js 
 // 注册成功，成功回调（解决）
 navigator.serviceWorker.register('./emptyServiceWorker.js') 
  .then(console.log, console.error); 
+
 // ServiceWorkerRegistration { ... } 
+
 // 使用不存在的文件注册，失败回调（拒绝）
 navigator.serviceWorker.register('./doesNotExist.js') 
  .then(console.log, console.error); 
 // TypeError: Failed to register a ServiceWorker: 
 // A bad HTTP response code (404) was received when fetching the script. 
-服务工作者线程对于何时注册是比较灵活的。在第一次调用 register()激活服务工作者线程后，
-后续在同一个页面使用相同 URL 对 register()的调用实际上什么也不会执行。此外，即使浏览器未
-全局支持服务工作者线程，服务工作者线程本身对页面也应该是不可见的。这是因为它的行为类似代理，
-就算有需要它处理的操作，也仅仅是发送常规的网络请求。
-考虑到上述情况，注册服务工作者线程的一种非常常见的模式是基于特性检测，并在页面的 load
-事件中操作。比如：
+
+服务工作者线程对于何时注册是比较灵活的。在第一次调用 register()激活服务工作者线程后，后续在同一个页面使用相同 URL 对 register()的调用实际上什么也不会执行。此外，即使浏览器未全局支持服务工作者线程，服务工作者线程本身对页面也应该是不可见的。这是因为它的行为类似代理，就算有需要它处理的操作，也仅仅是发送常规的网络请求。
+
+考虑到上述情况，注册服务工作者线程的一种非常常见的模式是基于特性检测，并在页面的 load事件中操作。比如：
 if ('serviceWorker' in navigator) { 
  window.addEventListener('load', () => { 
  navigator.serviceWorker.register('./serviceWorker.js'); 
  }); 
 } 
-如果没有 load 事件这个门槛，服务工作者线程的注册就会与页面资源的加载重叠，进而拖慢初始
-页面渲染的过程。除非该服务工作者线程负责管理缓存（这样的话就需要尽早注册，比如使用本章稍后
-会讨论的 clients.claim()），否则等待 load 事件是个明智的选择，这样同样可以发挥服务工作者线
-程的价值。
+
+如果没有 load 事件这个门槛，服务工作者线程的注册就会与页面资源的加载重叠，进而拖慢初始页面渲染的过程。除非该服务工作者线程负责管理缓存（这样的话就需要尽早注册，比如使用本章稍后会讨论的 clients.claim()），否则等待 load 事件是个明智的选择，这样同样可以发挥服务工作者线程的价值。
 ```
 
 ```js
-//3. 使用 ServiceWorkerContainer 对象
-ServiceWorkerContainer 接口是浏览器对服务工作者线程生态的顶部封装。它为管理服务工作
-者线程状态和生命周期提供了便利。
+//3. 使用 ServiceWorkerContainer 对象Using the ServiceWorkerContainer Object
+ServiceWorkerContainer 接口是浏览器对服务工作者线程生态的顶部封装。它为管理服务工作者线程状态和生命周期提供了便利。
 ServiceWorkerContainer 始终可以在客户端上下文中访问：
 console.log(navigator.serviceWorker); 
 // ServiceWorkerContainer { ... } 
+
 ServiceWorkerContainer 支持以下事件处理程序。
- oncontrollerchange：在 ServiceWorkerContainer 触发 controllerchange 事件时会
-调用指定的事件处理程序。
- 此事件在获得新激活的 ServiceWorkerRegistration 时触发。
- 此事件也可以使用 navigator.serviceWorker.addEventListener('controllerchange', 
+ oncontrollerchange：在 ServiceWorkerContainer 触发 controllerchange 事件时会调用指定的事件处理程序。
+ 此事件在获得新激活的 ServiceWorkerRegistration 时触发。
+ 此事件也可以使用 navigator.serviceWorker.addEventListener('controllerchange', 
 handler)处理。
  onerror：在关联的服务工作者线程触发 ErrorEvent 错误事件时会调用指定的事件处理程序。
- 此事件在关联的服务工作者线程内部抛出错误时触发。
- 此事件也可以使用 navigator.serviceWorker.addEventListener('error', handler)
-处理。
+ 此事件在关联的服务工作者线程内部抛出错误时触发。
+ 此事件也可以使用 navigator.serviceWorker.addEventListener('error', handler)处理。
  onmessage：在服务工作者线程触发 MessageEvent 事件时会调用指定的事件处理程序。
- 此事件在服务脚本向父上下文发送消息时触发。
- 此事件也可以使用 navigator.serviceWorker.addEventListener('message', handler)
-处理。
+ 此事件在服务脚本向父上下文发送消息时触发。
+ 此事件也可以使用 navigator.serviceWorker.addEventListener('message', handler)处理。
+
 ServiceWorkerContainer 支持下列属性。
  ready：返回期约，解决为激活的 ServiceWorkerRegistration 对象。该期约不会拒绝。
- controller：返回与当前页面关联的激活的 ServiceWorker 对象，如果没有激活的服务工作
-者线程则返回 null。
+ controller：返回与当前页面关联的激活的 ServiceWorker 对象，如果没有激活的服务工作者线程则返回 null。
+
 ServiceWorkerContainer 支持下列方法。
  register()：使用接收的 url 和 options 对象创建或更新 ServiceWorkerRegistration。
- getRegistration()：返回期约，解决为与提供的作用域匹配的 ServiceWorkerRegistration
-对象；如果没有匹配的服务工作者线程则返回 undefined。
+ getRegistration()：返回期约，解决为与提供的作用域匹配的 ServiceWorkerRegistration对象；如果没有匹配的服务工作者线程则返回 undefined。
  getRegistrations()：返回期约，解决为与 ServiceWorkerContainer 关联的 ServiceWorkerRegistration 对象的数组；如果没有关联的服务工作者线程则返回空数组。
  startMessage()：开始传送通过 Client.postMessage()派发的消息。
 ```
 
 ```js
 //4. 使用 ServiceWorkerRegistration 对象
-ServiceWorkerRegistration 对象表示注册成功的服务工作者线程。该对象可以在 register()
-返回的解决期约的处理程序中访问到。通过它的一些属性可以确定关联服务工作者线程的生命周期状态。
-调用 navigator.serviceWorker.register()之后返回的期约会将注册成功的 ServiceWorkerRegistration 对象（注册对象）发送给处理函数。在同一页面使用同一 URL 多次调用该方法
-会返回相同的注册对象。
+ServiceWorkerRegistration 对象表示注册成功的服务工作者线程。该对象可以在 register()返回的解决期约的处理程序中访问到。通过它的一些属性可以确定关联服务工作者线程的生命周期状态。
+
+调用 navigator.serviceWorker.register()之后返回的期约会将注册成功的 ServiceWorkerRegistration 对象（注册对象）发送给处理函数。在同一页面使用同一 URL 多次调用该方法会返回相同的注册对象。
 navigator.serviceWorker.register('./serviceWorker.js') 
 .then((registrationA) => { 
  console.log(registrationA); 
@@ -1274,23 +1352,27 @@ navigator.serviceWorker.register('./serviceWorker.js')
  console.log(registrationA === registrationB); 
  }); 
 }); 
+
 ServiceWorkerRegistration 支持以下事件处理程序。
  onupdatefound：在服务工作者线程触发 updatefound 事件时会调用指定的事件处理程序。
- 此事件会在服务工作者线程开始安装新版本时触发，表现为 ServiceWorkerRegistration. 
+ 此事件会在服务工作者线程开始安装新版本时触发，表现为 ServiceWorkerRegistration. 
 installing 收到一个新的服务工作者线程。
- 此事件也可以使用 serv serviceWorkerRegistration.addEventListener('updatefound', 
+ 此事件也可以使用 serv serviceWorkerRegistration.addEventListener('updatefound', 
 handler)处理。
+
 ServiceWorkerRegistration 支持以下通用属性。
  scope：返回服务工作者线程作用域的完整 URL 路径。该值源自接收服务脚本的路径和在
 register()中提供的作用域。
  navigationPreload：返回与注册对象关联的 NavigationPreloadManager 实例。
  pushManager：返回与注册对象关联的 pushManager 实例。
-ServiceWorkerRegistration 还支持以下属性，可用于判断服务工作者线程处于生命周期的什
-么阶段。
+
+ServiceWorkerRegistration 还支持以下属性，可用于判断服务工作者线程处于生命周期的什么阶段。
  installing：如果有则返回状态为 installing（安装）的服务工作者线程，否则为 null。
  waiting：如果有则返回状态为 waiting（等待）的服务工作者线程，否则为 null。
  active：如果有则返回状态 activating 或 active（活动）的服务工作者线程，否则为 null。
+
 注意，这些属性都是服务工作者线程状态的一次性快照。这在大多数情况下是没有问题的，因为活动状态的服务工作者线程在页面的生命周期内不会改变状态，除非强制这样做（比如调用 ServiceWorkerGlobalScope.skipWaiting()）。
+
 ServiceWorkerRegistration 支持下列方法。
  getNotifications()：返回期约，解决为 Notification 对象的数组。
  showNotifications()：显示通知，可以配置 title 和 options 参数。
@@ -1300,23 +1382,23 @@ ServiceWorkerRegistration 支持下列方法。
 
 ```js
 //5. 使用 ServiceWorker 对象
-ServiceWorker 对象可以通过两种方式获得：通过 ServiceWorkerContainer 对象的 controller
-属性和通过 ServiceWorkerRegistration 的 active 属性。该对象继承 Worker 原型，因此包括其
-所有属性和方法，但没有 terminate()方法。
+ServiceWorker 对象可以通过两种方式获得：通过 ServiceWorkerContainer 对象的 controller属性和通过 ServiceWorkerRegistration 的 active 属性。该对象继承 Worker 原型，因此包括其所有属性和方法，但没有 terminate()方法。
+
 ServiceWorker 支持以下事件处理程序。
  onstatechange：ServiceWorker 发生 statechange 事件时会调用指定的事件处理程序。
- 此事件会在 ServiceWorker.state 变化时发生。
- 此事件也可以使用 serviceWorker.addEventListener('statechange', handler)处理。
+ 此事件会在 ServiceWorker.state 变化时发生。
+ 此事件也可以使用 serviceWorker.addEventListener('statechange', handler)处理。
+
 ServiceWorker 支持以下属性。
  scriptURL：解析后注册服务工作者线程的 URL。例如，如果服务工作者线程是通过相对路径
 './serviceWorker.js'创建的，且注册在 https://www.example.com 上，则 scriptURL 属性将
 返回"https://www.example.com/serviceWorker.js"。
  state：表示服务工作者线程状态的字符串，可能的值如下。
- installing
- installed
- activating
- activated
- redundant
+ installing
+ installed
+ activating
+ activated
+ redundant
 ```
 
 ```js
