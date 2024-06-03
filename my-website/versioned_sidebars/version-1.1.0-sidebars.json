@@ -44,7 +44,8 @@
             "js/clientstor",
             "js/modulejs",
             "js/workerthread",
-            "js/bestpract"
+            "js/bestpract",
+            "js/appendix"                   
           ]
         }
       ]
