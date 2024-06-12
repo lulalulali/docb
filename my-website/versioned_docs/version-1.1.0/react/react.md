@@ -1821,15 +1821,533 @@ body {
 </html>
 ```
 
-#### 再一次状态提升\什么?
+#### 再一次状态提升\什么?再一次是什么意思啊???
 
 ```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
+import { useState } from 'react';
+
+function Square({ value, onSquareClick }) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
+
+function Board({ xIsNext, squares, onPlay }) {// Board 是一个 React 函数组件，接收三个 props：xIsNext, squares 和 onPlay
+function handleClick(i) {
+  // handleClick 是一个用于处理方块点击的函数，i 是点击的方块的索引
+  if (calculateWinner(squares) || squares[i]) {
+    // 如果当前的 squares 数组已经有赢家（由 calculateWinner 函数判断）
+    // 或者 squares[i] 已经有值（即方块已被点击），则直接返回，不做任何操作
+    return;
+  }
+  const nextSquares = squares.slice();
+  // 创建 squares 数组的一个副本，避免直接修改原数组
+  // 这样可以保持 React 的不可变性原则
+  if (xIsNext) {
+    nextSquares[i] = 'X';
+    // 如果当前是 X 的回合，将 nextSquares[i] 设置为 'X'
+  } else {
+    nextSquares[i] = 'O';
+    // 否则，将 nextSquares[i] 设置为 'O'
+  }
+  onPlay(nextSquares);
+  // 调用传入的 onPlay 函数，并传递更新后的 nextSquares 数组.  触发状态更新：调用 onPlay 函数，将更新后的 nextSquares 数组传递给它。这个函数通常用于更新父组件的状态，从而触发界面的重新渲染。
+  }
+
+  return (
+    <>
+      <div className="status">{status}</div>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+let App = function Game() {
+  const [xIsNext, setXIsNext] = useState(true);
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  //状态管理：xIsNext：表示当前轮到谁下棋，初始值为 true（表示 'X' 先下）。history：存储游戏的每一步历史状态，初始值为一个包含 9 个 null 值的数组。
+  const currentSquares = history[history.length - 1];
+  //获取当前棋盘状态：currentSquares：获取 history 数组中的最后一个元素，即当前的棋盘状态。
+  function handlePlay(nextSquares) {
+    setHistory([...history, nextSquares]);
+    setXIsNext(!xIsNext);
+    //点击处理函数 handlePlay：当一个方块被点击时，handlePlay 会更新 history 数组，将新的棋盘状态 nextSquares 添加到 history 中。setHistory：这是 useState 返回的函数，用于更新 history 状态。[...]：这是展开运算符，用于展开数组。history：当前的 history 状态，包含游戏的所有历史状态。nextSquares：新的棋盘状态。...history：展开当前的 history 数组，复制其中的所有元素。nextSquares：将 nextSquares 作为新的元素添加到数组的末尾  --同时，xIsNext 会被切换，以便下次点击时使用不同的符号。
+  }
+  return (
+    //渲染：Board 组件被渲染，并通过 props 接收 xIsNext、currentSquares 和 handlePlay。还有一个留空的 <ol> 标签，用于将来实现游戏历史记录显示。
+    // <div className="game-board">：创建一个 div 元素，并赋予它一个名为 game-board 的 CSS 类。这个类名可以用来应用样式，使这个容器在页面上以特定方式显示。
+    // <Board>：在 div 内渲染 Board 组件。 xIsNext={xIsNext}：将 xIsNext 状态作为一个名为 xIsNext 的属性传递给 Board 组件，使 Board 能够知道当前是 X 还是 O 的回合。 squares={currentSquares}：将 currentSquares 作为一个名为 squares 的属性传递给 Board 组件，使 Board 知道当前的棋盘状态。 onPlay={handlePlay}：将 handlePlay 函数作为一个名为 onPlay 的属性传递给 Board 组件，使 Board 能够在棋盘点击时调用 handlePlay 函数。
+    // 这段代码的作用是创建一个包含 Board 组件的 div 容器，并将必要的属性传递给 Board，以便它能够正确显示和处理游戏逻辑。  
+      <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{/*TODO*/}</ol>
+      </div>
+    </div>
+    //<div>：HTML 的 div 元素，用于创建一个块级容器。className="game-info"：className 是 React 中用于指定 HTML 类名的属性，"game-info" 是应用于这个 div 的 CSS 类名。<ol>：HTML 的 ol 元素，表示有序列表。 {/*TODO*/}：JavaScript 的注释语法，在 JSX 中用花括号 {} 包裹，表示在这里将来会添加内容。
+  );
+}
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
 ```
+
+#### 显示过去的落子
+
+### recat哲学
+
+当你使用 React 构建用户界面时，你首先会把它分解成一个个 组件，然后，你需要把这些组件连接在一起，使数据流经它们。
+
+#### 将 UI 拆解为组件层级结构
+
+就是整体是个框;部分中各自套框
+
+#### 使用 React 构建一个静态版本
+
+!!!!构建一个静态版本需要写大量的代码，并不需要什么思考; 但添加交互需要大量的思考，却不需要大量的代码。!!!!在简单的例子中，自上而下构建通常更简单；而在大型项目中，自下而上构建更简单。!!!!
+
+##### 静态版本示例
 
 ```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
+import { useState } from 'react';
+
+function Square({ value, onSquareClick }) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
+
+function Board({ xIsNext, squares, onPlay }) {
+  function handleClick(i) {
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    const nextSquares = squares.slice();
+    if (xIsNext) {
+      nextSquares[i] = 'X';
+    } else {
+      nextSquares[i] = 'O';
+    }
+    onPlay(nextSquares);
+  }
+
+  const winner = calculateWinner(squares);
+  let status;
+  if (winner) {
+    status = 'Winner: ' + winner;
+  } else {
+    status = 'Next player: ' + (xIsNext ? 'X' : 'O');
+  }
+
+  return (
+    <>
+      <div className="status">{status}</div>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+let App = function Game() {
+  const [xIsNext, setXIsNext] = useState(true);
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const currentSquares = history[history.length - 1];
+
+  function handlePlay(nextSquares) {
+    setHistory([...history, nextSquares]);
+    setXIsNext(!xIsNext);
+  }
+
+  function jumpTo(nextMove) {
+    // TODO
+  }
+
+  //map是一种数组操作方法. 以下生成了一个包含所有历史步数的列表，每个列表项都是一个按钮，点击按钮可以跳转到相应的历史状态。描述信息根据步数显示为 Go to move #n 或 Go to game start。
+  //array.map((element, index) => {});
+  // 回调函数的主体
+  // 对元素进行操作并返回新值
+  //array 是我们要遍历的数组。.map 是数组的方法，用来对数组中的每个元素执行一个函数，并生成一个新数组。element 是当前正在处理的数组元素。index 是当前正在处理的数组元素的索引（位置）。
+  const moves = history.map((squares, move) => {
+    //map 方法会创建一个新数组，其结果是对原数组中的每个元素调用一次提供的回调函数后的返回值。它会遍历 history 数组中的每个元素，并为每个元素调用一次回调函数。(squares, move) => {这是传递给 map 方法的回调函数，它是一个箭头函数。箭头函数在这里定义了两个参数：squares 和 move。squares这是 history 数组中的每个元素。在这个上下文中，squares 是一个数组，表示某一时刻的棋盘状态。move这是 map 方法提供的第二个参数，表示当前元素在 history 数组中的索引。move 用来标识第几步。
+    let description;
+    if (move > 0) {
+      description = 'Go to move #' + move;
+    } else {
+      description = 'Go to game start';
+    }
+    return (
+      <li>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+    //const moves = history.map((squares, move) => {遍历 history 数组，为每一步创建一个按钮。history.map 返回一个新数组 moves，其中每个元素是一个列表项 li，包含一个按钮。
+    //let description;声明一个变量 description，用于存储每一步的描述信息。
+    //if (move > 0) {判断 move 是否大于 0，如果是，则设置 description 为 Go to move # 加上 move。
+    //description = 'Go to move #' + move;设置 description 的值为当前步数。
+    //description = 'Go to game start';如果 move 为 0，设置 description 为 Go to game start。
+    //return (返回一个 li 元素，包含一个按钮，按钮的 onClick 事件调用 jumpTo 函数，传入当前的 move 值，按钮的文本为 description。
+    //<li key={move}>创建一个 li 元素，key 属性设置为 move。
+    //<button onClick={() => jumpTo(move)}>{description}</button>创建一个按钮，点击时调用 jumpTo 函数，传入当前的 move 值，按钮的文本为 description。
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+  //game 容器包含整个游戏界面。
+  //game-board 容器包含棋盘组件 Board，该组件接收当前的玩家、棋盘状态和处理点击事件的函数作为属性。
+  //game-info 容器包含历史记录的有序列表 moves，用户可以点击列表中的按钮跳转到对应的历史状态。
+}
+
+ function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
 ```
+
+#### 找出 UI 精简且完整的 state 表示
+
+为了使 UI 可交互，你需要用户更改潜在的数据结构。你将可以使用 state 进行实现。
+
+组织 state 最重要的一条原则是保持它 DRY（不要自我重复）。计算出你应用程序需要的绝对精简 state 表示，按需计算其它一切。举个例子，如果你正在构建一个购物列表，你可将他们在 state 中存储为数组。如果你同时想展示列表中物品数量，不需要将其另存为一个新的 state。取而代之，可以通过读取你数组的长度来实现。
+
+思路!!!:原始列表中的产品 被作为 props 传递，所以不是 state。
+搜索文本似乎应该是 state，因为它会随着时间的推移而变化，并且无法从任何东西中计算出来。
+复选框的值似乎是 state，因为它会随着时间的推移而变化，并且无法从任何东西中计算出来。
+过滤后列表中的产品 不是 state，因为可以通过被原始列表中的产品，根据搜索框文本和复选框的值进行计算。
+
+props与state:
+在 React 中有两种“模型”数据：props 和 state。下面是它们的不同之处:
+props 像是你传递的参数 至函数。它们使父组件可以传递数据给子组件，定制它们的展示。举个例子，Form 可以传递 color prop 至 Button。
+state 像是组件的内存。它使组件可以对一些信息保持追踪，并根据交互来改变。举个例子，Button 可以保持对 isHovered state 的追踪。
+props 和 state 是不同的，但它们可以共同工作。父组件将经常在 state 中放置一些信息（以便它可以改变），并且作为子组件的属性!!!向下!!!传递至它的子组件。如果第一次了解这其中的差别感到迷惑，也没关系。通过大量练习即可牢牢记住！
+
+#### 验证state应该被放置在哪里
+
+通常情况下，你可以直接放置 state 于它们共同的父组件。
+你也可以将 state 放置于它们父组件上层的组件。
+如果你找不到一个有意义拥有这个 state 的地方，单独创建一个新的组件去管理这个 state，并将它添加到它们父组件上层的某个地方。
+
+##### 编辑后搜框和表格的变化
 
 ```html
 
