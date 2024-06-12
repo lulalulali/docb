@@ -1,0 +1,1924 @@
+# REACT
+
+## jsx
+
+JSX 的全名是 JavaScript XML。它是一种语法扩展，通常与 React 一起使用。JSX 允许你在 JavaScript 代码中编写类似 HTML 的标签，从而使得定义 React 组件的结构和内容更加直观和简洁。
+
+大致表述
+语法扩展：JSX 是 JavaScript 的语法扩展，允许你在 JavaScript 文件中直接写 HTML 标签。
+类 HTML 语法：使用类似 HTML 的语法来描述组件的 UI 结构，使得代码更具可读性和直观性。
+与 React 结合：JSX 通常与 React 一起使用，简化了创建和管理组件的过程。
+转译为 JavaScript：在构建过程中，JSX 会被 Babel 等工具转译为标准的 JavaScript 代码。每个 JSX 元素都被转换为 React.createElement() 调用。
+
+## 概述
+
+React 应用程序是由 组件 组成的。一个组件是 UI（用户界面）的一部分，它拥有自己的逻辑和外观。组件可以小到一个按钮，也可以大到整个页面。
+
+React 组件是返回标签的 JavaScript 函数
+
+你可能已经注意到 ``<MyButton />`` 是以大写字母开头的。你可以据此识别 React 组件。React 组件必须以大写字母开头，而 HTML 标签则必须是小写字母。
+
+大多数 React 项目会使用 JSX，主要是它很方便。所有 我们推荐的本地开发工具 都开箱即用地支持 JSX。
+
+JSX (JavaScript XML)比 HTML 更加严格。你必须闭合标签，如 ``<br />``。你的组件也不能返回多个 JSX 标签。你必须将它们包裹到一个共享的父级中，比如 ``<div>...</div>``或使用空的 <>...</> 包裹
+
+如果你有大量的 HTML 需要移植到 JSX 中，你可以使用 在线转换器。 就是说把html格式的东西放进jsx的组件里面???
+
+React 并没有规定你如何添加 CSS 文件。最简单的方式是使用 HTML 的 ``<link>`` 标签。
+
+JSX 会让你把标签放到 JavaScript 中。而大括号会让你 “回到” JavaScript 中，这样你就可以从你的代码中嵌入一些变量并展示给用户。例如，这将显示 user.name：
+
+```jsx
+return (
+  <h1>
+    {user.name}
+  </h1>
+);
+return ( 
+  <img
+    className="avatar"
+    src={user.imageUrl}
+  />
+);
+
+//更复杂的式子
+const user = {
+  name: 'Hedy Lamarr',
+  imageUrl: 'https://i.imgur.com/yXOvdOSs.jpg',
+  imageSize: 90,
+};
+export default function Profile() {
+  return (
+    <>
+      <h1>{user.name}</h1>
+      <img
+        className="avatar"
+        src={user.imageUrl}
+        alt={'Photo of ' + user.name}
+        style={{
+          width: user.imageSize,
+          height: user.imageSize
+          //就这儿
+        }}
+      />
+    </>
+  );
+}
+```
+
+你还可以将 JSX 属性 “转义到 JavaScript”，但你必须使用大括号 而非 引号。例如，className="avatar" 是将 "avatar" 字符串传递给 className，作为 CSS 的 class。但 src={user.imageUrl} 会读取 JavaScript 的 user.imageUrl 变量，然后将该值作为 src 属性传递.(在上面代码里面)
+
+```jsx
+//React 没有特殊的语法来编写条件语句，因此你使用的就是普通的 JavaScript 代码。例如使用 if 语句根据条件引入 JSX：
+let content;
+if (isLoggedIn) {
+  content = <AdminPanel />;
+} else {
+  content = <LoginForm />;
+}
+return (
+  <div>
+    {content}
+  </div>
+);
+//如果你喜欢更为紧凑的代码，可以使用 条件 ? 运算符。与 if 不同的是，它工作于 JSX 内部：
+<div>
+  {isLoggedIn ? (
+    <AdminPanel />
+  ) : (
+    <LoginForm />
+  )}
+</div>
+
+//或者下面的逻辑
+<div>
+  {isLoggedIn && <AdminPanel />}
+</div>
+```
+
+```jsx
+const listItems = products.map(product =>
+  <li key={product.id}>
+    {product.title}
+  </li>
+);
+//<li> 有一个 key 属性。对于列表中的每一个元素，你都应该传递一个字符串或者数字给 key，用于在其兄弟节点中唯一标识该元素。通常 key 来自你的数据，比如数据库中的 ID。如果你在后续插入、删除或重新排序这些项目，React 将依靠你提供的 key 来思考发生了什么。  后续是毛意思,怎么插入???
+
+return (
+  <ul>{listItems}</ul>
+);
+```
+
+### 响应事件
+
+```jsx
+//可以通过在组件中声明 事件处理 函数来响应事件：
+function MyButton() {
+  function handleClick() {
+    alert('You clicked me!');
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Click me
+    </button>
+  );
+}
+注意，onClick={handleClick} 的结尾没有小括号！不要 调用 事件处理函数：你只需 把函数传递给事件 即可。当用户点击按钮时 React 会调用你传递的事件处理函数。
+```
+
+### 更新界面
+
+```jsx
+//通常你会希望你的组件 “记住” 一些信息并展示出来，  比如说:  一个按钮被点击的次数。要做到这一点，你需要在你的组件中添加 state。
+//首先，从 React 引入 useState：
+import { useState } from 'react';
+//现在你可以在你的组件中声明一个 state 变量：
+function MyButton() {
+  const [count, setCount] = useState(0);
+  // ...}
+//你将从 useState 中获得两样东西：当前的 state（count），以及用于更新它的函数（setCount）。你可以给它们起任何名字，但按照惯例会像 [something, setSomething] 这样为它们命名。
+
+//第一次显示按钮时，count 的值为 0，因为你把 0 传给了 useState()。当你想改变 state 时，调用 setCount() 并将新的值传递给它。点击该按钮计数器将递增：
+function MyButton() {
+    //定义了一个函数组件 MyButton。函数组件是 React 中定义组件的一种方式。
+  const [count, setCount] = useState(0);
+    //状态钩子:useState(0)：调用 useState 钩子，初始化 count 状态为 0。count：当前状态值，初始化为 0。setCount：更新状态的函数。调用 setCount 并传入新值时，React 会重新渲染组件并更新 count 的值。
+  function handleClick() {
+    setCount(count + 1);
+  }
+    //事件处理函数:handleClick：定义了一个事件处理函数，当按钮被点击时调用。setCount(count + 1)：每次按钮点击时，将 count 的值增加 1，并使用 setCount 更新状态。
+  return (
+    <button onClick={handleClick}>
+      Clicked {count} times
+    </button>
+    //render按钮:<button onClick={handleClick}>：定义了一个按钮，并将 handleClick 作为 onClick 事件处理函数。当按钮被点击时，会调用 handleClick 函数。    Clicked {count} times：按钮的文本内容动态显示 count 的值，格式为 "Clicked X times"，其中 X 是当前点击次数。
+  );
+  //注意，每个按钮会 “记住” 自己的 count，而不影响其他按钮。
+}
+//React 将再次调用你的组件函数。第一次 count 变成 1。接着点击会变成 2。继续点击会逐步递增。
+//如果你多次渲染同一个组件，每个组件都会拥有自己的 state。你可以尝试点击不同的按钮：
+```
+
+```js
+import { useState } from 'react';
+
+export default function MyApp() {
+  return (
+    <div>
+      <h1>Counters that update separately</h1>
+      <MyButton />
+      <MyButton />
+    </div>
+  );
+}
+function MyButton() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Clicked {count} times
+    </button>
+  );
+}
+```
+
+### HOOK
+
+以 use 开头的函数被称为 Hook。useState 是 React 提供的一个内置 Hook。你可以在 React API 参考 中找到其他内置的 Hook。你也可以通过组合现有的 Hook 来编写属于你自己的 Hook。
+
+Hook 比普通函数更为严格。你只能在你的组件（或其他 Hook）的 顶层 调用 Hook。如果你想在一个条件或循环中使用 useState，请提取一个新的组件并在组件内部使用它。
+
+### 上移
+
+上移是用来干嘛的?
+
+```jsx
+//希望将按钮的计数逻辑从 MyApp 组件中移动到 MyButton 组件中。这样，每个 MyButton 组件都有独立的状态和计数逻辑。
+import { useState } from 'react';
+// 定义 MyButton 组件
+function MyButton() {
+    //定义了一个函数组件 MyButton，该组件包含自己的状态和点击处理逻辑。
+    //使用 useState 钩子初始化 count 状态为 0。
+    //定义 handleClick 函数，当按钮被点击时调用 setCount 增加计数。
+    //渲染一个按钮，显示当前的点击次数，当按钮被点击时调用 handleClick 函数。
+  const [count, setCount] = useState(0);
+  function handleClick() {
+    setCount(count + 1);
+  }
+  return (
+    <button onClick={handleClick}>
+      Clicked {count} times
+    </button>
+  );
+}
+
+// 定义 MyApp 组件
+export default function MyApp() {
+  return (
+    //定义了一个函数组件 MyApp，渲染一个包含标题和两个 MyButton 组件的 div。
+    //每个 MyButton 组件都有独立的状态，因此它们的计数是分开更新的。
+    <div>
+      <h1>Counters that update separately</h1>
+      <MyButton />
+      <MyButton />
+    </div>
+  );
+}
+//组件交互
+//当 MyApp 组件渲染时，会创建两个 MyButton 组件的实例。
+//每个 MyButton 组件都有自己的 count 状态，并且它们的状态是相互独立的。
+//点击任意一个按钮，只会更新对应 MyButton 组件的 count 状态，而不会影响另一个按钮的计数。
+
+//接着，将 MyApp 中的点击事件处理函数以及 state 一同向下传递到 每个 MyButton 中。你可以使用 JSX 的大括号向 MyButton 传递信息。就像之前向 <img> 等内置标签所做的那样:
+export default function MyApp() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+  }
+  return (
+    <div>
+      <h1>Counters that update together</h1>
+      <MyButton count={count} onClick={handleClick} />
+      <MyButton count={count} onClick={handleClick} />
+    </div>
+  );
+}
+//使用这种方式传递的信息被称作 prop。此时 MyApp 组件包含了 count state 以及 handleClick 事件处理函数，并将它们作为 prop 传递给 了每个按钮。
+//最后，改变 MyButton 以 读取 从父组件传递来的 prop：
+function MyButton({ count, onClick }) {
+  return (
+    <button onClick={onClick}>
+      Clicked {count} times
+    </button>
+  );
+}
+```
+
+```jsx
+在这个示例中，我们希望创建一个 `MyApp` 组件，该组件包含两个 `MyButton` 组件，并且它们共享同一个计数状态。这意味着无论点击哪个按钮，两个按钮的计数都会一起更新。以下是实现此功能的完整代码：
+import { useState } from 'react';
+
+function MyButton({ count, onClick }) {
+  return (
+    <button onClick={onClick}>
+      Clicked {count} times
+    </button>
+  );
+}
+
+export default function MyApp() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+  }
+
+  return (
+    <div>
+      <h1>Counters that update together</h1>
+      <MyButton count={count} onClick={handleClick} />
+      <MyButton count={count} onClick={handleClick} />
+    </div>
+  );
+}
+
+1. **`MyButton` 组件**：
+   - 接受 `count` 和 `onClick` 作为 props。
+   - 渲染一个按钮，显示当前的点击次数 `count`，并将 `onClick` 函数绑定到按钮的 `onClick` 事件上。
+2. **`MyApp` 组件**：
+   - 使用 `useState` 钩子来管理计数状态 `count`。
+   - 定义 `handleClick` 函数，当按钮被点击时，增加计数。
+   - 渲染一个包含标题和两个 `MyButton` 组件的 `div`。
+   - 将 `count` 和 `handleClick` 作为 props 传递给每个 `MyButton` 组件。
+
+- `MyApp` 组件管理着一个共享的 `count` 状态。
+- 每次点击任意一个按钮，都会调用 `handleClick` 函数，将 `count` 增加 `1`。
+- 由于 `count` 是由 `MyApp` 组件管理的，两个 `MyButton` 组件会显示相同的计数值，并且它们的计数会一起更新。
+
+最终结果:当你运行这个代码时，你会看到标题 "Counters that update together" 和两个按钮。每个按钮都会显示相同的点击次数。当你点击任意一个按钮时，两个按钮的计数都会增加。这展示了如何在 React 中通过传递 props 来实现组件之间的状态共享。
+
+- **共享状态**：`MyApp` 组件管理着一个 `count` 状态，并将其作为 props 传递给 `MyButton` 组件。
+- **统一更新**：由于 `count` 状态是由 `MyApp` 管理的，每次更新都会导致所有依赖该状态的组件重新渲染。
+- **提升状态**：这是一个状态提升的示例，状态提升到它们的共同父组件中，以便多个子组件可以共享同一个状态。
+```
+
+### 井字棋game
+
+```jsx
+//注意:html文件！打头 
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- 一个带有 id 为 root 的 div，React 将在这个 div 中渲染内容。 -->
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<!-- 加载 Babel 以便在浏览器中直接使用 JSX 和现代 JavaScript 特性。加载 ES 模块填充库以便使用 importmap 来指定模块的位置。 -->
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+//导入 React 和 useState 钩子。导入 createRoot 方法，用于创建 React 根节点。
+
+import { useState } from 'react';
+
+function Square({ value, onSquareClick }) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+  //Square 组件是一个按钮，显示传入的 value，并在点击时调用 onSquareClick 函数。
+}
+
+//定义了三个 React 组件：Square、Board 和 Game。Square 组件表示棋盘上的一个方格。
+//Board 组件表示整个棋盘，它负责渲染 9 个 Square 组件，并处理点击事件。
+//Game 组件管理游戏的状态，包括历史记录和当前步数，并允许用户查看游戏历史记录。
+//calculateWinner 函数用来判断是否有玩家赢得了游戏。
+//使用 createRoot 方法挂载 React 应用，并在 root 元素中渲染 App 组件。
+
+//game组件
+function Board({ xIsNext, squares, onPlay }) {
+  function handleClick(i) {
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    const nextSquares = squares.slice();
+    if (xIsNext) {
+      nextSquares[i] = 'X';
+    } else {
+      nextSquares[i] = 'O';
+    }
+    onPlay(nextSquares);
+  }
+
+  //计算赢家的个数
+  const winner = calculateWinner(squares);
+  let status;
+  if (winner) {
+    status = 'Winner: ' + winner;
+  } else {
+    status = 'Next player: ' + (xIsNext ? 'X' : 'O');
+  }
+
+  return (
+    <>
+      <div className="status">{status}</div>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+let App = function Game() {
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const xIsNext = currentMove % 2 === 0;
+  const currentSquares = history[currentMove];
+
+  function handlePlay(nextSquares) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+  }
+
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  const moves = history.map((squares, move) => {
+    let description;
+    if (move > 0) {
+      description = 'Go to move #' + move;
+    } else {
+      description = 'Go to game start';
+    }
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+}
+
+//计算赢家的函数
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+//挂载react应用
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+/* 为游戏组件定义了一些基础样式，包括方格、行和游戏信息的布局。 */
+</style>
+</html>
+```
+
+#### 一个button框
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<!-- 这两行脚本的作用是支持在浏览器中直接编写和运行现代 JavaScript 和 JSX 语法 -->
+<!-- Babel：这是一个 JavaScript 编译器，可以将最新的 JavaScript 语法和 JSX 语法转换为浏览器能够理解的普通 JavaScript。   作用：这个脚本从 unpkg CDN 加载 Babel 的独立版本。它使我们可以在 HTML 文件中直接使用 JSX 语法和现代 JavaScript 特性，无需预编译步骤。配合 <script type="text/babel"> 标签使用时，Babel 会自动编译这些标签中的代码。 -->
+<!-- ES Module Shims：这是一个 polyfill(Polyfill 是一个 JavaScript 库，通常用于提供对较旧的浏览器不支持的新特性或新功能的支持。Polyfill 可以模拟新特性，使得这些特性能够在不支持它们的旧环境中运行。一般作用--兼容性：Polyfill 的主要作用是增强兼容性，确保代码能够在尽可能多的浏览器和环境中运行。功能补充：对于浏览器尚未实现的 Web 标准，Polyfill 可以提供相应的功能支持。
+平滑过渡：在新特性逐步被各大浏览器支持的过渡期，Polyfill 能帮助开发者提前使用这些新特性。)，它为浏览器提供对 import maps 和其他 ES 模块特性的支持。
+作用：这个脚本使得我们可以使用 import maps 来定义模块的路径，从而在浏览器中更灵活地加载 ES 模块。它确保浏览器能够理解并处理 import maps 中的配置，并且支持基于 import 语句的模块导入。 -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<!-- Import Map 是一种用于在 JavaScript 模块导入时映射模块名称与实际 URL 之间的关系的 JSON 对象。它允许开发者定义模块名称以及它们的实际加载路径，从而更灵活地管理依赖项。 -->
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+//React：从 react 库中导入 React 对象，这是编写 React 组件所需的核心库。StrictMode：React 的严格模式，用于突出潜在的问题。createRoot：从 react-dom/client 中导入的函数，用于创建 React 应用的根节点。
+let App = function Square() {
+  return <button className="square">X</button>;
+}
+
+const root = createRoot(document.getElementById('root'));
+//创建一个 React 应用的根节点，并将其与 DOM 中的一个元素绑定。
+//createRoot 函数--这是 React 18 中引入的新 API，用于创建一个新的根节点（root）。createRoot 函数接受一个 DOM 元素作为参数，返回一个根节点实例，该实例用于渲染 React 组件树。
+//document.getElementById('root')--document.getElementById 是一个 DOM 方法，用于获取具有指定 id 的元素。在这个例子中，它获取 id 为 root 的 DOM 元素。
+//结合起来--createRoot(document.getElementById('root')) 这行代码将获取 id 为 root 的 DOM 元素，并将其作为 React 应用的根元素。  root 变量现在是一个由 createRoot 创建的根节点实例，允许我们使用它来渲染 React 组件树。
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+// 在指定的根节点上渲染 React 组件树
+//root.render 方法--root 是由 createRoot 创建的根节点实例。render 方法用于渲染 React 组件树到指定的根节点上。<StrictMode> 组件--StrictMode 是一个用于突出潜在问题的工具。它仅在开发模式中启用，帮助检测不安全的生命周期方法、过时的 API 以及其他可能导致问题的代码。将组件树包裹在 <StrictMode> 中，可以在开发过程中更早发现并修复潜在问题。<App /> 组件--这是我们自定义的 React 组件 App。在这个例子中，App 返回一个包含 "X" 的按钮。
+//整体作用--这段代码的作用是将 App 组件（一个简单的按钮）渲染到 DOM 中 id 为 root 的元素中，并使用 StrictMode 进行包裹以便在开发过程中检测潜在问题。
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 数字9宫格框
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script> 
+<!-- type="importmap" 是用来定义 JavaScript 模块的导入映射的。import map 是一种浏览器原生支持的机制，用来指定模块的路径映射关系，使得我们可以使用简短的别名来引用模块，而无需在每个文件中都写出完整的路径。 -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+let App = function Board() {
+  return (
+    <>
+      <div className="board-row">
+        <button className="square">1</button>
+        <button className="square">2</button>
+        <button className="square">3</button>
+      </div>
+      <div className="board-row">
+        <button className="square">4</button>
+        <button className="square">5</button>
+        <button className="square">6</button>
+      </div>
+      <div className="board-row">
+        <button className="square">7</button>
+        <button className="square">8</button>
+        <button className="square">9</button>
+      </div>
+    </>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+// createRoot(document.getElementById('root'))：创建一个 React 应用的根节点，并绑定到 HTML 中 id 为 root 的元素。
+// root.render：在根节点上渲染 React 组件树。
+// <StrictMode>：用于包裹 App 组件，帮助在开发模式下检测潜在问题。
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 数字9宫格另一种代码
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+function Square({ value }) {
+  return <button className="square">{value}</button>;
+}
+
+let App = function Board() {      
+      // <div className="board-row">
+      //   <button className="square">1</button>
+      //   <button className="square">2</button>
+      //   <button className="square">3</button>
+      // </div>跟以下对比来看
+  return (
+    <>
+      <div className="board-row">
+        <Square value="1" />
+        <Square value="2" />
+        <Square value="3" />
+      </div>
+
+      <div className="board-row">
+        <Square value="4" />
+        <Square value="5" />
+        <Square value="6" />
+      </div>
+      <div className="board-row">
+        <Square value="7" />
+        <Square value="8" />
+        <Square value="9" />
+      </div>
+    </>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 空的9宫格棋盘
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { useState } from 'react';
+
+function Square({ value }) {
+  return <button className="square">{value}</button>;
+}
+
+let App = function Board() {
+  const [squares, setSquares] = useState(Array(9).fill(null));
+//使用了 React 的 useState 钩子来定义和管理组件的状态。以下是逐词解释：
+// const：这是一个 ES6 关键字，用于声明一个常量变量。
+// [squares, setSquares]：使用数组解构语法从 useState 返回的数组中提取两个值。第一个值 squares 是当前状态，第二个值 setSquares 是一个函数，用于更新状态。
+// useState：这是 React 的一个钩子，用于在函数组件中添加状态。它接受一个初始状态作为参数，并返回一个包含当前状态和更新状态的函数的数组。
+// Array(9).fill(null)：这是 useState 钩子的初始状态，它创建了一个包含 9 个 null 值的数组。这个数组表示一个 3x3 的棋盘，每个方块初始状态都是空的。
+  return (
+    <>
+      <div className="board-row">
+        <Square value={squares[0]} />
+        <Square value={squares[1]} />
+        <Square value={squares[2]} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} />
+        <Square value={squares[4]} />
+        <Square value={squares[5]} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} />
+        <Square value={squares[7]} />
+        <Square value={squares[8]} />
+      </div>
+    </>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 点击后全是X的9空格
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { useState } from 'react';
+
+function Square({ value, onSquareClick }) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+// function Square({ value, onSquareClick }) { ... }：定义了一个名为 Square 的函数组件，接受两个属性（props）：value 和 onSquareClick。
+// <button className="square" onClick={onSquareClick}>：返回一个按钮元素，具有一个 onClick 事件处理程序，当点击按钮时触发 onSquareClick 函数。
+// {value}：按钮内部显示 value 属性的值。
+}
+
+let App = function Board() {
+//let App = function Board() { ... }：定义了一个名为 Board 的函数，并将其赋值给 App，它代表了棋盘。
+//const [squares, setSquares] = useState(Array(9).fill(null));：使用 useState 钩子定义一个状态变量 squares，其初始值为包含 9 个 null 的数组。setSquares 用于更新 squares 的值。
+//function handleClick(i) { ... }：定义了一个 handleClick 函数，当一个方块被点击时调用。它创建一个 squares 数组的副本，更新点击的方块的值为 'X'，然后调用 setSquares 更新状态。
+//return ( ... )：返回一个包含三个 div 元素的 JSX 片段，每个 div 元素代表棋盘的一行。每个 Square 组件被传递了对应的 value 和 onSquareClick 函数。
+  const [squares, setSquares] = useState(Array(9).fill(null));
+
+  function handleClick(i) {
+    const nextSquares = squares.slice();
+    nextSquares[i] = 'X';
+    setSquares(nextSquares);
+    //function handleClick(i) { ... }：定义了一个名为 handleClick 的函数，接受一个参数 i，表示被点击的方块的索引。
+   // const nextSquares = squares.slice();：创建 squares 数组的一个副本 nextSquares。
+   // nextSquares[i] = 'X';：将 nextSquares 数组中索引 i 处的值设置为 'X'。
+   // setSquares(nextSquares);：使用 setSquares 更新 squares 状态为 nextSquares。
+  }
+
+  return (
+    <>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 交替落子
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { useState } from 'react';
+
+function Square({value, onSquareClick}) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
+
+let App = function Board() {
+  //定义两个状态,一个是拿来true\false调控判断的;一个是拿来证明按钮新不新鲜的
+  const [xIsNext, setXIsNext] = useState(true);
+  const [squares, setSquares] = useState(Array(9).fill(null));
+  //状态定义：xIsNext：一个布尔值，表示下一步是否由 X 进行。squares：一个包含 9 个元素的数组，表示棋盘上的方块，每个方块可以是 null、'X' 或 'O'。
+
+  function handleClick(i) {
+    if (squares[i]) {
+      return;
+      //检查索引 i 处的方块是否已经被点击过（即是否有值）。如果方块已经被点击过（值不为 null），函数返回，不执行后续操作。
+    }
+    const nextSquares = squares.slice();
+    //创建当前 squares 数组的副本 nextSquares。使用 slice() 方法可以创建数组的浅拷贝。
+    if (xIsNext) {
+      nextSquares[i] = 'X';
+    } else {
+      nextSquares[i] = 'O';
+      //nextSquares[i] = 'X';：如果当前是 X 的回合（xIsNext 为 true），将索引 i 处的方块值设置为 'X'。else { nextSquares[i] = 'O'; }：否则，将索引 i 处的方块值设置为 'O'。
+    }
+    setSquares(nextSquares);//更新 squares 状态为 nextSquares，重新渲染组件，显示更新后的方块值。
+    setXIsNext(!xIsNext);//切换 xIsNext 的值，即将布尔值 xIsNext 取反，以便下次点击时使用不同的符号（X 或 O）。
+    //handleClick 函数：
+    // 首先检查方块是否已经被点击，如果是则直接返回。
+    // 创建 squares 数组的副本 nextSquares。
+    // 根据 xIsNext 的值设置点击的方块为 'X' 或 'O'。
+    // 更新 squares 状态为 nextSquares。
+    // 切换 xIsNext 的值，以便下一步由另一个玩家进行。
+  }
+
+  return (
+// <Square value={squares[0]}：
+// value={squares[0]}：将 squares 数组中索引为 0 的值传递给 Square 组件的 value 属性。这个值可以是 null、'X' 或 'O'。
+// onSquareClick={() => handleClick(0)}：
+// onSquareClick={() => handleClick(0)}：传递一个箭头函数给 Square 组件的 onSquareClick 属性。
+// 当 Square 组件中的按钮被点击时，会调用这个箭头函数。
+// 这个箭头函数会调用 handleClick(0) 函数，传递索引 0 作为参数，从而更新索引为 0 的方块的值。
+    <>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 赢家
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { useState } from 'react';
+
+function Square({value, onSquareClick}) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
+
+ let App = function Board() {
+  // 定义两个 state 变量：xIsNext 和 squares
+  const [xIsNext, setXIsNext] = useState(true);
+  const [squares, setSquares] = useState(Array(9).fill(null));
+  // 点击处理函数
+  function handleClick(i) {
+    // 如果已经有赢家或者该方块已被点击，直接返回
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    // 创建 squares 数组的一个副本
+    const nextSquares = squares.slice();
+    // 根据 xIsNext 的值设置当前点击的方块为 'X' 或 'O'
+    if (xIsNext) {
+      nextSquares[i] = 'X';
+    } else {
+      nextSquares[i] = 'O';
+    }
+    // 更新 squares 状态为 nextSquares
+    setSquares(nextSquares);
+    // 切换 xIsNext 的值，以便下次点击时使用不同的符号
+    setXIsNext(!xIsNext);
+  }
+  // 检查是否有赢家
+  const winner = calculateWinner(squares);
+  let status;
+  // 如果有赢家，显示赢家
+  if (winner) {
+    status = 'Winner: ' + winner;
+  } else {
+    // 否则，显示下一个玩家
+    status = 'Next player: ' + (xIsNext ? 'X' : 'O');
+  }
+  // 返回 JSX 组件
+  return (
+    <>
+      <div className="status">{status}</div>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
+
+  // const [xIsNext, setXIsNext] = useState(true);
+  // const [squares, setSquares] = useState(Array(9).fill(null));
+
+  // function handleClick(i) {
+  //   if (calculateWinner(squares) || squares[i]) {
+  //     return;
+  //   }
+  //   const nextSquares = squares.slice();
+  //   if (xIsNext) {
+  //     nextSquares[i] = 'X';
+  //   } else {
+  //     nextSquares[i] = 'O';
+  //   }
+  //   setSquares(nextSquares);
+  //   setXIsNext(!xIsNext);
+  // }
+
+  // const winner = calculateWinner(squares);
+  // let status;
+  // if (winner) {
+  //   status = 'Winner: ' + winner;
+  // } else {
+  //   status = 'Next player: ' + (xIsNext ? 'X' : 'O');
+  // }
+
+  // return (
+  //   <>
+  //     <div className="status">{status}</div>
+  //     <div className="board-row">
+  //       <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+  //       <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+  //       <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+  //     </div>
+  //     <div className="board-row">
+  //       <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+  //       <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+  //       <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+  //     </div>
+  //     <div className="board-row">
+  //       <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+  //       <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+  //       <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+  //     </div>
+  //   </>
+  // );
+
+function calculateWinner(squares) {
+  // 定义一个包含所有可能赢得比赛的行、列和对角线组合的数组
+  const lines = [
+    [0, 1, 2], // 第一行
+    [3, 4, 5], // 第二行
+    [6, 7, 8], // 第三行
+    [0, 3, 6], // 第一列
+    [1, 4, 7], // 第二列
+    [2, 5, 8], // 第三列
+    [0, 4, 8], // 主对角线
+    [2, 4, 6], // 副对角线
+  ];
+  // 遍历所有可能的胜利组合
+  for (let i = 0; i < lines.length; i++) {
+    // 获取当前组合的三个索引
+    const [a, b, c] = lines[i];
+    // 检查这三个索引是否都相同且不为空
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      // 如果三个索引的值都相同且不为空，返回这个值（'X'或'O'）
+      return squares[a];
+      //第一个条件写作 squares[a] && squares[a] === squares[b] 而不是仅仅 squares[a]，是因为它不仅需要检查 squares[a] 是否有值，还要确保 squares[a] 的值等于 squares[b] 和 squares[c] 的值。这么做有两个目的：---防止 null 或 undefined 值的比较：squares[a] 只检查 squares[a] 是否有值（即不为 null 或 undefined）。如果 squares[a] 是 null 或 undefined，那么接下来的比较操作 squares[a] === squares[b] 和 squares[a] === squares[c] 可能会引发错误或无效比较。---确保在进行相等比较之前，先确认 squares[a] 有值：逻辑运算符 && 具有短路特性，即如果 squares[a] 是 falsy 值（例如 null、undefined、0、空字符串等），则整个条件表达式会直接返回 false，而不会继续进行后面的比较。这保证了只有在 squares[a] 有有效值的情况下，才会继续进行后续的相等性检查。
+    }
+  }
+  // 如果没有赢家，返回 null
+  return null;
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+.square {
+  background: #fff;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  margin-left: 20px;
+}
+
+</style>
+</html>
+```
+
+#### 再一次状态提升\什么?
+
+```html
+
+```
+
+```html
+
+```
+
+```html
+
+```
+
+```html
+
+```
+
+```html
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```
+
+```jsx
+
+```

@@ -45,7 +45,8 @@
             "js/modulejs",
             "js/workerthread",
             "js/bestpract",
-            "js/appendix"                   
+            "js/appendix",
+            "js/git"
           ]
         }
       ]
