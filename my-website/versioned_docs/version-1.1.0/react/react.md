@@ -2884,20 +2884,63 @@ async function Talks({ confId }) {
 步骤 1：配置模块化的 JavaScript 环境
 
 ```jsx
+import { createRoot } from 'react-dom/client';
 
+// 清除现有的 HTML 内容
+document.body.innerHTML = '<div id="app"></div>';
+
+// 渲染你的 React 组件
+const root = createRoot(document.getElementById('app'));
+root.render(<h1>Hello, world</h1>);
+```
+
+步骤 2：在页面的任何位置渲染 React 组件
+
+```jsx
+//在上一步中，此代码将被放在主文件的顶部：
+import { createRoot } from 'react-dom/client';
+
+// 清除现有的 HTML 内容
+document.body.innerHTML = '<div id="app"></div>';
+
+// 渲染你的 React 组件
+const root = createRoot(document.getElementById('app'));
+root.render(<h1>Hello, world</h1>);
 ```
 
 ```jsx
+<!-- ... 你的 HTML 代码某处 ... -->
+<nav id="navigation"></nav>
+<!-- ... 其他 HTML 代码 ... -->
 
+<!DOCTYPE html>
+<html>
+  <head><title>My app</title></head>
+  <body>
+    <p>This paragraph is a part of HTML.</p>
+    <nav id="navigation"></nav>
+    <p>This paragraph is also a part of HTML.</p>
+  </body>
+</html>
+//<title>My app</title>：定义了文档的标题栏显示的文本内容为 "My app"。
+//<nav>：定义导航链接的部分。id="navigation"：给导航部分定义了一个ID为 "navigation"，可以在CSS或JavaScript中引用该ID。
 ```
 
 ```jsx
+//index.js
+import { createRoot } from 'react-dom/client';
 
+function NavigationBar() {
+  // Todo: 实际实现一个导航栏
+  return <h1>Hello from React!</h1>;
+}
+
+const domNode = document.getElementById('navigation');
+const root = createRoot(domNode);
+root.render(<NavigationBar />);
 ```
 
-```jsx
-
-```
+### 编辑器设置
 
 ```jsx
 
