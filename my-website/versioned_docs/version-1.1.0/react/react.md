@@ -2350,20 +2350,538 @@ props 和 state 是不同的，但它们可以共同工作。父组件将经常�
 ##### 编辑后搜框和表格的变化
 
 ```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
+import { useState } from 'react';
+
+function FilterableProductTable({ products }) {
+  const [filterText, setFilterText] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+
+  return (
+    <div>
+      <SearchBar
+        filterText={filterText}
+        inStockOnly={inStockOnly} />
+      <ProductTable
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly} />
+    </div>
+  );
+}
+
+function ProductCategoryRow({ category }) {
+  return (
+    <tr>
+      <th colSpan="2">
+        {category}
+      </th>
+    </tr>
+  );
+}
+
+function ProductRow({ product }) {
+  const name = product.stocked ? product.name :
+    <span style={{ color: 'red' }}>
+      {product.name}
+    </span>;
+
+   return (
+    <tr>
+      <td>{name}</td>
+      <td>{product.price}</td>
+    </tr>
+  );
+}
+
+function ProductTable({ products, filterText, inStockOnly }) {
+  const rows = [];
+  let lastCategory = null;
+
+  products.forEach((product) => {
+    if (
+      product.name.toLowerCase().indexOf(
+        filterText.toLowerCase()
+      ) === -1
+    ) {
+      return;
+    }
+    //如果 product.name 中不包含 filterText，则跳过当前产品
+    if (inStockOnly && !product.stocked) {
+      return;
+    }
+    //检查 inStockOnly 是否为真，以及产品是否未库存 (!product.stocked)。如果 inStockOnly 为真且产品未库存，则跳过当前产品。
+    if (product.category !== lastCategory) {
+      rows.push(
+        <ProductCategoryRow
+          category={product.category}
+          key={product.category} />
+      );
+      //检查当前产品的类别是否与 lastCategory 不同。如果不同，则说明遇到一个新的类别。
+      //向 rows 数组添加一个 ProductCategoryRow 组件。ProductCategoryRow 组件用于显示当前产品类别的标题行。使用 product.category 作为 key 属性，以确保唯一性。
+    }
+    rows.push(
+      <ProductRow
+        product={product}
+        key={product.name} />
+        //向 rows 数组添加一个 ProductRow 组件。ProductRow 组件用于显示当前产品的详细信息。使用 product.name 作为 key 属性，以确保唯一性。
+    );
+    lastCategory = product.category;
+    //将 lastCategory 更新为当前产品的类别，以便下一个产品进行类别检查。
+    //总之:遍历所有产品。过滤掉不匹配搜索文本的产品。过滤掉未库存的产品（如果启用了库存过滤）。如果当前产品的类别与上一个产品不同，则添加一个新的类别行。将产品行添加到 rows 数组中。更新 lastCategory 以便下一次迭代检查。最终，rows 数组包含了按类别分组并过滤后的产品列表，这些数据将用于在表格中显示产品信息。
+  });
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+}
+
+function SearchBar({ filterText, inStockOnly }) {
+  return (
+    <form>
+      <input
+        type="text"
+        value={filterText}
+        placeholder="Search..."/>
+      <label>
+        <input
+          type="checkbox"
+          checked={inStockOnly} />
+        {' '}
+        Only show products in stock
+      </label>
+    </form>
+  );
+}
+
+const PRODUCTS = [
+  {category: "Fruits", price: "$1", stocked: true, name: "Apple"},
+  {category: "Fruits", price: "$1", stocked: true, name: "Dragonfruit"},
+  {category: "Fruits", price: "$2", stocked: false, name: "Passionfruit"},
+  {category: "Vegetables", price: "$2", stocked: true, name: "Spinach"},
+  {category: "Vegetables", price: "$4", stocked: false, name: "Pumpkin"},
+  {category: "Vegetables", price: "$1", stocked: true, name: "Peas"}
+];
+
+let App = function App() {
+  return <FilterableProductTable products={PRODUCTS} />;
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+body {
+  padding: 5px
+}
+label {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+th {
+  padding-top: 5px;
+}
+td {
+  padding: 2px;
+}
+
+</style>
+</html>
 ```
 
-```html
+#### 添加反向数据流
 
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { useState } from 'react';
+
+function FilterableProductTable({ products }) {
+  const [filterText, setFilterText] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+
+  return (
+    // 这两个onchange函数用来更新 FilterableProductTable 组件中的状态 filterText 和 inStockOnly。
+    <div>
+      <SearchBar
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+        onFilterTextChange={setFilterText}
+        onInStockOnlyChange={setInStockOnly} />
+
+      <ProductTable
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly} />
+    </div>
+  );
+}
+
+function ProductCategoryRow({ category }) {
+  return (
+    <tr>
+      <th colSpan="2">
+        {category}
+      </th>
+    </tr>
+  );
+}
+
+function ProductRow({ product }) {
+  const name = product.stocked ? product.name :
+    <span style={{ color: 'red' }}>
+      {product.name}
+    </span>;
+
+  return (
+    <tr>
+      <td>{name}</td>
+      <td>{product.price}</td>
+    </tr>
+  );
+}
+
+function ProductTable({ products, filterText, inStockOnly }) {
+  const rows = [];
+  let lastCategory = null;
+
+  products.forEach((product) => {
+    if (
+      product.name.toLowerCase().indexOf(
+        filterText.toLowerCase()
+      ) === -1
+    ) {
+      return;
+    }
+    if (inStockOnly && !product.stocked) {
+      return;
+    }
+    if (product.category !== lastCategory) {
+      rows.push(
+        <ProductCategoryRow
+          category={product.category}
+          key={product.category} />
+      );
+    }
+    rows.push(
+      <ProductRow
+        product={product}
+        key={product.name} />
+    );
+    lastCategory = product.category;
+  });
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+}
+
+function SearchBar({
+  filterText,
+  inStockOnly,
+  onFilterTextChange,
+  onInStockOnlyChange
+}) {
+  return (
+    <form>
+      <input
+        type="text"
+        value={filterText} placeholder="Search..."
+        onChange={(e) => onFilterTextChange(e.target.value)} />
+      <label>
+        <input
+          type="checkbox"
+          checked={inStockOnly}
+          onChange={(e) => onInStockOnlyChange(e.target.checked)} />
+        {' '}
+        Only show products in stock
+      </label>
+    </form>
+  );
+  //简单说就是当输入框的内容改变时，调用 onFilterTextChange 并传递新的输入值。  就是说onchange事件(监视作用)发生时调用e=>后面的句子
+  //这是一个 JSX 属性，指定当 HTML 输入元素的值改变时要调用的事件处理程序。--(e):这是事件处理函数的参数。e 代表事件对象，即 change 事件的实例。当输入框的内容发生变化时，浏览器会生成一个事件对象，并将其作为参数传递给事件处理函数。--=>:这是箭头函数语法，用来定义一个匿名函数。在这个上下文中，箭头函数接受一个参数 e，并执行箭头右侧的代码。---onFilterTextChange(e.target.value):onFilterTextChange 是通过属性传递到当前组件的一个函数。e.target 是触发事件的 DOM 元素，即输入框。e.target.value 是输入框当前的值，即用户输入的文本。这个表达式的作用是调用 onFilterTextChange 函数，并将输入框当前的值作为参数传递给它。
+  //综合起来，onChange={(e) => onFilterTextChange(e.target.value)} 的作用是当输入框的内容发生变化时，调用 onFilterTextChange 函数，并传递输入框的新值。这样，onFilterTextChange 函数就能够接收到最新的输入值，并进行相应的处理（比如更新组件的状态）。
+  //完整的解释如下：当输入框的值发生变化时，触发 change 事件。浏览器生成一个事件对象 e，包含事件的相关信息。事件处理程序 (e) => onFilterTextChange(e.target.value) 被调用，e 作为参数传入。事件处理程序内，通过 e.target 获取触发事件的 DOM 元素（输入框），再通过 e.target.value 获取输入框的当前值。调用 onFilterTextChange 函数，并将输入框的当前值作为参数传递给它。
+}
+
+const PRODUCTS = [
+  {category: "Fruits", price: "$1", stocked: true, name: "Apple"},
+  {category: "Fruits", price: "$1", stocked: true, name: "Dragonfruit"},
+  {category: "Fruits", price: "$2", stocked: false, name: "Passionfruit"},
+  {category: "Vegetables", price: "$2", stocked: true, name: "Spinach"},
+  {category: "Vegetables", price: "$4", stocked: false, name: "Pumpkin"},
+  {category: "Vegetables", price: "$1", stocked: true, name: "Peas"}
+];
+
+let App = function App() {
+  return <FilterableProductTable products={PRODUCTS} />;
+}
+
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+body {
+  padding: 5px
+}
+label {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+th {
+  padding: 4px;
+}
+td {
+  padding: 2px;
+}
+
+</style>
+</html>
 ```
 
-```html
+## 安装
 
+### 启动一个新项目
+
+大多数应用程序和网站最终都会构建常见问题的解决方案，例如代码分割、路由、数据获取和生成 HTML。不仅仅是 React，这些问题对于所有 UI 库都很常见。
+
+当然可以在没有框架的情况下使用 React——这也就是你将 使用 React 作为页面的一部分。但是，如果你完全使用 React 构建新应用程序或网站，我们建议使用框架。
+
+#### 生产级的react框架
+
+这些框架支持在生产中部署和扩展应用程序所需的所有功能，并致力于支持我们的 全栈架构愿景。我们推荐的所有框架都是开源的，有活跃的社区支持，并且可以部署到你自己的服务器或托管服务提供商。如果你是一位框架作者，有兴趣加入此列表，请告诉我们。
+
+#### nextjs
+
+```js
+这个组件 `Talks` 仅在服务端运行（或在构建期间），下面是对代码的逐段解释：
+**函数声明**：这里定义了一个名为 `Talks` 的异步函数组件，它接收一个名为 `confId` 的属性。
+async function Talks({ confId }) {
+  // 1. 你在服务端，所以你可以和你的数据层对话。不需要 API 端点。**数据获取**：由于这个组件在服务端运行，它可以直接与数据库对话。使用 `await` 等待 `db.Talks.findAll` 方法的结果，该方法根据传入的 `confId` 从数据库中查找所有相关的 `talks`（演讲）。
+  const talks = await db.Talks.findAll({ confId });
+
+  // 2. 添加任意数量的渲染逻辑。它不会使你的 JavaScript bundle 变大。**处理数据**：`talks` 是一个包含演讲数据的数组。使用 `map` 方法从每个 `talk` 对象中提取 `video` 属性，并将这些 `video` 组成一个新的数组 `videos`。
+  const videos = talks.map(talk => talk.video);
+
+  // 3. 将数据向下传递给将在浏览器中运行的组件。**渲染组件**：返回一个 `SearchableVideoList` 组件，并将 `videos` 作为属性传递给它。这个 `SearchableVideoList` 组件将在浏览器中运行，并接收由服务端传递下来的数据。
+  return <SearchableVideoList videos={videos} />;
+}
+
+- 这个组件 `Talks` 只在服务端运行。
+- 它从数据库中获取数据，处理数据，然后将处理后的数据传递给一个将在浏览器中运行的组件。
+- 这样做的好处是可以在服务端进行复杂的数据处理，而不会影响客户端 JavaScript 的大小或性能。
 ```
 
 ```jsx
+简而言之就是:使用 Suspense 组件在加载 Talks 组件时显示 TalksLoading 作为回退内容。
+使用了 React 的 `Suspense` 组件来处理异步加载的组件 `Talks`，并在 `Talks` 加载期间显示一个回退的加载指示器 `TalksLoading`。
+<Suspense fallback={<TalksLoading />}>
+  <Talks confId={conf.id} />
+</Suspense>
 
+1. **Suspense 组件**：`Suspense` 是 React 的一个组件，用于处理异步操作的界面。`fallback` 属性指定在子组件加载过程中显示的回退内容。在这里，`<TalksLoading />` 是一个加载指示器组件，当 `Talks` 组件还没有加载完成时，会显示这个组件。
+
+2. **Talks 组件**：`Talks` 是一个异步加载的组件，它接收一个 `confId` 属性。这里的 `conf.id` 是一个从 `conf` 对象中获取的会议信息 ID。这段代码表示 `Talks` 组件需要根据 `conf.id` 来加载特定会议信息的演讲数据。
+
+3. **关闭 Suspense 组件**：这部分关闭了 `Suspense` 组件的标签。所有放置在 `Suspense` 组件内的子组件都将受到 `Suspense` 组件的控制，即如果这些子组件有任何异步操作（如数据加载），则会显示 `fallback` 指定的回退内容，直到这些子组件完全加载完成。
+
+- **`Suspense` 组件**：用于处理异步操作。在加载子组件时，可以显示一个回退内容。
+- **`fallback` 属性**：指定回退内容，这里是 `<TalksLoading />` 组件。
+- **`Talks` 组件**：这是一个异步组件，加载指定 `confId` 的会议信息。
+- **嵌套结构**：`Talks` 组件被包含在 `Suspense` 组件中，所以在 `Talks` 加载过程中，会显示 `TalksLoading` 组件作为加载指示器。
+
+通过这种方式，React 可以优雅地处理异步数据加载，并在数据加载完成之前提供用户友好的加载指示。
 ```
+
+### 将 React 添加到现有项目中
+
+如果想对现有项目添加一些交互，不必使用 React 将其整个重写。只需将 React 添加到已有技术栈中，就可以在任何位置渲染交互式的 React 组件。
+
+#### 在现有网站的子路由中使用 React
+
+你又想在 example.com/some-app/ 部署一个 React 项目。
+
+以下是推荐的配置方式：
+
+使用一个 基于 React 的框架 构建 应用的 React 部分。
+在框架配置中将 /some-app 指定为基本路径（这里有 Next.js 与 Gatsby 的配置样例）。
+配置服务器或代理，以便所有位于 /some-app/ 下的请求都由 React 应用处理。
+这可以确保应用的 React 部分可以受益于这些框架中内置的 最佳实践。
+
+许多基于 React 的框架都是全栈的，从而可以让你的 React 应用充分利用服务器。但是，即使无法或不想在服务器上运行 JavaScript，也可以使用相同的方法。在这种情况下，将 HTML/CSS/JS 导出（Next.js 的 next export output，Gatsby 的 default）替换为 /some-app/。
+
+#### 在现有页面的一部分中使用 React
+
+想要在该页面的某个位置渲染交互式的 React 组件。这是常见方式——实际上，正是多年来大多数情况下 Meta 使用 React 的方式！
+
+你可以分两步进行：
+配置 JavaScript 环境，以便使用 JSX 语法、import 和 export 语法将代码拆分为模块，以及从 npm 包注册表中使用包（例如 React）。
+在需要的位置渲染 React 组件。
+确切的方法取决于现有的页面配置，因此让我们对一些细节进行说明。
+
+步骤 1：配置模块化的 JavaScript 环境
 
 ```jsx
 
