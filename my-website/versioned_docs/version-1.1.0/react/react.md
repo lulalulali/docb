@@ -2933,11 +2933,17 @@ import { createRoot } from 'react-dom/client';
 function NavigationBar() {
   // Todo: 实际实现一个导航栏
   return <h1>Hello from React!</h1>;
+  //定义了一个名为 NavigationBar 的函数组件，这个组件目前返回一个简单的 <h1> 元素，显示文本 "Hello from React!"。
 }
 
 const domNode = document.getElementById('navigation');
 const root = createRoot(domNode);
 root.render(<NavigationBar />);
+//使用 document.getElementById 方法获取 id 为 'navigation' 的 DOM 元素。这个元素预期在 HTML 中已经存在，作为要将 React 组件渲染到其内部的目标容器。
+//使用 createRoot 方法创建了一个根渲染器 root，并将其绑定到 domNode，即前面获取的 id 为 'navigation' 的 DOM 元素。根渲染器是 React 18 中引入的新概念，用于异步渲染和并发模式。
+//使用 root 渲染器的 render 方法，将 NavigationBar 组件渲染到之前选定的 domNode 容器中。这样，<h1>Hello from React!</h1> 就会被渲染到 id 为 'navigation' 的 DOM 元素内部。
+
+//总结：这段目的是在页面中找到 id 为 'navigation' 的 DOM 元素，然后使用 React 的新特性 createRoot 和 root.render 将一个简单的 NavigationBar 组件渲染到这个位置。
 ```
 
 ### 编辑器设置
