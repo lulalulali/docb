@@ -6390,7 +6390,1013 @@ export default function App() {
     </div>
   );
 }
+上述示例中，<button onClick={onSmash}> 代表浏览器内置的 <button>（小写）仍然需要使用 onClick prop，而自定义的 Button 组件接收到的 prop 名称可由你决定！
 
+当你的组件支持多种交互时，你可以根据不同的应用程序命名事件处理函数 prop。例如，一个 Toolbar 组件接收 onPlayMovie 和 onUploadImage 两个事件处理函数：
+export default function App() {
+  return (
+    <Toolbar
+      onPlayMovie={() => alert('正在播放！')}
+      onUploadImage={() => alert('正在上传！')}
+    />
+  );
+}
+
+function Toolbar({ onPlayMovie, onUploadImage }) {
+  return (
+    <div>
+      <Button onClick={onPlayMovie}>
+        播放电影
+      </Button>
+      <Button onClick={onUploadImage}>
+        上传图片
+      </Button>
+    </div>
+  );
+}
+
+function Button({ onClick, children }) {
+  return (
+    <button onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+请注意，App 组件并不需要知道 Toolbar 将会对 onPlayMovie 和 onUploadImage 做 什么 。上述示例是 Toolbar 的实现细节。其中，Toolbar 将它们作为 onClick 处理函数传递给了 Button 组件，其实还可以通过键盘快捷键来触发它们。根据应用程序特定的交互方式（如 onPlayMovie）来命名 prop ，可以让你灵活地更改以后使用它们的方式。
+
+注意:确保为事件处理程序使用适当的 HTML 标签。例如，要处理点击事件，请使用 <button onClick={handleClick}> 而不是 <div onClick={handleClick}>。使用真正的浏览器 <button> 启用内置的浏览器行为，如键盘导航。如果你不喜欢按钮的默认浏览器样式，并且想让它看起来更像一个链接或不同的 UI 元素，你可以使用 CSS 来实现。了解有关编写无障碍标签的更多信息。
+```
+
+```jsx
+//事件传播 
+事件处理函数还将捕获任何来自子组件的事件。通常，我们会说事件会沿着树向上“冒泡”或“传播”：它从事件发生的地方开始，然后沿着树向上传播。
+
+下面这个 <div> 包含两个按钮。<div> 和每个按钮都有自己的 onClick 处理函数。你认为点击按钮时会触发哪些处理函数？
+export default function Toolbar() {
+  return (
+    <div className="Toolbar" onClick={() => {
+      alert('你点击了 toolbar ！');
+    }}>
+      <button onClick={() => alert('正在播放！')}>
+        播放电影
+      </button>
+      <button onClick={() => alert('正在上传！')}>
+        上传图片
+      </button>
+    </div>
+  );
+}
+陷阱:在 React 中所有事件都会传播，除了 onScroll，它仅适用于你附加到的 JSX 标签。
+```
+
+```jsx
+//阻止传播 
+事件处理函数接收一个 事件对象 作为唯一的参数。按照惯例，它通常被称为 e ，代表 “event”（事件）。你可以使用此对象来读取有关事件的信息。
+
+这个事件对象还允许你阻止传播。如果你想阻止一个事件到达父组件，你需要像下面 Button 组件那样调用 e.stopPropagation() ：
+function Button({ onClick, children }) {
+  return (
+    <button onClick={e => {
+      e.stopPropagation();
+      onClick();
+    }}>
+      {children}
+    </button>
+  );
+}
+
+export default function Toolbar() {
+  return (
+    <div className="Toolbar" onClick={() => {
+      alert('你点击了 toolbar ！');
+    }}>
+      <Button onClick={() => alert('正在播放！')}>
+        播放电影
+      </Button>
+      <Button onClick={() => alert('正在上传！')}>
+        上传图片
+      </Button>
+    </div>
+  );
+}
+当你点击按钮时：
+
+React 调用了传递给 <button> 的 onClick 处理函数。
+定义在 Button 中的处理函数执行了如下操作：
+调用 e.stopPropagation()，阻止事件进一步冒泡。
+调用 onClick 函数，它是从 Toolbar 组件传递过来的 prop。
+在 Toolbar 组件中定义的函数，显示按钮对应的 alert。
+由于传播被阻止，父级 <div> 的 onClick 处理函数不会执行。
+由于调用了 e.stopPropagation()，点击按钮现在将只显示一个 alert（来自 <button>），而并非两个（分别来自 <button> 和父级 toolbar <div>）。点击按钮与点击周围的 toolbar 不同，因此阻止传播对这个 UI 是有意义的。
+
+捕获阶段事件:
+极少数情况下，你可能需要捕获子元素上的所有事件，即便它们阻止了传播。例如，你可能想对每次点击进行埋点记录，传播逻辑暂且不论。那么你可以通过在事件名称末尾添加 Capture 来实现这一点：
+
+<div onClickCapture={() => { /* 这会首先执行 */ }}>
+  <button onClick={e => e.stopPropagation()} />
+  <button onClick={e => e.stopPropagation()} />
+</div>
+每个事件分三个阶段传播：
+
+它向下传播，调用所有的 onClickCapture 处理函数。
+它执行被点击元素的 onClick 处理函数。
+它向上传播，调用所有的 onClick 处理函数。
+捕获事件对于路由或数据分析之类的代码很有用，!!!但你可能不会在应用程序代码中使用它们。!!!
+```
+
+```jsx
+//传递处理函数作为事件传播的替代方案 
+注意，此处的点击事件处理函数先执行了一行代码，然后调用了父组件传递的 onClick prop：
+function Button({ onClick, children }) {
+  return (
+    <button onClick={e => {
+      e.stopPropagation();
+      onClick();
+    }}>
+      {children}
+    </button>
+  );
+}
+你也可以在调用父元素 onClick 函数之前，向这个处理函数添加更多代码。此模式是事件传播的另一种 替代方案 。它让子组件处理事件，同时也让父组件指定一些额外的行为。与事件传播不同，它并非自动。但使用这种模式的好处是你可以清楚地追踪因某个事件的触发而执行的整条代码链。???
+
+如果你依赖于事件传播，而且很难追踪哪些处理程序在执行，及其执行的原因，可以尝试这种方法。
+```
+
+```jsx
+//阻止默认行为 
+某些浏览器事件具有与事件相关联的默认行为。例如，点击 <form> 表单内部的按钮会触发表单提交事件，默认情况下将重新加载整个页面：
+export default function Signup() {
+  return (
+    <form onSubmit={() => alert('提交表单！')}>
+      <input />
+      <button>发送</button>
+    </form>
+  );
+}
+
+你可以调用事件对象中的 e.preventDefault() 来阻止这种情况发生：
+export default function Signup() {
+  return (
+    <form onSubmit={e => {
+      e.preventDefault();
+      alert('提交表单！');
+    }}>
+      <input />
+      <button>发送</button>
+    </form>
+  );
+}
+不要混淆 e.stopPropagation() 和 e.preventDefault()。它们都很有用，但二者并不相关：
+
+e.stopPropagation() 阻止触发绑定在外层标签上的事件处理函数。
+e.preventDefault() 阻止少数事件的默认浏览器行为。
+```
+
+```jsx
+//事件处理函数可以包含副作用吗？ 
+当然可以！事件处理函数是执行副作用的最佳位置。
+
+与渲染函数不同，事件处理函数不需要是 纯函数，因此它是用来 更改 某些值的绝佳位置。例如，更改输入框的值以响应键入，或者更改列表以响应按钮的触发。但是，为了更改某些信息，你首先需要某种方式存储它。在 React 中，这是通过 state（组件的记忆） 来完成的。你将在下一章节了解所有相关信息。
+
+摘要:
+
+你可以通过将函数作为 prop 传递给元素如 <button> 来处理事件。
+必须传递事件处理函数，而非函数调用！ onClick={handleClick} ，不是 onClick={handleClick()}。
+你可以单独或者内联定义事件处理函数。
+事件处理函数在组件内部定义，所以它们可以访问 props。
+你可以在父组件中定义一个事件处理函数，并将其作为 prop 传递给子组件。
+你可以根据特定于应用程序的名称定义事件处理函数的 prop。
+事件会向上传播。通过事件的第一个参数调用 e.stopPropagation() 来防止这种情况。
+事件可能具有不需要的浏览器默认行为。调用 e.preventDefault() 来阻止这种情况。
+从子组件显式调用事件处理函数 prop 是事件传播的另一种优秀替代方案。
+```
+
+```jsx
+//第 1 个挑战 共 2 个挑战: 修复事件处理函数 
+点击此按钮理论上应该在黑白主题之间切换页面背景。然而，当你点击它时，什么也没有发生。解决这个问题。（无需担心 handleClick 的内部逻辑。）
+export default function LightSwitch() {
+  function handleClick() {
+    let bodyStyle = document.body.style;
+    if (bodyStyle.backgroundColor === 'black') {
+      bodyStyle.backgroundColor = 'white';
+    } else {
+      bodyStyle.backgroundColor = 'black';
+    }
+  }
+
+  return (
+    <button onClick={handleClick()}>
+      切换背景
+    </button>
+  );
+}
+这是由于 <button onClick={handleClick()}> 在渲染过程中 调用 了 handleClick 函数，而没有将其进行 传递。移除 () 调用改为 <button onClick={handleClick}> 进而修复问题：return (
+    <button onClick={handleClick()}>
+      切换背景
+    </button>
+  );
+
+```
+
+```jsx
+//第 2 个挑战 共 2 个挑战: 关联事件 
+ColorSwitch 组件渲染了一个按钮。它应该改变页面颜色。将它与从父组件接收的 onChangeColor 事件处理函数关联，以便在点击按钮时改变颜色。
+
+如此操作后，你会发现点击按钮时，也会增加页面点击计数器的值。而编写父组件的同事坚持认为 onChangeColor 不应该使得计数器的值递增。应该如何处理？修改问题使得点击按钮 只 改变颜色，并且 不 增加计数器。
+export default function ColorSwitch({
+  onChangeColor
+  //function ColorSwitch({ onChangeColor })：定义一个名为 ColorSwitch 的函数组件，并解构出一个 onChangeColor 属性。
+}) {
+  return (
+    <button>
+      改变颜色
+    </button>
+  );
+  //定义并导出了一个名为 ColorSwitch 的 React 函数组件，该组件渲染一个按钮，按钮上的文字内容为“改变颜色”。目前，这个组件接受一个 onChangeColor 属性，但这个属性没有被使用（组件内部并未触发 onChangeColor）。这个组件的意图是显示一个按钮，点击按钮后可以触发颜色改变的功能（需要在实际使用时将 onChangeColor 关联到按钮的点击事件）。
+}
+答:
+首先，你需要添加事件处理函数，例如 <button onClick={onChangeColor}>。
+
+然而，同时又引入了计数器递增的问题。正如你的同事所坚持的那样，onChangeColor 并不符合预期，!!!这主要是因为事件发生向上传播，并且上层的某些事件处理函数执行了递增操作。为了解决这个问题，你需要阻止事件冒泡!!!。但是不要忘记调用 onChangeColor。
+export default function ColorSwitch({
+  onChangeColor
+}) {
+  return (
+    <button onClick={e => {
+      e.stopPropagation();
+      onChangeColor();
+    }}>
+      改变颜色
+    </button>
+  );
+}
+```
+
+### State：组件的记忆
+
+组件通常需要根据交互更改屏幕上显示的内容。输入表单应该更新输入字段，单击轮播图上的“下一个”应该更改显示的图片，单击“购买”应该将商品放入购物车。组件需要“记住”某些东西：当前输入值、当前图片、购物车。在 React 中，这种组件特有的记忆被称为 state。
+
+你将会学习到:
+如何使用 useState Hook 添加 state 变量
+useState Hook 返回哪一对值
+如何添加多个 state 变量
+为什么 state 被称作是局部的
+
+```jsx
+//当普通的变量无法满足时 
+以下是一个渲染雕塑图片的组件。点击 “Next” 按钮应该显示下一个雕塑并将 index 更改为 1，再次点击又更改为 2，以此类推。但这个组件现在不起作用（你可以试一试！）：
+//appjs  显示雕塑画廊，并点击按钮显示下一个雕塑。
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  let index = 0;
+
+  function handleClick() {
+    index = index + 1;
+    //定义一个名为 handleClick 的函数，这个函数将在按钮被点击时调用。
+  }
+
+  let sculpture = sculptureList[index];//根据当前 index，从 sculptureList 中获取当前雕塑对象。
+  return (
+    <>
+      <button onClick={handleClick}>
+        Next
+      </button>
+
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+
+      <p>
+        {sculpture.description}
+      </p>
+    </>
+  );
+  //定义并导出了一个名为 Gallery 的 React 函数组件，该组件渲染一个雕塑画廊。画廊显示一个按钮和当前雕塑的信息，包括名称、艺术家、编号、图片和描述。当用户点击按钮时，显示下一个雕塑。然而，由于 index 是一个局部变量，每次重新渲染组件时都会重置为 0，因此点击按钮不会真正切换到下一个雕塑。
+}
+//datajs
+export const sculptureList = [{
+  name: 'Homenaje a la Neurocirugía',
+  artist: 'Marta Colvin Andrade',
+  description: 'Although Colvin is predominantly known for abstract themes that allude to pre-Hispanic symbols, this gigantic sculpture, an homage to neurosurgery, is one of her most recognizable public art pieces.',
+  url: 'https://i.imgur.com/Mx7dA2Y.jpg',
+  alt: 'A bronze statue of two crossed hands delicately holding a human brain in their fingertips.'  
+}, {
+  name: 'Floralis Genérica',
+  artist: 'Eduardo Catalano',
+  description: 'This enormous (75 ft. or 23m) silver flower is located in Buenos Aires. It is designed to move, closing its petals in the evening or when strong winds blow and opening them in the morning.',
+  url: 'https://i.imgur.com/ZF6s192m.jpg',
+  alt: 'A gigantic metallic flower sculpture with reflective mirror-like petals and strong stamens.'
+}, {
+  name: 'Eternal Presence',
+  artist: 'John Woodrow Wilson',
+  description: 'Wilson was known for his preoccupation with equality, social justice, as well as the essential and spiritual qualities of humankind. This massive (7ft. or 2,13m) bronze represents what he described as "a symbolic Black presence infused with a sense of universal humanity."',
+  url: 'https://i.imgur.com/aTtVpES.jpg',
+  alt: 'The sculpture depicting a human head seems ever-present and solemn. It radiates calm and serenity.'
+}, {
+  name: 'Moai',
+  artist: 'Unknown Artist',
+  description: 'Located on the Easter Island, there are 1,000 moai, or extant monumental statues, created by the early Rapa Nui people, which some believe represented deified ancestors.',
+  url: 'https://i.imgur.com/RCwLEoQm.jpg',
+  alt: 'Three monumental stone busts with the heads that are disproportionately large with somber faces.'
+}, {
+  name: 'Blue Nana',
+  artist: 'Niki de Saint Phalle',
+  description: 'The Nanas are triumphant creatures, symbols of femininity and maternity. Initially, Saint Phalle used fabric and found objects for the Nanas, and later on introduced polyester to achieve a more vibrant effect.',
+  url: 'https://i.imgur.com/Sd1AgUOm.jpg',
+  alt: 'A large mosaic sculpture of a whimsical dancing female figure in a colorful costume emanating joy.'
+}, {
+  name: 'Ultimate Form',
+  artist: 'Barbara Hepworth',
+  description: 'This abstract bronze sculpture is a part of The Family of Man series located at Yorkshire Sculpture Park. Hepworth chose not to create literal representations of the world but developed abstract forms inspired by people and landscapes.',
+  url: 'https://i.imgur.com/2heNQDcm.jpg',
+  alt: 'A tall sculpture made of three elements stacked on each other reminding of a human figure.'
+}, {
+  name: 'Cavaliere',
+  artist: 'Lamidi Olonade Fakeye',
+  description: "Descended from four generations of woodcarvers, Fakeye's work blended traditional and contemporary Yoruba themes.",
+  url: 'https://i.imgur.com/wIdGuZwm.png',
+  alt: 'An intricate wood sculpture of a warrior with a focused face on a horse adorned with patterns.'
+}, {
+  name: 'Big Bellies',
+  artist: 'Alina Szapocznikow',
+  description: "Szapocznikow is known for her sculptures of the fragmented body as a metaphor for the fragility and impermanence of youth and beauty. This sculpture depicts two very realistic large bellies stacked on top of each other, each around five feet (1,5m) tall.",
+  url: 'https://i.imgur.com/AlHTAdDm.jpg',
+  alt: 'The sculpture reminds a cascade of folds, quite different from bellies in classical sculptures.'
+}, {
+  name: 'Terracotta Army',
+  artist: 'Unknown Artist',
+  description: 'The Terracotta Army is a collection of terracotta sculptures depicting the armies of Qin Shi Huang, the first Emperor of China. The army consisted of more than 8,000 soldiers, 130 chariots with 520 horses, and 150 cavalry horses.',
+  url: 'https://i.imgur.com/HMFmH6m.jpg',
+  alt: '12 terracotta sculptures of solemn warriors, each with a unique facial expression and armor.'
+}, {
+  name: 'Lunar Landscape',
+  artist: 'Louise Nevelson',
+  description: 'Nevelson was known for scavenging objects from New York City debris, which she would later assemble into monumental constructions. In this one, she used disparate parts like a bedpost, juggling pin, and seat fragment, nailing and gluing them into boxes that reflect the influence of Cubism’s geometric abstraction of space and form.',
+  url: 'https://i.imgur.com/rN7hY6om.jpg',
+  alt: 'A black matte sculpture where the individual elements are initially indistinguishable.'
+}, {
+  name: 'Aureole',
+  artist: 'Ranjani Shettar',
+  description: 'Shettar merges the traditional and the modern, the natural and the industrial. Her art focuses on the relationship between man and nature. Her work was described as compelling both abstractly and figuratively, gravity defying, and a "fine synthesis of unlikely materials."',
+  url: 'https://i.imgur.com/okTpbHhm.jpg',
+  alt: 'A pale wire-like sculpture mounted on concrete wall and descending on the floor. It appears light.'
+}, {
+  name: 'Hippos',
+  artist: 'Taipei Zoo',
+  description: 'The Taipei Zoo commissioned a Hippo Square featuring submerged hippos at play.',
+  url: 'https://i.imgur.com/6o5Vuyu.jpg',
+  alt: 'A group of bronze hippo sculptures emerging from the sett sidewalk as if they were swimming.'
+}];
+handleClick() 事件处理函数正在更新局部变量 index。但存在两个原因使得变化不可见：
+
+局部变量无法在多次渲染中持久保存。 当 React 再次渲染这个组件时，它会从头开始渲染——不会考虑之前对局部变量的任何更改。
+更改局部变量不会触发渲染。 React 没有意识到它需要使用新数据再次渲染组件。
+要使用新数据更新组件，需要做两件事：
+
+保留 渲染之间的数据。
+触发 React 使用新数据渲染组件（重新渲染）。
+useState Hook 提供了这两个功能：
+
+State 变量 用于保存渲染间的数据。
+State setter 函数 更新变量并触发 React 再次渲染组件。
+```
+
+```jsx
+//添加一个 state 变量 
+要添加 state 变量，先从文件顶部的 React 中导入 useState：
+
+import { useState } from 'react';
+然后，替换这一行：
+
+let index = 0;
+将其修改为
+
+const [index, setIndex] = useState(0);
+index 是一个 state 变量，setIndex 是对应的 setter 函数。
+
+这里的 [ 和 ] 语法称为数组解构，它允许你从数组中读取值。 useState 返回的数组总是正好有两项。
+
+以下展示了它们在 handleClick() 中是如何共同起作用的：
+
+function handleClick() {
+  setIndex(index + 1);
+}
+现在点击 “Next” 按钮切换当前雕塑：
+//appjs
+import { useState } from 'react';
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  const [index, setIndex] = useState(0);
+
+  function handleClick() {
+    setIndex(index + 1);
+  }
+
+  let sculpture = sculptureList[index];
+  //当用户点击按钮时，handleClick 函数将 index 增加 1，使用 useState 更新组件状态，从而显示下一个雕塑。这样，点击按钮后可以浏览雕塑列表中的每个雕塑。
+  return (
+    <>
+      <button onClick={handleClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+      <p>
+        {sculpture.description}
+      </p>
+    </>
+  );
+}
+//datajs
+...
+```
+
+```jsx
+//遇见你的第一个 Hook 
+在 React 中，useState 以及任何其他以“use”开头的函数都被称为 Hook。
+
+Hook 是特殊的函数，只在 React 渲染时有效（我们将在下一节详细介绍）。它们能让你 “hook” 到不同的 React 特性中去。
+
+State 只是这些特性中的一个，你之后还会遇到其他 Hook。
+```
+
+```jsx
+//见你的第一个 Hook 
+在 React 中，useState 以及任何其他以“use”开头的函数都被称为 Hook。
+
+Hook 是特殊的函数，只在 React 渲染时有效（我们将在下一节详细介绍）。它们能让你 “hook” 到不同的 React 特性中去。
+
+State 只是这些特性中的一个，你之后还会遇到其他 Hook。
+
+陷阱:Hooks ——以 use 开头的函数——只能在组件或自定义 Hook 的最顶层调用。 你不能在条件语句、循环语句或其他嵌套函数内调用 Hook。Hook 是函数，但将它们视为关于组件需求的无条件声明会很有帮助。在组件顶部 “use” React 特性，类似于在文件顶部“导入”模块。
+```
+
+```js
+//剖析 useState 
+当你调用 useState 时，你是在告诉 React 你想让这个组件记住一些东西：
+
+const [index, setIndex] = useState(0);
+在这个例子里，你希望 React 记住 index。
+
+注意:惯例是将这对返回值命名为 const [thing, setThing]。你也可以将其命名为任何你喜欢的名称，但遵照约定俗成能使跨项目合作更易理解。
+
+useState 的唯一参数是 state 变量的初始值。在这个例子中，index 的初始值被useState(0)设置为 0。
+
+每次你的组件渲染时，useState 都会给你一个包含两个值的数组：
+
+state 变量 (index) 会保存上次渲染的值。
+state setter 函数 (setIndex) 可以更新 state 变量并触发 React 重新渲染组件。
+以下是实际发生的情况：
+
+const [index, setIndex] = useState(0);
+组件进行第一次渲染。 因为你将 0 作为 index 的初始值传递给 useState，它将返回 [0, setIndex]。 React 记住 0 是最新的 state 值。
+你更新了 state。当用户点击按钮时，它会调用 setIndex(index + 1)。 index 是 0，所以它是 setIndex(1)。这告诉 React 现在记住 index 是 1 并触发下一次渲染。
+组件进行第二次渲染。React 仍然看到 useState(0)，但是因为 React 记住 了你将 index 设置为了 1，它将返回 [1, setIndex]。
+以此类推！
+```
+
+```jsx
+//赋予一个组件多个 state 变量 
+你可以在一个组件中拥有任意多种类型的 state 变量。该组件有两个 state 变量，一个数字 index 和一个布尔值 showMore，点击 “Show Details” 会改变 showMore 的值：
+//appjs
+import { useState } from 'react';
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  const [index, setIndex] = useState(0);
+  const [showMore, setShowMore] = useState(false);
+
+  function handleNextClick() {
+    setIndex(index + 1);
+  }
+
+  function handleMoreClick() {
+    setShowMore(!showMore);
+  }
+
+  let sculpture = sculptureList[index];
+  return (
+    <>
+      <button onClick={handleNextClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <button onClick={handleMoreClick}>
+        {showMore ? 'Hide' : 'Show'} details
+      </button>
+      {showMore && <p>{sculpture.description}</p>}
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+    </> 
+    // 如果 showMore 为真，则显示雕塑的描述。
+  );
+}
+//datajs
+...
+如果它们不相关，那么存在多个 state 变量是一个好主意，例如本例中的 index 和 showMore。但是，如果你发现经常同时更改两个 state 变量，那么最好将它们合并为一个。例如，如果你有一个包含多个字段的表单，那么有一个值为对象的 state 变量比每个字段对应一个 state 变量更方便。 选择 state 结构在这方面有更多提示。
+```
+
+```jsx
+//React 如何知道返回哪个 state 
+
+答:你可能已经注意到，useState 在调用时没有任何关于它引用的是哪个 state 变量的信息。没有传递给 useState 的“标识符”，它是如何知道要返回哪个 state 变量呢？它是否依赖于解析函数之类的魔法？答案是否定的。
+
+相反，为了使语法更简洁，在同一组件的每次渲染中，Hooks 都依托于一个稳定的调用顺序。这在实践中很有效，因为如果你遵循上面的规则（“只在顶层调用 Hooks”），Hooks 将始终以相同的顺序被调用。此外，linter 插件也可以捕获大多数错误。
+
+在 React 内部，为每个组件保存了一个数组，其中每一项都是一个 state 对。它维护当前 state 对的索引值，在渲染之前将其设置为 “0”。每次调用 useState 时，React 都会为你提供一个 state 对并增加索引值。你可以在文章 React Hooks: not magic, just arrays中阅读有关此机制的更多信息。
+
+这个例子没有使用 React，但它让你了解 useState 在内部是如何工作的：
+//indexjs
+// useState 在 React 中是如何工作的（简化版）
+let componentHooks = [];
+let currentHookIndex = 0;
+//声明一个全局变量 componentHooks，用于存储组件的所有 hooks。声明一个全局变量 currentHookIndex，用于跟踪当前组件中的 hook 调用。
+
+function useState(initialState) {
+  let pair = componentHooks[currentHookIndex];
+  if (pair) {
+    // 这不是第一次渲染
+    // 所以 state pair 已经存在
+    // 将其返回并为下一次 hook 的调用做准备
+    currentHookIndex++;
+    return pair;
+    //声明一个名为 useState 的函数，接受一个初始状态 initialState。
+    //获取当前 hook 索引对应的 state pair。
+    //如果 pair 存在，表示不是第一次渲染，直接返回它。增加 currentHookIndex，为下一个 hook 调用做准备。
+  }
+
+  // 这是我们第一次进行渲染.
+  // 所以新建一个 state pair 然后存储它.如果 pair 不存在，表示第一次渲染，创建一个新的 state pair。
+  pair = [initialState, setState];
+
+  function setState(nextState) {
+    // 当用户发起 state 的变更， 把新的值放入 pair 中.   声明 setState 函数，当 state 更新时调用 updateDOM 重新渲染组件。
+    pair[0] = nextState;
+    updateDOM();
+  }
+
+  // 存储这个 pair 用于将来的渲染
+  // 并且为下一次 hook 的调用做准备
+  componentHooks[currentHookIndex] = pair;
+  currentHookIndex++;
+  return pair;
+}
+
+function Gallery() {
+  // 每次调用 useState() 都会得到新的 pair
+  const [index, setIndex] = useState(0);//使用 useState 初始化 index 为 0，并提供 setIndex 方法更新它。
+  const [showMore, setShowMore] = useState(false);//使用 useState 初始化 showMore 为 false，并提供 setShowMore 方法更新它。
+
+  function handleNextClick() {
+    setIndex(index + 1);
+    //当用户点击 "Next" 按钮时，调用 setIndex 增加 index 值。
+  }
+
+  function handleMoreClick() {
+    setShowMore(!showMore);
+    //当用户点击 "Show details" 或 "Hide details" 按钮时，调用 setShowMore 切换 showMore 状态。
+  }
+
+  let sculpture = sculptureList[index];
+  // 这个例子没有使用 React，所以, 返回一个对象而不是 JSX
+  return {
+    //返回一个对象，其中包含了所有需要的属性和事件处理函数，用于更新 DOM。
+    onNextClick: handleNextClick,
+    onMoreClick: handleMoreClick,
+    header: `${sculpture.name} by ${sculpture.artist}`,
+    counter: `${index + 1} of ${sculptureList.length}`,
+    more: `${showMore ? 'Hide' : 'Show'} details`,
+    description: showMore ? sculpture.description : null,
+    imageSrc: sculpture.url,
+    imageAlt: sculpture.alt
+  };
+}
+
+function updateDOM() {
+  // 在渲染组件之前重置当前 Hook 的下标
+  currentHookIndex = 0;
+  let output = Gallery();
+
+  // 更新 DOM 以匹配输出结果
+  // 这部分工作由 React 为你完成
+  nextButton.onclick = output.onNextClick;
+  header.textContent = output.header;
+  moreButton.onclick = output.onMoreClick;
+  moreButton.textContent = output.more;
+  image.src = output.imageSrc;
+  image.alt = output.imageAlt;
+  if (output.description !== null) {
+    description.textContent = output.description;
+    description.style.display = '';
+  } else {
+    description.style.display = 'none';
+  }
+}
+
+//初始化渲染
+let nextButton = document.getElementById('nextButton');
+let header = document.getElementById('header');
+let moreButton = document.getElementById('moreButton');
+let description = document.getElementById('description');
+let image = document.getElementById('image');
+let sculptureList = [{
+  name: 'Terracotta Army',
+  artist: 'Unknown Artist',
+  description: 'The Terracotta Army is a collection of terrts with 52',
+  url: 'https://i.imgur.com/HMFmH6m.jpg',
+  alt: '12 txpression and armor.'
+}, 
+...
+}];
+// 使 UI 匹配当前 state
+updateDOM();
+
+//indexhtml
+<button id="nextButton">
+  Next
+</button>
+<h3 id="header"></h3>
+<button id="moreButton"></button>
+<p id="description"></p>
+<img id="image">
+
+<style>
+* { box-sizing: border-box; }
+body { font-family: sans-serif; margin: 20px; padding: 0; }
+button { display: block; margin-bottom: 10px; }
+</style>
+```
+
+```jsx
+//
+```
+
+```jsx
+//State 是隔离且私有的 
+State 是屏幕上组件实例内部的状态。换句话说，如果你渲染同一个组件两次，每个副本都会有完全隔离的 state！改变其中一个不会影响另一个。
+
+在这个例子中，之前的 Gallery 组件以同样的逻辑被渲染了两次。试着点击每个画廊内的按钮。你会注意到它们的 state 是相互独立的：
+//appjs
+import Gallery from './Gallery.js';
+
+export default function Page() {
+  return (
+    <div className="Page">
+      <Gallery />
+      <Gallery />
+    </div>
+  );
+}
+//galleryjs
+import { useState } from 'react';
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  const [index, setIndex] = useState(0);
+  const [showMore, setShowMore] = useState(false);
+
+  function handleNextClick() {
+    setIndex(index + 1);
+  }
+
+  function handleMoreClick() {
+    setShowMore(!showMore);
+  }
+
+  let sculpture = sculptureList[index];
+  return (
+    <section>
+      <button onClick={handleNextClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <button onClick={handleMoreClick}>
+        {showMore ? 'Hide' : 'Show'} details
+      </button>
+      {showMore && <p>{sculpture.description}</p>}
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+    </section>
+  );
+}
+//datajs
+...
+这就是 state 与声明在模块顶部的普通变量不同的原因。 State 不依赖于特定的函数调用或在代码中的位置，它的作用域“只限于”屏幕上的某块特定区域。你渲染了两个 <Gallery /> 组件，所以它们的 state 是分别存储的。
+
+还要注意 Page 组件“不知道”关于 Gallery state 的任何信息，甚至不知道它是否有任何 state。与 props 不同，state 完全私有于声明它的组件。父组件无法更改它。这使你可以向任何组件添加或删除 state，而不会影响其他组件。
+
+如果你希望两个画廊保持其 states 同步怎么办？在 React 中执行此操作的正确方法是从子组件中删除 state 并将其添加到离它们最近的共享父组件中。接下来的几节将专注于组织单个组件的 state，但我们将在组件间共享 state 中回到这个主题。
+```
+
+```jsx
+//摘要
+当一个组件需要在多次渲染间“记住”某些信息时使用 state 变量。
+State 变量是通过调用 useState Hook 来声明的。
+Hook 是以 use 开头的特殊函数。它们能让你 “hook” 到像 state 这样的 React 特性中。
+Hook 可能会让你想起 import：它们需要在非条件语句中调用。调用 Hook 时，包括 useState，仅在组件或另一个 Hook 的顶层被调用才有效。
+useState Hook 返回一对值：当前 state 和更新它的函数。
+你可以拥有多个 state 变量。在内部，React 按顺序匹配它们。
+State 是组件私有的。如果你在两个地方渲染它，则每个副本都有独属于自己的 state。
+```
+
+```jsx
+//第 1 个挑战 共 4 个挑战: 完成画廊组件 
+当你在最后一个雕塑上按 “Next” 时，代码会发生崩溃。请修复逻辑以防止此崩溃。你可以尝试在事件处理函数中添加额外的逻辑，或在操作无法执行时禁用掉按钮。
+
+修复崩溃后，添加一个显示上一个雕塑的 “Previous” 按钮。同样地，确保它不在第一个雕塑里发生崩溃。
+//appjs
+import { useState } from 'react';
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  const [index, setIndex] = useState(0);
+  const [showMore, setShowMore] = useState(false);
+
+  function handleNextClick() {
+    setIndex(index + 1);
+  }
+
+  function handleMoreClick() {
+    setShowMore(!showMore);
+  }
+
+  let sculpture = sculptureList[index];
+  return (
+    <>
+      <button onClick={handleNextClick}>
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <button onClick={handleMoreClick}>
+        {showMore ? 'Hide' : 'Show'} details
+      </button>
+      {showMore && <p>{sculpture.description}</p>}
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+    </>
+  );
+}
+//datajs
+...
+
+答:
+import { useState } from 'react';
+import { sculptureList } from './data.js';
+
+export default function Gallery() {
+  const [index, setIndex] = useState(0);
+  const [showMore, setShowMore] = useState(false);
+
+  let hasPrev = index > 0;
+  let hasNext = index < sculptureList.length - 1;
+
+  function handlePrevClick() {
+    if (hasPrev) {
+      setIndex(index - 1);
+    }
+  }
+
+  function handleNextClick() {
+    if (hasNext) {
+      setIndex(index + 1);
+    }
+  }
+
+  function handleMoreClick() {
+    setShowMore(!showMore);
+  }
+
+  let sculpture = sculptureList[index];
+  return (
+    <>
+      <button
+        onClick={handlePrevClick}
+        disabled={!hasPrev}
+      >
+        Previous
+      </button>
+      <button
+        onClick={handleNextClick}
+        disabled={!hasNext}
+      >
+        Next
+      </button>
+      <h2>
+        <i>{sculpture.name} </i> 
+        by {sculpture.artist}
+      </h2>
+      <h3>  
+        ({index + 1} of {sculptureList.length})
+      </h3>
+      <button onClick={handleMoreClick}>
+        {showMore ? 'Hide' : 'Show'} details
+      </button>
+      {showMore && <p>{sculpture.description}</p>}
+      <img 
+        src={sculpture.url} 
+        alt={sculpture.alt}
+      />
+    </>
+  );
+}
+注意 hasPrev 和 hasNext 是如何同时 作用于返回的 JSX 和事件处理函数中的！这种简便的模式之所以有效，是因为事件处理函数”闭包”了渲染时声明的变量。
+```
+
+```jsx
+//第 2 个挑战 共 4 个挑战: 修复卡住的输入表单 
+当你输入字段时，什么也没有出现。这就像输入值被空字符串给“卡住”了。第一个 <input> 的 value 设置为始终匹配 firstName 变量，第二个 <input> 的 value 设置为始终匹配 lastName 变量。这是对的。两个输入框都有 onChange 事件处理函数，它尝试根据最新的用户输入（e.target.value）更新变量。但是，变量似乎并没有在重新渲染时“记住”它们的值。通过使用 state 变量来解决此问题。
+export default function Form() {
+  let firstName = '';
+  let lastName = '';
+
+  function handleFirstNameChange(e) {
+    firstName = e.target.value;
+  }
+
+  function handleLastNameChange(e) {
+    lastName = e.target.value;
+  }
+
+  function handleReset() {
+    firstName = '';
+    lastName = '';
+  }
+
+  return (
+    <form onSubmit={e => e.preventDefault()}>
+      <input
+        placeholder="First name"
+        value={firstName}
+        onChange={handleFirstNameChange}
+      />
+      <input
+        placeholder="Last name"
+        value={lastName}
+        onChange={handleLastNameChange}
+      />
+      <h1>Hi, {firstName} {lastName}</h1>
+      <button onClick={handleReset}>Reset</button>
+    </form>
+  );
+}
+
+答:首先，从 React 导入 useState。然后用 useState 声明的 state 变量替换 firstName 和 lastName。最后，用 setFirstName(...) 替换每个 firstName = ... 赋值，并对 lastName 做同样的事情。不要忘记更新 handleReset，以使重置按钮生效。
+import { useState } from 'react';
+
+export default function Form() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
+  function handleFirstNameChange(e) {
+    setFirstName(e.target.value);
+    //该函数在输入框内容改变时更新 firstName 状态。
+    //定义一个名为 handleFirstNameChange 的函数，接收一个事件对象 e 作为参数。函数的参数 e，表示事件对象。
+    //调用 setFirstName 函数，用输入框的新值更新 firstName 状态。setFirstName一个函数，通常由 useState 钩子生成，用于更新 firstName 状态。(e.target.value) 从事件对象 e 中获取目标元素的值，并传递给 setFirstName 函数。e.target事件对象的目标元素，即触发事件的元素。.value目标元素的当前值，通常是输入框中的文本。
+  }
+
+  function handleLastNameChange(e) {
+    setLastName(e.target.value);
+  }
+
+  function handleReset() {
+    setFirstName('');
+    setLastName('');
+  }
+
+  return (
+    <form onSubmit={e => e.preventDefault()}>
+      <input
+        placeholder="First name"
+        value={firstName}
+        onChange={handleFirstNameChange}
+      />
+      <input
+        placeholder="Last name"
+        value={lastName}
+        onChange={handleLastNameChange}
+      />
+      <h1>Hi, {firstName} {lastName}</h1>
+      <button onClick={handleReset}>Reset</button>
+    </form>
+  );
+}
+```
+
+```jsx
+//第 3 个挑战 共 4 个挑战: 修复一个错误 
+这是一个收集用户反馈的小表单。当反馈被提交时，它应该显示一条感谢信息。但是，现在它会发生崩溃并显示错误消息“渲染的 hooks 比预期的少”。你能发现错误并修复它吗？
+import { useState } from 'react';
+
+export default function FeedbackForm() {
+  const [isSent, setIsSent] = useState(false);
+  if (isSent) {
+    return <h1>Thank you!</h1>;
+  } else {
+    // eslint-disable-next-line
+    const [message, setMessage] = useState('');
+    return (
+      <form onSubmit={e => {
+        e.preventDefault();
+        alert(`Sending: "${message}"`);
+        setIsSent(true);
+      }}>
+        <textarea
+          placeholder="Message"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+        />
+        <br />
+        <button type="submit">Send</button>
+      </form>
+    );
+  }
+}
+
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
+```
+
+```jsx
+//
 ```
 
 ```jsx
