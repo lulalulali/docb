@@ -7331,7 +7331,7 @@ export default function Form() {
 //第 3 个挑战 共 4 个挑战: 修复一个错误 
 这是一个收集用户反馈的小表单。当反馈被提交时，它应该显示一条感谢信息。但是，现在它会发生崩溃并显示错误消息“渲染的 hooks 比预期的少”。你能发现错误并修复它吗？
 import { useState } from 'react';
-
+//这个组件显示一个反馈表单，当提交表单时显示感谢信息。
 export default function FeedbackForm() {
   const [isSent, setIsSent] = useState(false);
   if (isSent) {
@@ -7339,6 +7339,38 @@ export default function FeedbackForm() {
   } else {
     // eslint-disable-next-line
     const [message, setMessage] = useState('');
+    return (
+      <form onSubmit={e => {
+        e.preventDefault();
+        alert(`Sending: "${message}"`);
+        setIsSent(true);
+        //返回一个表单元素，当表单提交时执行事件处理函数。return (返回的 JSX 元素开始。<form onSubmit={e => { ... }}>表单元素，当提交表单时执行 onSubmit 处理函数。e.preventDefault();阻止默认的表单提交行为。alert(Sending: "${message}");弹出一个提示框，显示将要发送的消息。setIsSent(true);将 isSent 状态更新为 true。
+      }}>
+        <textarea
+          placeholder="Message"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          //定义一个文本区域，用于输入消息，绑定 message 状态，值改变时更新 message。<textarea定义一个多行文本输入区域。placeholder="Message"提示文本，显示为 "Message"。value={message}绑定 message 状态，显示当前消息。onChange={e => setMessage(e.target.value)}当文本区域内容改变时，更新 message 状态。
+        />
+        <br />
+        <button type="submit">Send</button>
+      </form>
+    );
+  }
+}
+答:
+Hook 只能在组件函数的顶层调用。这里，第一个 isSent 定义遵循这个规则，但是 message 的定义位于一个条件语句中。
+
+将其移出条件语句以解决问题：
+import { useState } from 'react';
+
+export default function FeedbackForm() {
+  const [isSent, setIsSent] = useState(false);
+  const [message, setMessage] = useState('');
+
+  if (isSent) {
+    return <h1>Thank you!</h1>;
+  } else {
     return (
       <form onSubmit={e => {
         e.preventDefault();
@@ -7356,11 +7388,77 @@ export default function FeedbackForm() {
     );
   }
 }
+请记住，必须在条件语句外并且始终以相同的顺序调用 Hook！
 
+你还可以删除不必要的 else 分支以减少嵌套。但要保证对 Hook 的所有调用都发生在第一个 return 前，这很重要。
+import { useState } from 'react';
+
+export default function FeedbackForm() {
+  const [isSent, setIsSent] = useState(false);
+  const [message, setMessage] = useState('');
+
+  if (isSent) {
+    return <h1>Thank you!</h1>;
+  }
+
+  return (
+    <form onSubmit={e => {
+      e.preventDefault();
+      alert(`Sending: "${message}"`);
+      setIsSent(true);
+    }}>
+      <textarea
+        placeholder="Message"
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+      />
+      <br />
+      <button type="submit">Send</button>
+    </form>
+  );
+}
+尝试移动第二个 useState 调用到 if 条件之后，并要注意这会如何再次破坏它。
+
+通常，以上类型的错误都会由 eslint-plugin-react-hooks linter 规则捕获。如果在本地调试错误代码时没有看到错误，则需要在构建工具的配置文件中进行设置。
 ```
 
 ```jsx
-//
+//第 4 个挑战 共 4 个挑战: 移除不必要的 state 
+当按钮被点击时，这个例子应该询问用户的名字，然后显示一个 alert 欢迎他们。你尝试使用 state 来保存名字，但由于某种原因，它始终显示“Hello, ！”。
+
+要修复此代码，请删除不必要的 state 变量。（我们将在稍后讨论为什么上述代码不起作用。）
+
+你能解释为什么这个 state 变量是不必要的吗？
+import { useState } from 'react';
+
+export default function FeedbackForm() {
+  const [name, setName] = useState('');
+
+  function handleClick() {
+    setName(prompt('What is your name?'));
+    alert(`Hello, ${name}!`);
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Greet
+    </button>
+  );
+}
+答:以下是一个使用了普通变量 name 的固定版本，这个变量声明于需要它的函数中。
+export default function FeedbackForm() {
+  function handleClick() {
+    const name = prompt('What is your name?');
+    alert(`Hello, ${name}!`);
+  }
+
+  return (
+    <button onClick={handleClick}>
+      Greet
+    </button>
+  );
+}
+State 变量仅用于在组件重渲染时保存信息。在单个事件处理函数中，普通变量就足够了。当普通变量运行良好时，不要引入 state 变量。
 ```
 
 ```jsx
