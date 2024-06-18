@@ -7449,6 +7449,7 @@ export default function FeedbackForm() {
 export default function FeedbackForm() {
   function handleClick() {
     const name = prompt('What is your name?');
+    //这行代码会显示一个提示对话框，询问用户“你的名字是什么？”。用户在对话框中输入的内容将被存储在常量变量 name 中。
     alert(`Hello, ${name}!`);
   }
 
@@ -7461,52 +7462,401 @@ export default function FeedbackForm() {
 State 变量仅用于在组件重渲染时保存信息。在单个事件处理函数中，普通变量就足够了。当普通变量运行良好时，不要引入 state 变量。
 ```
 
+### 渲染和提交
+
+组件显示到屏幕之前，其必须被 React 渲染。理解这些处理步骤将帮助你思考代码的执行过程并能解释其行为。
+
+你将会学习到
+在 React 中渲染的含义是什么
+为什么以及什么时候 React 会渲染一个组件
+在屏幕上显示组件所涉及的步骤
+为什么渲染并不一定会导致 DOM 更新
+想象一下，你的组件是厨房里的厨师，把食材烹制成美味的菜肴。在这种场景下，React 就是一名服务员，他会帮客户们下单并为他们送来所点的菜品。这种请求和提供 UI 的过程总共包括三个步骤：
+
+触发 一次渲染（把客人的点单分发到厨房）
+渲染 组件（在厨房准备订单）
+提交 到 DOM（将菜品放在桌子上）
+
 ```jsx
-//
+//步骤 1: 触发一次渲染 
+有两种原因会导致组件的渲染:
+
+组件的 初次渲染。
+组件（或者其祖先之一）的 状态发生了改变。
+初次渲染 
+当应用启动时，会触发初次渲染。框架和沙箱有时会隐藏这部分代码，但它是通过调用 createRoot 方法并传入目标 DOM 节点，然后用你的组件调用 render 函数完成的：
+//indexjs
+import Image from './Image.js';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'))
+root.render(<Image />);
+//获取 HTML 页面中的一个元素，并在其中渲染一个 React 组件 <Image />。   createRoot: React 18 中的一个函数，用于创建一个新的根渲染器。document.getElementById('root'): JavaScript 中的一个方法，用于获取 HTML 页面中 id 为 'root' 的元素。createRoot(document.getElementById('root')): 这一整句代码的意思是使用 createRoot 函数，传入获取到的 id 为 'root' 的 HTML 元素，并返回一个新的根渲染器，将其赋值给 root 变量。
+//root.render(<Image />): 使用根渲染器的 render 方法，将 <Image /> 组件渲染到 id 为 'root' 的 HTML 元素中。
+
+//imagejs
+export default function Image() {
+  return (
+    <img
+      src="https://i.imgur.com/ZF6s192.jpg"
+      alt="'Floralis Genérica' by Eduardo Catalano: a gigantic metallic flower sculpture with reflective petals"
+    />
+  );
+}
+试着注释掉 root.render()，然后你将会看到组件消失。
 ```
 
 ```jsx
-//
+//状态更新时重新渲染 
+一旦组件被初次渲染，你就可以通过使用 set 函数 更新其状态来触发之后的渲染。更新组件的状态会自动将一次渲染送入队列。（你可以把这种情况想象成餐厅客人在第一次下单之后又点了茶、点心和各种东西，具体取决于他们的胃口。）
+
+```
+
+!!!此处插入图react8
+
+```jsx
+//步骤 2: React 渲染你的组件 
+在你触发渲染后，React 会调用你的组件来确定要在屏幕上显示的内容。“渲染中” 即 React 在调用你的组件。
+
+在进行初次渲染时, React 会调用根组件。
+对于后续的渲染, React 会调用内部状态更新触发了渲染的函数组件。
+这个过程是递归的：如果更新后的组件会返回某个另外的组件，那么 React 接下来就会渲染 那个 组件，而如果那个组件又返回了某个组件，那么 React 接下来就会渲染 那个 组件，以此类推。这个过程会持续下去，直到没有更多的嵌套组件并且 React 确切知道哪些东西应该显示到屏幕上为止。  !!!就是说像俄罗斯套娃
+
+在接下来的例子中，React 将会调用 Gallery() 和 Image() 若干次：
+//indexjs
+import Gallery from './Gallery.js';
+import { createRoot } from 'react-dom/client';
+
+const root = createRoot(document.getElementById('root'))
+root.render(<Gallery />);
+//galleryjs
+export default function Gallery() {
+  return (
+    <section>
+      <h1>鼓舞人心的雕塑</h1>
+      <Image />
+      <Image />
+      <Image />
+    </section>
+  );
+}
+
+function Image() {
+  return (
+    <img
+      src="https://i.imgur.com/ZF6s192.jpg"
+      alt="'Floralis Genérica' by Eduardo Catalano: a gigantic metallic flower sculpture with reflective petals"
+    />
+  );
+}
+在初次渲染中， React 将会为<section>、<h1> 和三个 <img> 标签 创建 DOM 节点。
+在一次重渲染过程中, React 将计算它们的哪些属性（如果有的话）自上次渲染以来已更改。在下一步（提交阶段）之前，它不会对这些信息执行任何操作。
+陷阱
+渲染必须始终是一次 纯计算:
+
+输入相同，输出相同。 给定相同的输入，组件应始终返回相同的 JSX。（当有人点了西红柿沙拉时，他们不应该收到洋葱沙拉！）
+只做它自己的事情。 它不应更改任何存在于渲染之前的对象或变量。（一个订单不应更改其他任何人的订单。）
+否则，随着代码库复杂性的增加，你可能会遇到令人困惑的错误和不可预测的行为。在 “严格模式” 下开发时，React 会调用每个组件的函数两次，这可以帮助发现由不纯函数引起的错误。
+
+性能优化 :如果更新的组件在树中的位置非常高，渲染更新后的组件内部所有嵌套组件的默认行为将不会获得最佳性能。如果你遇到了性能问题，性能 章节描述了几种可选的解决方案 。不要过早进行优化！
 ```
 
 ```jsx
-//
+//步骤 3: React 把更改提交到 DOM 上 
+在渲染（调用）你的组件之后，React 将会修改 DOM。
+
+对于初次渲染， React 会使用 appendChild() DOM API 将其创建的所有 DOM 节点放在屏幕上。
+对于重渲染， React 将应用最少的必要操作（在渲染时计算！），以使得 DOM 与最新的渲染输出相互匹配。
+React 仅在渲染之间存在差异时才会更改 DOM 节点。 例如，有一个组件，它!!!每秒!!!使用从父组件传递下来的不同属性重新渲染一次。注意，你可以添加一些文本到 <input> 标签，更新它的 value，但是文本不会在组件重渲染时消失：
+export default function Clock({ time }) {
+  return (
+    <>
+      <h1>{time}</h1>
+      <input />
+    </>
+  );
+  //定义并导出一个名为 Clock 的 React 函数组件。这个组件接受一个 time 属性，并返回一个包含两个元素的 JSX 结构：一个显示 time 属性值的 <h1> 标签和一个输入框 <input />。使用 React Fragment (<>...</>) 来包裹这些元素，从而避免在 DOM 中增加额外的节点。
+  //
+}
+这个例子之所以会正常运行，是因为在最后一步中，React 只会使用最新的 time 更新 <h1> 标签的内容。它看到 <input> 标签出现在 JSX 中与上次相同的位置，因此 React 不会修改 <input> 标签或它的 value！
 ```
 
 ```jsx
-//
+//尾声：浏览器绘制 
+在渲染完成并且 React 更新 DOM 之后，浏览器就会重新绘制屏幕。尽管这个过程被称为“浏览器渲染”（“browser rendering”），但我们还是将它称为“绘制”（“painting”），以避免在这些文档的其余部分中出现混淆。
+
+//摘要
+在一个 React 应用中一次屏幕更新都会发生以下三个步骤：
+触发
+渲染
+提交
+你可以使用严格模式去找到组件中的错误
+如果渲染结果与上次一样，那么 React 将不会修改 DOM
+上一页
+state：组件的记忆
+```
+
+### state 如同一张快照
+
+也许 state 变量看起来和一般的可读写的 JavaScript 变量类似。但 state 在其表现出的特性上更像是一张快照。设置它不会更改你已有的 state 变量，但会触发重新渲染。
+
+你将会学习到
+设置 state 如何导致重新渲染
+state 在何时以何种方式更新
+为什么 state 不在设置后立即更新
+事件处理函数如何获取 state 的一张“快照”
+
+```jsx
+//设置 state 会触发渲染 
+你可能会认为你的用户界面会直接对点击之类的用户输入做出响应并发生变化。在 React 中，它的工作方式与这种思维模型略有不同。在上一页中，你看到了来自 React 的设置 state 请求重新渲染。这意味着要使界面对输入做出反应，你需要设置其 state。
+
+在这个例子中，当你按下 “send” 时，setIsSent(true) 会通知 React 重新渲染 UI：
+import { useState } from 'react';
+
+export default function Form() {
+  const [isSent, setIsSent] = useState(false);
+  const [message, setMessage] = useState('Hi!');
+  if (isSent) {
+    return <h1>Your message is on its way!</h1>
+  }
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      setIsSent(true);
+      sendMessage(message);
+    }}>
+      <textarea
+        placeholder="Message"
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+      />
+      <button type="submit">Send</button>
+    </form>
+  );
+}
+
+function sendMessage(message) {
+  // ...
+}
+当你单击按钮时会发生以下情况：
+
+执行 onSubmit 事件处理函数。
+setIsSent(true) 将 isSent 设置为 true 并排列一个新的渲染。
+React 根据新的 isSent 值重新渲染组件。
+让我们仔细看看 state 和渲染之间的关系。
 ```
 
 ```jsx
-//
+//渲染会及时生成一张快照 
+“正在渲染” 就意味着 React 正在调用你的组件——一个函数。你从该函数返回的 JSX 就像是在某个时间点上 UI 的快照。它的 props、事件处理函数和内部变量都是 根据当前渲染时的 state 被计算出来的。
+
+与照片或电影画面不同，你返回的 UI “快照”是可交互的。它其中包括类似事件处理函数的逻辑，这些逻辑用于指定如何对输入作出响应。React 随后会更新屏幕来匹配这张快照，并绑定事件处理函数。因此，按下按钮就会触发你 JSX 中的点击事件处理函数。
+
+当 React 重新渲染一个组件时：
+
+React 会再次调用你的函数
+函数会返回新的 JSX 快照
+React 会更新界面以匹配返回的快照  
+
+```
+
+!!!此处插入图react9
+
+```jsx
+//作为一个组件的记忆，state 不同于在你的函数返回之后就会消失的普通变量。state 实际上“活”在 React 本身中——就像被摆在一个架子上！——位于你的函数之外。当 React 调用你的组件时，它会为特定的那一次渲染提供一张 state 快照。你的组件会在其 JSX 中返回一张包含一整套新的 props 和事件处理函数的 UI 快照 ，其中所有的值都是 根据那一次渲染中 state 的值 被计算出来的！
+这里有个向你展示其运行原理的小例子。在这个例子中，你可能会以为点击“+3”按钮会调用 setNumber(number + 1) 三次从而使计数器递增三次。
+
+看看你点击“+3”按钮时会发生什么：
+```
+
+!!!此处插入react10
+
+```jsx
+//import { useState } from 'react';
+
+export default function Counter() {
+  const [number, setNumber] = useState(0);
+
+  return (
+    <>
+      <h1>{number}</h1>
+      <button onClick={() => {
+        setNumber(number + 1);
+        setNumber(number + 1);
+        setNumber(number + 1);
+      }}>+3</button>
+    </>
+  )
+}
+
+请注意，每次点击只会让 number 递增一次！
+
+设置 state 只会为下一次渲染变更 state 的值。在第一次渲染期间，number 为 0。这也就解释了为什么在 那次渲染中的 onClick 处理函数中，即便在调用了 setNumber(number + 1) 之后，number 的值也仍然是 0：
+
+<button onClick={() => {
+  setNumber(number + 1);
+  setNumber(number + 1);
+  setNumber(number + 1);
+}}>+3</button>
+以下是这个按钮的点击事件处理函数通知 React 要做的事情：
+
+setNumber(number + 1)：number 是 0 所以 setNumber(0 + 1)。
+React 准备在下一次渲染时将 number 更改为 1。
+setNumber(number + 1)：number 是0 所以 setNumber(0 + 1)。
+React 准备在下一次渲染时将 number 更改为 1。
+setNumber(number + 1)：number 是0 所以 setNumber(0 + 1)。
+React 准备在下一次渲染时将 number 更改为 1。
+尽管你调用了三次 setNumber(number + 1)，但在 这次渲染的 事件处理函数中 number 会一直是 0，所以你会三次将 state 设置成 1。这就是为什么在你的事件处理函数执行完以后，React 重新渲染的组件中的 number 等于 1 而不是 3。
+
+你还可以通过在心里把 state 变量替换成它们在你代码中的值来想象这个过程。由于 这次渲染 中的 state 变量 number 是 0，其事件处理函数看起来会像这样：
+
+<button onClick={() => {
+  setNumber(0 + 1);
+  setNumber(0 + 1);
+  setNumber(0 + 1);
+}}>+3</button>
+对于下一次渲染来说，number 是 1，因此 那次渲染中的 点击事件处理函数看起来会像这样：
+
+<button onClick={() => {
+  setNumber(1 + 1);
+  setNumber(1 + 1);
+  setNumber(1 + 1);
+}}>+3</button>
+这就是为什么再次点击按钮会将计数器设置为 2，下次点击时会设为 3，依此类推。
 ```
 
 ```jsx
-//
+//随时间变化的 state 
+好的，刚才那些很有意思。试着猜猜点击这个按钮会发出什么警告：
+import { useState } from 'react';
+
+export default function Counter() {
+  const [number, setNumber] = useState(0);
+
+  return (
+    <>
+      <h1>{number}</h1>
+      <button onClick={() => {
+        setNumber(number + 5);
+        alert(number);
+      }}>+5</button>
+    </>
+  )
+}
+如果你使用之前替换的方法，你就能猜到这个提示框将会显示 “0”：
+
+setNumber(0 + 5);
+alert(0);
+但如果你在这个提示框上加上一个定时器， 使得它在组件重新渲染 之后 才触发，又会怎样呢？是会显示 “0” 还是 “5” ？猜一猜！
+import { useState } from 'react';
+
+export default function Counter() {
+  const [number, setNumber] = useState(0);
+
+  return (
+    <>
+      <h1>{number}</h1>
+      <button onClick={() => {
+        setNumber(number + 5);
+        setTimeout(() => {
+          alert(number);
+        }, 3000);
+      }}>+5</button>
+    </>
+  )
+}
+惊讶吗？你如果使用替代法，就能看到被传入提示框的 state “快照”。
+
+setNumber(0 + 5);
+setTimeout(() => {
+  alert(0);
+}, 3000);
+到提示框运行时，React 中存储的 state 可能已经发生了更改，但它是使用用户与之交互时状态的快照进行调度的！
+
+一个 state 变量的值永远不会在一次渲染的内部发生变化， 即使其事件处理函数的代码是异步的。在 那次渲染的 onClick 内部，number 的值即使在调用 setNumber(number + 5) 之后也还是 0。它的值在 React 通过调用你的组件“获取 UI 的快照”时就被“固定”了。
+
+这里有个示例能够说明上述特性会使你的事件处理函数更不容易出现计时错误。下面是一个会在五秒延迟之后发送一条消息的表单。想象以下场景：
+
+你按下“发送”按钮，向 Alice 发送“你好”。
+在五秒延迟结束之前，将“To”字段的值更改为“Bob”。
+你觉得 alert 会显示什么？它是会显示“你向 Alice 说了你好“还是会显示“你向 Bob 说了你好”？根据你已经学到的知识猜一猜，然后动手试一试：
+import { useState } from 'react';
+
+export default function Form() {
+  const [to, setTo] = useState('Alice');
+  const [message, setMessage] = useState('你好');
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setTimeout(() => {
+      alert(`你向 ${to} 说了${message}`);
+    }, 5000);
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        To:{' '}
+        <select
+          value={to}
+          onChange={e => setTo(e.target.value)}>
+          <option value="Alice">Alice</option>
+          <option value="Bob">Bob</option>
+        </select>
+      </label>
+      <textarea
+        placeholder="Message"
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+      />
+      <button type="submit">发送</button>
+    </form>
+  );
+}
+React 会使 state 的值始终“固定”在一次渲染的各个事件处理函数内部。你无需担心代码运行时 state 是否发生了变化。
+
+但是，万一你想在重新渲染之前读取最新的 state 怎么办？你应该使用 状态更新函数，下一页将会介绍！
 ```
 
 ```jsx
-//
+//摘要
+设置 state 请求一次新的渲染。
+React 将 state 存储在组件之外，就像在架子上一样。
+当你调用 useState 时，React 会为你提供该次渲染 的一张 state 快照。
+变量和事件处理函数不会在重渲染中“存活”。每个渲染都有自己的事件处理函数。
+每个渲染（以及其中的函数）始终“看到”的是 React 提供给这个 渲染的 state 快照。
+你可以在心中替换事件处理函数中的 state，类似于替换渲染的 JSX。
+过去创建的事件处理函数拥有的是创建它们的那次渲染中的 state 值。
 ```
 
 ```jsx
-//
-```
+//第 1 个挑战 共 1 个挑战: 实现红绿灯组件 
+以下是一个人行道红绿灯组件，在按下按钮时会切换状态：
+import { useState } from 'react';
 
-```jsx
-//
-```
+export default function TrafficLight() {
+  const [walk, setWalk] = useState(true);
 
-```jsx
-//
-```
+  function handleClick() {
+    setWalk(!walk);
+  }
 
-```jsx
-//
-```
+  return (
+    <>
+      <button onClick={handleClick}>
+        Change to {walk ? 'Stop' : 'Walk'}
+      </button>
+      <h1 style={{
+        color: walk ? 'darkgreen' : 'darkred'
+      }}>
+        {walk ? 'Walk' : 'Stop'}
+      </h1>
+    </>
+  );
+}
+向 click 事件处理函数添加一个 alert 。当灯为绿色且显示“Walk”时，单击按钮应显示“Stop is next”。当灯为红色并显示“Stop”时，单击按钮应显示“Walk is next”。
 
-```jsx
-//
+把 alert 方法放在 setWalk 方法之前或之后有区别吗？
 ```
 
 ```jsx
