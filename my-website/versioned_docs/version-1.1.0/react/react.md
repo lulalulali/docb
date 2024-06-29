@@ -20860,10 +20860,16 @@ import { useState, useRef } from 'react';
 
 export default function VideoPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
+  //const ref =useRef(null);
 
   function handleClick() {
     const nextIsPlaying = !isPlaying;
     setIsPlaying(nextIsPlaying);
+    //if (nextIsPlaying){
+    // ref.current.play();
+    // }else {
+    //   ref.current.pause();
+    // }
   }
 
   return (
@@ -20878,6 +20884,9 @@ export default function VideoPlayer() {
         />
       </video>
     </>
+    //ref={ref}
+    //onPlay={()=>setIsPlaying(true)}
+    //onPause={()=>setIsPlaying(false)}
   )
 }
 对于额外的挑战，即使用户右键单击视频并使用内置浏览器媒体控件播放，也要使“播放”按钮与视频是否正在播放同步。 您可能需要在视频中监听 onPlay 和 onPause 才能做到这一点。
@@ -20937,6 +20946,10 @@ export default function Page() {
       />
     </>
   );
+  //const加一个
+  //button 的onclick里面加一个
+  //input>里面加一个
+
 }
 答案
 向输入框添加一个 ref，并在 DOM 节点上调用 focus() 以使其获得焦点：
@@ -20974,18 +20987,27 @@ node.scrollIntoView({
 });
 
 import { useState } from 'react';
-
+//import { flushSync } from 'react-dom';
 export default function CatFriends() {
   const [index, setIndex] = useState(0);
+  // const selectedRef = useRef(null);
   return (
+    //调用 flushSync，确保在更新 DOM 前同步执行传递的回调函数。flushSync 是 React 18 中提供的一个方法，用于确保在当前更新循环内同步刷新 React 树。
+    //在 flushSync 的回调函数中执行一个条件判断：如果 index 小于 catList 的长度减一，则将 index 增加 1。否则，将 index 重置为 0。
+    //调用 selectedRef.current.scrollIntoView 方法，使被 selectedRef 引用的 DOM 元素滚动到视口中：behavior: 'smooth'：表示平滑滚动。block: 'nearest'：滚动到最近的块级位置。inline: 'center'：滚动到水平中心位置。
     <>
       <nav>
         <button onClick={() => {
+          //    flushSync(() => {
           if (index < catList.length - 1) {
             setIndex(index + 1);
           } else {
             setIndex(0);
-          }
+          };
+        // selectedRef.current.scrollIntoView({
+        // behavior: 'smooth',
+        // block: 'nearest',
+        // nline: 'center'
         }}>
           下一个
         </button>
@@ -21097,6 +21119,7 @@ import SearchInput from './SearchInput.js';
 
 export default function Page() {
   return (
+    //const inputRef =useRef(null);
     <>
       <nav>
         <SearchButton />
@@ -21104,6 +21127,8 @@ export default function Page() {
       <SearchInput />
     </>
   );
+  //onClick ={()=>{inputRef.current.focus();}}
+  //ref={inputRef}
 }
 
 export default function SearchButton() {
@@ -21120,6 +21145,18 @@ export default function SearchInput() {
       placeholder="找什么呢？"
     />
   );
+  //export default forwardRef(
+  //   function SearchInput(props, ref) {
+  //     return (
+  //       <input
+  //         ref={ref}
+  //         placeholder="找什么呢？"
+  //       />
+  //     );
+  //   }
+  // );
+  //import { forwardRef } from 'react';从 react 库中导入 forwardRef 函数。forwardRef 允许函数组件接收 ref 参数，并将其传递给子组件。
+  //导出一个使用 forwardRef 包裹的函数组件。forwardRef 接受一个渲染函数作为参数。定义一个名为 SearchInput 的函数组件，该组件接受两个参数：props 和 ref。props 包含传递给组件的所有属性，ref 是传递给组件的引用。返回一个 input 元素：ref={ref}：将传递给 SearchInput 组件的 ref 赋值给 input 元素，使外部组件可以通过 ref 直接操作该 input 元素。placeholder="找什么呢？"：设置输入框的占位符文本为“找什么呢？”。
 }
 答案
 你需要向 SearchButton 添加一个onClick 属性，SearchButton 会将其向下传递给浏览器原生 <button>。你还要向下传递一个 ref 给 <SearchInput>，<SearchInput> 将转发 ref 给真正的 <input> 并对它进行赋值。最后，在单击事件处理器中，你将能对存储在该 ref 中的 DOM 节点调用 focus。
@@ -21168,8 +21205,14 @@ export default forwardRef(
 
 | Column 1 | 问题\毛病 | Column 3 |
 |----------|----------|----------|
+|键入handleclick中的ref和button中的ref|视频暂停和播放的切换||
+|框添加一个 ref，并在 DOM 节点上调用 focus()|获得焦点||
+|flushsync|滚动图像轮播||
+||搜索键和输入框分开在单独文件,如何获得焦点||
 
 ### 使用 Effect 同步
+
+就是说是确保副作用在状态更新完成后立即执行。
 
 有些组件需要与外部系统同步。例如，你可能希望根据 React state 控制非 React 组件、设置服务器连接或在组件出现在屏幕上时发送分析日志。Effects 会在渲染后运行一些代码，以便可以将组件与 React 之外的某些系统同步。
 
@@ -21673,6 +21716,13 @@ useEffect(() => {
 
 ```js
 //触发动画 
+
+在 React 开发环境中，`useEffect` 钩子会被执行两次：一次在挂载时，另一次在卸载时。这个行为是为了帮助开发者发现和修复副作用的问题。具体原因如下：
+1. **挂载时**：`useEffect` 在组件首次渲染完成后执行，设置 `node.style.opacity = 1`，触发动画将透明度变为 1。
+2. **卸载时**：在开发环境中，React 会在执行完 `useEffect` 的清理函数后立即重新运行 `useEffect`。清理函数将 `node.style.opacity` 重置为 0。
+3. **重新挂载时**：`useEffect` 再次运行，将 `node.style.opacity` 重新设置为 1。
+在生产环境中，`useEffect` 仅在组件挂载和卸载时运行一次，因此不会出现透明度反复变化的问题。React 仅在开发环境中执行这个双重调用，以帮助开发者识别潜在的副作用问题。
+
 如果 Effect 对某些内容加入了动画，清理函数应将动画重置：
 
 useEffect(() => {
@@ -21787,7 +21837,7 @@ useEffect(() => {
 
 这个例子使用 setTimeout 来安排控制台日志，在 Effect 运行后三秒钟显示输入文本。清理函数会取消挂起的超时。从按下“挂载组件”开始：
 import { useState, useEffect } from 'react';
-
+//展示了一个可以动态挂载和卸载的组件，该组件会根据输入的文本安排一个 3 秒后打印日志的定时器，并在文本变化时取消之前的定时器。
 function Playground() {
   const [text, setText] = useState('a');
 
@@ -21795,16 +21845,16 @@ function Playground() {
     function onTimeout() {
       console.log('⏰ ' + text);
     }
-
+    //使用 useEffect 钩子安排副作用。定义一个 onTimeout 函数，在定时器触发时打印日志。
     console.log('🔵 安排 "' + text + '" 日志');
     const timeoutId = setTimeout(onTimeout, 3000);
-
+    //打印日志，表示安排一个 3 秒后的定时器。设置一个定时器，3 秒后执行 onTimeout 函数，并将定时器的 ID 存储在 timeoutId 中。
     return () => {
       console.log('🟡 取消 "' + text + '" 日志');
       clearTimeout(timeoutId);
     };
   }, [text]);
-
+//返回一个清理函数。当 text 变化或组件卸载时，清理函数会取消之前安排的定时器，并打印取消日志。
   return (
     <>
       <label>
@@ -21817,10 +21867,11 @@ function Playground() {
       <h1>{text}</h1>
     </>
   );
+  //渲染一个输入框和一个标题。输入框的值绑定到 text 状态，输入框的变化会更新 text 状态。
 }
 
 export default function App() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(false);//定义一个状态变量 show，初始值为 false，用于控制 Playground 组件的显示和隐藏。
   return (
     <>
       <button onClick={() => setShow(!show)}>
@@ -21830,6 +21881,9 @@ export default function App() {
       {show && <Playground />}
     </>
   );
+  //渲染一个按钮，点击按钮会切换 show 的状态。如果 show 为 true，渲染分隔线和 Playground 组件；否则，不渲染。
+
+  //当 Playground 组件挂载时，useEffect 会安排一个定时器，3 秒后打印 text 的值。---当 text 变化时，useEffect 会先运行清理函数，取消之前的定时器，然后安排一个新的定时器。---当 Playground 组件卸载时，useEffect 的清理函数会运行，取消最后安排的定时器。---App 组件中的按钮控制 Playground 组件的挂载和卸载。点击按钮会在 show 状态和其取反值之间切换。
 }
 在最开始时可以看到三个日志输出：安排 "a" 日志，取消 "a" 日志，还有一个 安排 "a" 日志。三秒后，还会有一条日志显示：a。正如之前所说，额外的安排/取消动作产生的原因是因为 React 在开发环境中，会重新挂载组件一次，以验证你是否正确地实现了清理函数。
 
@@ -21846,13 +21900,20 @@ export default function App() {
 你可以将 useEffect 认为其将一段行为“附加”到渲染输出。考虑这种情况：
 
 export default function ChatRoom({ roomId }) {
+  //展示了一个动态连接和断开聊天室的功能
   useEffect(() => {
     const connection = createConnection(roomId);
     connection.connect();
     return () => connection.disconnect();
   }, [roomId]);
-
   return <h1>欢迎来到 {roomId}！</h1>;
+  //定义一个名为 ChatRoom 的 React 组件，该组件接收一个 roomId 作为属性。
+  //使用 useEffect 钩子安排副作用。该副作用会在组件挂载和 roomId 变化时执行。
+  //调用 createConnection 函数，传入 roomId，创建一个连接对象 connection。
+  //调用连接对象的 connect 方法，建立连接。
+  //返回一个清理函数。当组件卸载或 roomId 变化时，该清理函数会调用连接对象的 disconnect 方法，断开连接。
+  //指定 roomId 作为依赖项。当 roomId 变化时，useEffect 会重新执行副作用，首先调用上一次的清理函数断开旧的连接，然后创建并连接新的连接。
+  //渲染一个标题，显示当前的 roomId。
 }
 让我们看看当用户在应用程序中切换页面时到底发生了什么。
 
@@ -21946,7 +22007,9 @@ export default function MyInput({ value, onChange }) {
 
   // TODO：下面的这种做法不会生效，请修复。
   // ref.current.focus()    
-
+  //  useEffect(() => {
+  //  ref.current.focus();
+  //}, []);
   return (
     <input
       ref={ref}
@@ -21980,7 +22043,6 @@ export default function MyInput({ value, onChange }) {
     />
   );
 }
-
 ```
 
 ```js
@@ -21994,12 +22056,15 @@ import { useEffect, useRef } from 'react';
 
 export default function MyInput({ shouldFocus, value, onChange }) {
   const ref = useRef(null);
-
   // TODO：只在 shouldFocus 为 true 时才调用 focus()
   useEffect(() => {
     ref.current.focus();
   }, []);
-
+  // useEffect(()=>{
+  //   if (shoulderFoucs) {
+  //     ref.current.focus();
+  //   }
+  // },[shouldFocus]);
   return (
     <input
       ref={ref}
@@ -22048,14 +22113,15 @@ export default function Counter() {
     function onTick() {
       setCount(c => c + 1);
     }
-
     setInterval(onTick, 1000);
+    //const intervalId = setInterval(onTick, 1000);
+    // return () => clearInterval(intervalId);
   }, []);
 
   return <h1>{count}</h1>;
 }
 
-答案
+答案:
 在 严格模式 下，（本网站中的示例沙盒（sandbox）都已开启严格模式），React 在开发模式中，每个组件都会重复挂载一次。这也就导致计数器组件被挂载了两次。所以，计时器也被设立了两次，这就是为什么计数器每秒递增两次的原因。
 
 然而，这并不是 React 本身的错：而是 Effect 代码中本身就存在问题。React 只不过把这个问题放大了。真正的错误原因是这样的 Effect 启动后，但没有提供清理函数，所以上一次的 Effect 残留就没有被除去。
@@ -22096,6 +22162,30 @@ export default function Page() {
       setBio(result);
     });
   }, [person]);
+  //   useEffect(() => {
+  //在 person 变化时异步获取并设置用户简介，并在组件卸载或 person 变化时取消未完成的请求。
+  //   let ignore = false;
+  //   setBio(null);
+  //   fetchBio(person).then(result => {
+  //     if (!ignore) {
+  //       setBio(result);
+  //     }
+  //   });
+  //   return () => {
+  //     ignore = true;
+  //   }
+  // }, [person]);
+  //使用 useEffect 钩子安排副作用。该副作用会在组件挂载和 person 变化时执行。
+  //定义一个局部变量 ignore，用于在清理函数中标记是否应忽略请求结果。
+  //在开始新的异步请求之前，将 bio 设置为 null，表示正在加载或重置状态。
+  //调用 fetchBio 函数异步获取 person 的简介，当请求完成时执行 .then 回调。
+  //检查 ignore 标记，如果标记为 false，则继续执行。
+  //如果 ignore 标记为 false，将请求结果设置为 bio 的新值。
+  //返回一个清理函数。当组件卸载或 person 变化时，该清理函数会执行。
+  //在清理函数中，将 ignore 标记设置为 true，表示应忽略未完成的请求结果。
+  //指定 person 作为依赖项。当 person 变化时，useEffect 会重新执行副作用，首先调用上一次的清理函数，然后重新运行副作用逻辑。
+
+  //当组件首次挂载或 person 变化时，useEffect 会执行，重置 bio 为 null 并发起异步请求获取新的 person 的简介。---在异步请求完成后，如果组件未卸载且 person 未变化，结果会被设置为 bio 的新值。---如果在请求完成前组件卸载或 person 变化，清理函数会将 ignore 标记设置为 true，从而忽略未完成请求的结果，避免潜在的状态更新问题
 
   return (
     <>
@@ -22115,6 +22205,17 @@ export default function Page() {
 
 为什么会发生这种情况？试着修复此 Effect 中的错误。
 ```
+
+#### effect同步 表格
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+|[]就是只在渲染时与运行效果|||
+|effect返回一个清理函数|杜绝connect两次||
+|副作用应放在effect中|展开以后,输入框自动高亮||
+|在useeffect中写入逻辑|展开两个输入框,但是只高亮后一个||
+|清理|计时器触发2次的错误||
+|清理|复选框快速选择但是下面人物传记内容不匹配||
 
 ### 你 可能不需要 Effect
 
@@ -22319,11 +22420,14 @@ function List({ items }) {
 虽然这种方式比 Effect 更高效，但大多数组件也不需要它。无论你怎么做，根据 props 或其他 state 来调整 state 都会使数据流更难理解和调试。总是检查是否可以通过添加 key 来重置所有 state，或者 在渲染期间计算所需内容。例如，你可以存储已选中的 item ID 而不是存储（并重置）已选中的 item：
 
 function List({ items }) {
-  const [isReverse, setIsReverse] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
+  //实现了一个列表组件，并包含了对 selectedId 和 isReverse 的状态管理。
+  //定义一个名为 List 的函数组件，接收一个 items 属性。
+  const [isReverse, setIsReverse] = useState(false);//使用 useState 钩子定义一个布尔状态变量 isReverse 及其更新函数 setIsReverse，初始值为 false。
+  const [selectedId, setSelectedId] = useState(null);//使用 useState 钩子定义一个状态变量 selectedId 及其更新函数 setSelectedId，初始值为 null。
   // ✅ 非常好：在渲染期间计算所需内容
   const selection = items.find(item => item.id === selectedId) ?? null;
-  // ...
+  // 使用 find 方法在 items 数组中查找 id 与 selectedId 匹配的项目。如果找到了该项目，将其赋值给 selection；如果没有找到，使用空合并运算符 ?? 将 selection 赋值为 null。
+  //...组件其他部分
 }
 现在完全不需要 “调整” state 了。如果包含已选中 ID 的项出现在列表中，则仍然保持选中状态。如果没有找到匹配的项，则在渲染期间计算的 selection 将会是 null。行为不同了，但可以说更好了，因为大多数对 items 的更改仍可以保持选中状态。
 ```
@@ -22334,20 +22438,25 @@ function List({ items }) {
 //假设你有一个产品页面，上面有两个按钮（购买和付款），都可以让你购买该产品。当用户将产品添加进购物车时，你想显示一个通知。在两个按钮的 click 事件处理函数中都调用 showNotification() 感觉有点重复，所以你可能想把这个逻辑放在一个 Effect 中：
 
 function ProductPage({ product, addToCart }) {
+  //组件 ProductPage，展示了一个产品页面。这里展示了如何避免在 useEffect 中处理属于事件特定的逻辑。
+
   // 🔴 避免：在 Effect 中处理属于事件特定的逻辑
   useEffect(() => {
     if (product.isInCart) {
       showNotification(`已添加 ${product.name} 进购物车！`);
     }
   }, [product]);
-
-  function handleBuyClick() {
+  //组件，接收 product 和 addToCart 两个属性。
+  //使用 useEffect 钩子来显示通知，如果 product.isInCart 为 true，则显示通知 已添加 ${product.name} 进购物车！。useEffect 的依赖是 product，即每当 product 变化时，useEffect 都会重新执行。这个代码片段的注释指出这是一个不好的做法，因为它在 useEffect 中处理了事件特定的逻辑。
+function handleBuyClick() {
     addToCart(product);
+    //定义一个函数 handleBuyClick，当用户点击购买按钮时调用 addToCart 函数，将 product 添加到购物车。
   }
 
   function handleCheckoutClick() {
     addToCart(product);
     navigateTo('/checkout');
+    //定义一个函数 handleCheckoutClick，当用户点击结账按钮时，先调用 addToCart 函数将 product 添加到购物车，然后导航到结账页面。
   }
   // ...
 }
@@ -22381,6 +22490,7 @@ function ProductPage({ product, addToCart }) {
 //这个 Form 组件会发送两种 POST 请求。它在页面加载之际会发送一个分析请求。当你填写表格并点击提交按钮时，它会向 /api/register 接口发送一个 POST 请求：
 
 function Form() {
+  //一个表单组件 Form，说明了如何在组件挂载时执行逻辑，同时避免在 useEffect 中处理事件特定的逻辑
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
@@ -22388,18 +22498,21 @@ function Form() {
   useEffect(() => {
     post('/analytics/event', { eventName: 'visit_form' });
   }, []);
+  //使用 useEffect 钩子在组件挂载时发送分析事件 visit_form，因为第二个参数是空数组 []，所以这个效果只会在组件挂载和卸载时执行一次。这是一个很好的做法。
 
   // 🔴 避免：在 Effect 中处理属于事件特定的逻辑
-  const [jsonToSubmit, setJsonToSubmit] = useState(null);
+  const [jsonToSubmit, setJsonToSubmit] = useState(null);// useState 钩子定义一个状态变量 jsonToSubmit，用来存储要提交的 JSON 数据。
   useEffect(() => {
     if (jsonToSubmit !== null) {
       post('/api/register', jsonToSubmit);
     }
   }, [jsonToSubmit]);
+  //使用 useEffect 钩子来监听 jsonToSubmit 状态的变化。当 jsonToSubmit 不为 null 时，发送一个 POST 请求到 /api/register。这段代码的注释指出，应该避免在 useEffect 中处理事件特定的逻辑。这样做的目的是将事件特定的逻辑与组件状态变化的逻辑分开。
 
   function handleSubmit(e) {
     e.preventDefault();
     setJsonToSubmit({ firstName, lastName });
+    //定义一个 handleSubmit 函数，用来处理表单的提交事件。首先阻止表单的默认提交行为，然后设置 jsonToSubmit 状态为包含 firstName 和 lastName 的对象。
   }
   // ...
 }
@@ -22444,12 +22557,14 @@ function Game() {
     if (card !== null && card.gold) {
       setGoldCardCount(c => c + 1);
     }
+    //监听 card 状态的变化，如果 card 不为 null 且是黄金卡片（card.gold 为 true），则将黄金卡片计数增加 1。
   }, [card]);
 
   useEffect(() => {
     if (goldCardCount > 3) {
       setRound(r => r + 1)
       setGoldCardCount(0);
+      //监听 goldCardCount 状态的变化，如果黄金卡片计数大于 3，则将游戏回合增加 1，并将黄金卡片计数重置为 0
     }
   }, [goldCardCount]);
 
@@ -22457,10 +22572,12 @@ function Game() {
     if (round > 5) {
       setIsGameOver(true);
     }
+    //监听 round 状态的变化，如果回合数大于 5，则将游戏结束状态设置为 true。
   }, [round]);
 
   useEffect(() => {
     alert('游戏结束！');
+    //监听 isGameOver 状态的变化，如果游戏结束状态变为 true，则弹出一个提示框显示“游戏结束”。
   }, [isGameOver]);
 
   function handlePlaceCard(nextCard) {
@@ -22468,6 +22585,7 @@ function Game() {
       throw Error('游戏已经结束了。');
     } else {
       setCard(nextCard);
+      //定义 handlePlaceCard 函数来处理放置卡片的逻辑。如果游戏已经结束，抛出错误，否则将当前卡片设置为 nextCard。
     }
   }
 
@@ -22708,6 +22826,7 @@ function ChatIndicator() {
 
 尽管通常可以使用 Effect 来实现此功能，但 React 为此针对性地提供了一个 Hook 用于订阅外部 store。删除 Effect 并将其替换为调用 useSyncExternalStore：
 
+//使用 useSyncExternalStore 钩子订阅网络状态（在线或离线）并在组件中使用该状态。
 function subscribe(callback) {
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);
@@ -22715,6 +22834,9 @@ function subscribe(callback) {
     window.removeEventListener('online', callback);
     window.removeEventListener('offline', callback);
   };
+  //subscribe 函数用于订阅浏览器的在线和离线事件。
+  //在函数内部，window.addEventListener 方法添加了两个事件监听器，分别监听 online 和 offline 事件，并在事件发生时调用传入的 callback 函数。
+  //该函数返回一个清理函数，用于移除这些事件监听器。
 }
 
 function useOnlineStatus() {
@@ -22724,10 +22846,13 @@ function useOnlineStatus() {
     () => navigator.onLine, // 如何在客户端获取值
     () => true // 如何在服务端获取值
   );
+  //useOnlineStatus 是一个自定义钩子，它使用 useSyncExternalStore 来订阅外部的网络状态。
+  //useSyncExternalStore 接受三个参数：subscribe 函数，用于订阅在线和离线事件。一个函数，在客户端调用时返回当前的网络状态（navigator.onLine）。一个函数，在服务端调用时返回默认值（true）。
 }
 
 function ChatIndicator() {
   const isOnline = useOnlineStatus();
+  //ChatIndicator 组件使用 useOnlineStatus 钩子获取当前的网络状态。isOnline 变量保存当前的网络状态（true 表示在线，false 表示离线）。
   // ...
 }
 与手动使用 Effect 将可变数据同步到 React state 相比，这种方法能减少错误。通常，你可以写一个像上面的 useOnlineStatus() 这样的自定义 Hook，这样你就不需要在各个组件中重复写这些代码。阅读更多关于在 React 组件中订阅外部数据 store 的信息。
@@ -22764,7 +22889,9 @@ page 和 query 的来源其实并不重要。只要该组件可见，你就需�
 
 为了修复这个问题，你需要添加一个 清理函数 来忽略较早的返回结果：
 
+//根据查询参数 query 和当前页码 page 来获取搜索结果，并在组件中显示这些结果。
 function SearchResults({ query }) {
+  //这是一个接收 query 作为属性的函数组件，query 代表搜索查询。
   const [results, setResults] = useState([]);
   const [page, setPage] = useState(1);
   useEffect(() => {
@@ -22774,6 +22901,11 @@ function SearchResults({ query }) {
         setResults(json);
       }
     });
+   //使用 useEffect 钩子来执行副作用操作（如数据获取），当 query 或 page 发生变化时会重新运行该副作用。
+   //定义 ignore 变量，用于标记是否应忽略当前的请求结果（用于清理效果）。
+   //调用 fetchResults(query, page) 获取搜索结果，fetchResults 是一个异步函数，返回一个包含搜索结果的 Promise。
+   //当 fetchResults 返回结果后，检查 ignore 是否为 false，如果为 false，调用 setResults 更新 results 状态。
+   //useEffect 返回一个清理函数，当组件卸载或 query 或 page 发生变化时，清理函数会将 ignore 设置为 true，避免处理已卸载组件的状态更新。
     return () => {
       ignore = true;
     };
@@ -22781,6 +22913,7 @@ function SearchResults({ query }) {
 
   function handleNextPageClick() {
     setPage(page + 1);
+    //handleNextPageClick 函数用于处理用户点击“下一页”按钮的事件，调用 setPage 将 page 状态加 1，从而触发 useEffect 重新获取下一页的搜索结果。
   }
   // ...
 }
@@ -22792,11 +22925,15 @@ function SearchResults({ query }) {
 
 如果你不使用框架（也不想开发自己的框架），但希望使从 Effect 中获取数据更符合人类直觉，请考虑像这个例子一样，将获取逻辑提取到一个自定义 Hook 中：
 
+//查询参数 query 和当前页码 page 从 /api/search 获取搜索结果，并在组件中显示这些结果。
 function SearchResults({ query }) {
+  //这是一个接收 query 作为属性的函数组件，query 代表搜索查询
+  //使用 URLSearchParams 将 query 和 page 组合成查询字符串参数。
+  //调用 useData 钩子函数，并传入包含查询参数的 URL 字符串 /api/search?${params}，返回搜索结果并存储在 results 变量中。
+  //handleNextPageClick 函数用于处理用户点击“下一页”按钮的事件，调用 setPage 将 page 状态加 1，从而触发 useData 钩子重新获取下一页的搜索结果。
   const [page, setPage] = useState(1);
   const params = new URLSearchParams({ query, page });
   const results = useData(`/api/search?${params}`);
-
   function handleNextPageClick() {
     setPage(page + 1);
   }
@@ -22804,7 +22941,8 @@ function SearchResults({ query }) {
 }
 
 function useData(url) {
-  const [data, setData] = useState(null);
+  //useData 是一个自定义钩子函数，用于从指定的 url 获取数据。
+  const [data, setData] = useState(null);//data 是一个状态变量，用于存储从 API 获取的数据，初始值为 null。
   useEffect(() => {
     let ignore = false;
     fetch(url)
@@ -22814,6 +22952,10 @@ function useData(url) {
           setData(json);
         }
       });
+      //使用 useEffect 钩子来执行副作用操作（如数据获取），当 url 发生变化时会重新运行该副作用。
+      //定义 ignore 变量，用于标记是否应忽略当前的请求结果（用于清理效果）。
+      //调用 fetch(url) 获取数据，并转换为 JSON 格式  ;  接着检查 ignore 是否为 false，如果为 false，调用 setData 更新 data 状态。
+     //useEffect 返回一个清理函数，当组件卸载或 url 发生变化时，清理函数会将 ignore 设置为 true，避免处理已卸载组件的状态更新。
     return () => {
       ignore = true;
     };
@@ -22850,15 +22992,17 @@ export default function TodoList() {
   const [showActive, setShowActive] = useState(false);
   const [activeTodos, setActiveTodos] = useState([]);
   const [visibleTodos, setVisibleTodos] = useState([]);
-  const [footer, setFooter] = useState(null);
+  const [footer, setFooter] = useState(null);//多余
 
   useEffect(() => {
     setActiveTodos(todos.filter(todo => !todo.completed));
+    //筛选出所有未完成的事项。
   }, [todos]);
 
   useEffect(() => {
     setVisibleTodos(showActive ? activeTodos : todos);
-  }, [showActive, todos, activeTodos]);
+  }, [showActive, todos, 
+  //显示所有事项还是仅显示未完成的事项。activeTodos]);
 
   useEffect(() => {
     setFooter(
@@ -22866,7 +23010,10 @@ export default function TodoList() {
         {activeTodos.length} 项待办
       </footer>
     );
+    //，显示未完成事项的数量。
   }, [activeTodos]);
+
+//3个useeffect都多余
 
   return (
     <>
@@ -22887,8 +23034,15 @@ export default function TodoList() {
         ))}
       </ul>
       {footer}
-    </>
+    </> 
+        //       <footer>
+        //   {activeTodos.length} 项待办
+        // </footer>
   );
+  //渲染一个复选框，用于切换是否仅显示未完成事项。
+  //渲染一个 NewTodo 组件，用于添加新事项。
+  //渲染一个待办事项列表，根据 visibleTodos 中的内容显示。
+  //渲染页脚 footer。
 }
 
 function NewTodo({ onAdd }) {
@@ -22897,6 +23051,7 @@ function NewTodo({ onAdd }) {
   function handleAddClick() {
     setText('');
     onAdd(createTodo(text));
+    //NewTodo 组件用于添加新的待办事项。text: 存储新事项的文本内容，初始值为空字符串。handleAddClick 函数：清空输入框，并调用 onAdd 回调函数，将新事项添加到列表中。渲染一个输入框和一个按钮，用户可以在输入框中输入新事项，点击按钮添加事项。
   }
 
   return (
@@ -23011,7 +23166,12 @@ export default function TodoList() {
   const [showActive, setShowActive] = useState(false);
   const [text, setText] = useState('');
   const [visibleTodos, setVisibleTodos] = useState([]);
+  //  const visibleTodos = useMemo(
+  // () => getVisibleTodos(todos, showActive),
+// [todos, showActive]
+  )
 
+//这个useEFFECT删掉
   useEffect(() => {
     setVisibleTodos(getVisibleTodos(todos, showActive));
   }, [todos, showActive]);
@@ -23224,11 +23384,12 @@ import { useState, useEffect } from 'react';
 export default function EditContact({ savedContact, onSave }) {
   const [name, setName] = useState(savedContact.name);
   const [email, setEmail] = useState(savedContact.email);
-
+  
   useEffect(() => {
     setName(savedContact.name);
     setEmail(savedContact.email);
   }, [savedContact]);
+  //当 savedContact 发生变化时，使用 useEffect 钩子函数同步 name 和 email 状态。---每次 savedContact 更新时，将其 name 和 email 属性的值更新到对应的状态变量 name 和 email。
 
   return (
     <section>
@@ -23278,6 +23439,7 @@ export default function EditContact(props) {
       key={props.savedContact.id}
     />
   );
+  //使用 EditForm 组件并传递所有 props 属性。---设置 key 属性为 props.savedContact.id，确保每次 savedContact 变化时，EditForm 组件会重新渲染。
 }
 
 function EditForm({ savedContact, onSave }) {
@@ -23321,7 +23483,6 @@ function EditForm({ savedContact, onSave }) {
     </section>
   );
 }
-
 ```
 
 ```js
@@ -23380,7 +23541,45 @@ function sendMessage(message) {
   console.log('发送的消息：' + message);
 }
 
+
+答案:state 变量 showForm 决定了显示表单还是 “谢谢” 提示语。然而，你并不是因为 “谢谢” 提示语被 显示 才发送消息的。你希望发送消息是因为用户 提交了表单 。删除误导性的 Effect，并将 sendMessage 调用移到 handleSubmit 事件处理函数中：
+  function handleSubmit(e) {
+    e.preventDefault();
+    setShowForm(false);
+    sendMessage(message);
+    //阻止表单的默认提交行为。
+    // 将 showForm 设置为 false，隐藏表单。
+    // 调用 sendMessage 函数并传递当前的 message。
+  }
+
+  if (!showForm) {
+    return (
+      <>
+        <h1>谢谢使用我们的服务！</h1>
+        <button onClick={() => {
+          setMessage('');
+          setShowForm(true);
+        }}>
+          打开聊天
+        </button>
+      </>
+    );
+    //如果 showForm 为 false，显示感谢消息和一个按钮。
+    //点击按钮时，清空 message 并将 showForm 设置为 true，重新显示表单。
+  }
+
+注意在这个版本中，只有 提交表单（这是一个事件）才会导致消息被发送。采用这种方案，无论 showForm 最初被设置为 true 还是 false 都同样有效（将其设置为 false，注意没有额外的控制台消息）。
 ```
+
+#### 表格--你可能不需effect
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+||不同人的评论块自动切换避免错位||
+|删effect,用function|已经添加过的商品还是会出现"您已添加"||
+||全懵逼状态???||
+||3:  每次切换都会重新渲染||
+||||
 
 ### 响应式 Effect 的生命周期
 
@@ -23842,14 +24041,19 @@ Props 和 state 并不是唯一的响应式值。从它们计算出的值也是�
 
 假设用户可以在下拉菜单中选择聊天服务器，但他们还可以在设置中配置默认服务器。假设你已经将设置状态放入了 上下文，因此从该上下文中读取 settings。现在，可以根据 props 中选择的服务器和默认服务器来计算 serverUrl：
 
-function ChatRoom({ roomId, selectedServerUrl }) { // roomId 是响应式的
-  const settings = useContext(SettingsContext); // settings 是响应式的
-  const serverUrl = selectedServerUrl ?? settings.defaultServerUrl; // serverUrl 是响应式的
+function ChatRoom({ roomId, selectedServerUrl }) { 
+// roomId 是响应式的
+// 定义一个名为 ChatRoom 的组件，接收两个属性 roomId 和 selectedServerUrl
+  const settings = useContext(SettingsContext); // settings 是响应式的,使用 useContext 从 SettingsContext 获取 settings，settings 是响应式的
+  const serverUrl = selectedServerUrl ?? settings.defaultServerUrl; // serverUrl 是响应式的,如果 selectedServerUrl 存在，使用 selectedServerUrl，否则使用 settings.defaultServerUrl
   useEffect(() => {
-    const connection = createConnection(serverUrl, roomId); // Effect 读取了 roomId 和 serverUrl
+    // 定义一个副作用，依赖于 roomId 和 serverUrl
+    const connection = createConnection(serverUrl, roomId); // Effect 读取了 roomId 和 serverUrl,// 使用 serverUrl 和 roomId 创建一个连接
     connection.connect();
+    //// 连接建立后调用 connect 方法
     return () => {
       connection.disconnect();
+      //// 在副作用清理阶段调用 disconnect 方法断开连接
     };
   }, [roomId, serverUrl]); // 因此，当它们中的任何一个发生变化时，它需要重新同步！
   // ...
@@ -24040,6 +24244,7 @@ function ChatRoom({ roomId }) {
     connection.connect();
     return () => connection.disconnect();
   });
+  //,[roomId];有依赖项时，只在依赖项变化时执行；无依赖项时，每次渲染都会执行。
 
   return (
     <>
@@ -24159,11 +24364,13 @@ export default function App() {
 
   useEffect(() => {
     function handleMove(e) {
+      //if (canMove){}
       setPosition({ x: e.clientX, y: e.clientY });
     }
     window.addEventListener('pointermove', handleMove);
     return () => window.removeEventListener('pointermove', handleMove);
   }, []);
+  //,[canMove];确保在每次值的更改后，Effect 重新同步。
 
   return (
     <>
@@ -24243,10 +24450,12 @@ export default function App() {
 
   useEffect(() => {
     function handleMove(e) {
+      //定义一个 handleMove 函数，在指针移动时更新位置状态。
       setPosition({ x: e.clientX, y: e.clientY });
     }
     if (canMove) {
       window.addEventListener('pointermove', handleMove);
+      //如果 canMove 为真，添加 pointermove 事件监听器，并在组件卸载或 canMove 变化时移除该监听器。
       return () => window.removeEventListener('pointermove', handleMove);
     }
   }, [canMove]);
@@ -24482,7 +24691,9 @@ export default function ChatRoom({ roomId, createConnection }) {
     const connection = createConnection(roomId);
     connection.connect();
     return () => connection.disconnect();
+    //{ roomId, createConnection }和, [roomId, createConnection]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    //当用户勾选复选框时，父组件会传递一个不同的 createConnection prop 值。）这就是为什么它应该是一个依赖项。
   }, [roomId]);
 
   return <h1>欢迎来到 {roomId} 聊天室！</h1>;
@@ -24732,6 +24943,13 @@ export default function Page() {
   );
 }
 ```
+
+#### 表格---响应式effect的生命周期
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+||useEffect 有无依赖项的区别在于：有依赖项时，只在依赖项变化时执行；无依赖项时，每次渲染都会执行。||
+||||
 
 ### 将事件从 Effect 中分开
 
@@ -25490,6 +25708,8 @@ export default function Timer() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  //,[increment]);
+  //移除了抑制注释，React 就会告诉你这个 Effect 的代码依赖于 increment.此时,当 increment 变化时，React 会重新同步你的 Effect，这会重启 interval。
 
   return (
     <>
@@ -25573,7 +25793,17 @@ export default function Timer() {
       clearInterval(id);
     };
   }, [increment]);
-
+  //   const onTick = useEffectEvent(() => {
+  //   setCount(c => c + increment);
+  // });一个名为 onTick 的常量，它使用 useEffectEvent 钩子。useEffectEvent 接收一个回调函数，该回调函数会调用 setCount 函数，以当前计数器值 c 加上 increment 的结果来更新计数器值。
+  // useEffect(() => {
+  //   const id = setInterval(() => {
+  //     onTick();
+  //   }, 1000); 这个1000改成10000,会发现等10秒后加数器才作用
+  //   return () => {
+  //     clearInterval(id);
+  //   };
+  // }, []);使用 useEffect 钩子在组件挂载时运行。---在 useEffect 内部，调用 setInterval 创建一个定时器，每隔 1000 毫秒（即 1 秒）调用一次 onTick 函数。---onTick 函数会根据 useEffectEvent 钩子的定义来更新计数器。---useEffect 返回一个清理函数，该函数在组件卸载或依赖项变化时运行。清理函数调用 clearInterval 来清除定时器 id，以防止内存泄漏或不必要的计时器调用。
   return (
     <>
       <h1>
@@ -25661,6 +25891,7 @@ export default function Timer() {
       onTick();
     }, delay);
   });
+  //以上取消
 
   useEffect(() => {
     const id = onMount();
@@ -25668,6 +25899,10 @@ export default function Timer() {
       clearInterval(id);
     }
   }, []);
+  //,    return () => {
+  //     clearInterval(id);
+  //   }
+  // }, [delay]);需要将所有的响应式代码放回到 Effect 内部
 
   return (
     <>
@@ -25782,11 +26017,21 @@ function ChatRoom({ roomId, theme }) {
         onConnected();
       }, 2000);
     });
+    //    connection.on('connected', () => {
+    //   setTimeout(() => {
+    //     onConnected(roomId);
+    //   }, 2000);
+    // });connectedRoomId让它成为 Effect Event 的参数。然后通过调用 onConnected(roomId) 将 roomId 从 Effect 中传入
     connection.connect();
-    return () => connection.disconnect();
+   return () => connection.disconnect();
   }, [roomId]);
-
-  return <h1>Welcome to the {roomId} room!</h1>
+    //return () => {
+    //   connection.disconnect();
+    //   if (notificationTimeoutId !== undefined) {
+    //     clearTimeout(notificationTimeoutId);
+    //   }
+    // }
+      return <h1>Welcome to the {roomId} room!</h1>
 }
 
 export default function App() {
@@ -26037,6 +26282,15 @@ export function createConnection(serverUrl, roomId) {
 }
 这确保了当你修改聊天室时，已经安排好（但还没展示）的通知会被取消。
 ```
+
+#### 表格 将事件从effect中分开
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+||theme也得effect,但是你在 dark 和 light 主题间切换时，聊天也会重连,这很烦||
+|,[increment]|点击+-计时的增速没反应||
+|需要从 Effect 中提取一个 Effect Event onTick|点击+-时,计时停滞不动||
+||快速切换,但是显示2次都是最后一个music|响应式的只显示最新的|
 
 ### 移除 Effect 依赖
 
@@ -26316,7 +26570,7 @@ export default function Timer() {
 我们建议将依赖性 lint 错误作为一个编译错误来处理。如果你不抑制它，你将永远不会遇到像上面这样的错误。本页面的剩下部分将介绍这个和其他情况的替代方案。
 ```
 
-### 移除非必需的依赖
+#### 移除非必需的依赖
 
 每当你调整 Effect 的依赖以适配代码时，请注意一下当前的依赖。当这些依赖发生变化时，让 Effect 重新运行是否有意义？有时，答案是“不”：
 
@@ -26453,6 +26707,7 @@ function ShippingForm({ country }) {
 你想要根据 city 状态通过网络同步 areas state
 将逻辑分到 2 个 Effect 中，每个 Effect 仅响应其需要同步响应的 props：
 
+//定义了一个名为 ShippingForm 的 React 组件，用于根据所选国家和城市动态加载城市和区域数据。
 function ShippingForm({ country }) {
   const [cities, setCities] = useState(null);
   useEffect(() => {
@@ -26468,10 +26723,22 @@ function ShippingForm({ country }) {
       ignore = true;
     };
   }, [country]); // ✅ 所有依赖已声明
+  //使用 useEffect 钩子在 country 发生变化时执行。
+  //声明一个局部变量 ignore，用于取消无效的异步请求。
+  //发送 fetch 请求获取指定国家的城市数据。
+  //请求成功后，将响应转换为 JSON 并更新 cities 状态。
+  //如果 ignore 为 true，则不会更新 cities 状态。
+  //返回的清理函数在组件卸载或 country 变化时将 ignore 设置为 true，以避免更新卸载组件的状态。
 
   const [city, setCity] = useState(null);
   const [areas, setAreas] = useState(null);
   useEffect(() => {
+    //使用 useEffect 钩子在 city 发生变化且 city 不为 null 时执行。
+    //声明一个局部变量 ignore，用于取消无效的异步请求。
+    //发送 fetch 请求获取指定城市的区域数据。
+    //请求成功后，将响应转换为 JSON 并更新 areas 状态。
+    //如果 ignore 为 true，则不会更新 areas 状态。
+    //返回的清理函数在组件卸载或 city 变化时将 ignore 设置为 true，以避免更新卸载组件的状态
     if (city) {
       let ignore = false;
       fetch(`/api/areas?city=${city}`)
@@ -27025,7 +27292,8 @@ export default function Timer() {
       clearInterval(id);
     };
   }, [count]);
-
+  // setCount(c => c + 1);
+  //,[]
   return <h1>计数器: {count}</h1>
 }
 译注：
@@ -27077,7 +27345,16 @@ function Welcome({ duration }) {
       animation.stop();
     };
   }, [duration]);
-
+  // const onAppear = useEffectEvent(animation => {
+  //   animation.start(duration);
+  // });
+  // useEffect(() => {
+  //   const animation = new FadeInAnimation(ref.current);
+  //   onAppear(animation);
+  //   return () => {
+  //     animation.stop();
+  //   };
+  // }, []);
   return (
     <h1
       ref={ref}
@@ -27311,7 +27588,21 @@ export default function ChatRoom({ options }) {
     connection.connect();
     return () => connection.disconnect();
   }, [options]);
+  // const { roomId, serverUrl } = options;
+  // useEffect(() => {
+  //   const connection = createConnection({
+  //     roomId: roomId,
+  //     serverUrl: serverUrl
+  //   });
+  //   connection.connect();
+  //   return () => connection.disconnect();
+  // }, [roomId, serverUrl]);
 
+  //或者直接  useEffect(() => {
+    // const connection = createConnection({
+    //   roomId: roomId,
+    //   serverUrl: serverUrl
+    // });原始props更好一些
   return <h1>欢迎来到 {options.roomId} 房间！</h1>;
 }
 //chat
@@ -27808,7 +28099,7 @@ import {
 
 export default function ChatRoom({ roomId, isEncrypted, onMessage }) {
   const onReceiveMessage = useEffectEvent(onMessage);
-
+//使用 useEffectEvent 创建一个响应式的 onReceiveMessage 回调函数，确保每次渲染时 onMessage 都是最新的。
   useEffect(() => {
     function createConnection() {
       const options = {
@@ -27820,12 +28111,13 @@ export default function ChatRoom({ roomId, isEncrypted, onMessage }) {
       } else {
         return createUnencryptedConnection(options);
       }
+      //定义 createConnection 函数，根据 isEncrypted 决定创建加密或未加密的连接。--options 包含 serverUrl 和 roomId。
     }
 
-    const connection = createConnection();
-    connection.on('message', (msg) => onReceiveMessage(msg));
+    const connection = createConnection();//调用 createConnection 函数创建连接。
+    connection.on('message', (msg) => onReceiveMessage(msg));//设置消息事件处理程序，接收到消息时调用 onReceiveMessage 回调函数。
     connection.connect();
-    return () => connection.disconnect();
+    return () => connection.disconnect();//返回清理函数，在组件卸载或 roomId 或 isEncrypted 变化时断开连接。
   }, [roomId, isEncrypted]);
 
   return <h1>欢迎来到 {roomId} 房间！</h1>;
@@ -27929,6 +28221,15 @@ export function showNotification(message, theme) {
   }).showToast();
 }
 ```
+
+#### 表格 移除effect依赖
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+||post这种别放在useEffect里面||
+||静音动作不应[],因为不想看它刷新||
+||||
+||||
 
 ### 使用自定义 Hook 复用逻辑
 
@@ -29108,7 +29409,7 @@ function ShippingForm({ country }) {
 //不止一个方法可以做到 
 假设你想要使用浏览器的 requestAnimationFrame API 从头开始 实现一个 fade-in 动画。你也许会从一个设置动画循环的 Effect 开始。在动画的每一帧中，你可以修改 ref 持有的 DOM 节点的 opacity 属性直到 1。你的代码一开始可能是这样：
 import { useState, useEffect, useRef } from 'react';
-
+//一个组件，该组件在显示时会通过动画渐变显示欢迎消息。
 function Welcome() {
   const ref = useRef(null);
 
@@ -29119,34 +29420,44 @@ function Welcome() {
     let startTime = performance.now();
     let frameId = null;
 
+function Welcome() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const duration = 1000; // 动画持续时间为 1000 毫秒
+    const node = ref.current; // 引用到 DOM 节点
+
+    let startTime = performance.now();
+    let frameId = null; // 保存请求动画帧的 ID
+
     function onFrame(now) {
-      const timePassed = now - startTime;
-      const progress = Math.min(timePassed / duration, 1);
-      onProgress(progress);
+      const timePassed = now - startTime; // 计算已过去的时间
+      const progress = Math.min(timePassed / duration, 1); // 计算动画进度（0 到 1 之间）
+      onProgress(progress); // 更新节点透明度
       if (progress < 1) {
-        // 我们还有更多的帧需要绘制
+        // 如果动画未完成，请求下一帧
         frameId = requestAnimationFrame(onFrame);
       }
     }
 
     function onProgress(progress) {
-      node.style.opacity = progress;
+      node.style.opacity = progress; // 根据进度更新节点透明度
     }
 
     function start() {
-      onProgress(0);
-      startTime = performance.now();
-      frameId = requestAnimationFrame(onFrame);
+      onProgress(0); // 初始化透明度
+      startTime = performance.now(); // 记录动画开始时间
+      frameId = requestAnimationFrame(onFrame); // 开始动画
     }
 
     function stop() {
-      cancelAnimationFrame(frameId);
-      startTime = null;
-      frameId = null;
+      cancelAnimationFrame(frameId); // 取消动画帧请求
+      startTime = null; // 重置开始时间
+      frameId = null; // 重置帧 ID
     }
 
-    start();
-    return () => stop();
+    start(); // 启动动画
+    return () => stop(); // 清理函数，在组件卸载时停止动画
   }, []);
 
   return (
@@ -29157,17 +29468,18 @@ function Welcome() {
 }
 
 export default function App() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(false); // 用于控制 Welcome 组件显示状态的 state
   return (
     <>
       <button onClick={() => setShow(!show)}>
-        {show ? 'Remove' : 'Show'}
+        {show ? 'Remove' : 'Show'} // 按钮文本根据 show 的状态进行切换
       </button>
       <hr />
-      {show && <Welcome />}
+      {show && <Welcome />} // 根据 show 的状态决定是否渲染 Welcome 组件
     </>
   );
 }
+
 为了让组件更具有可读性，你可能要将逻辑提取到自定义 Hook useFadeIn：
 import { useState, useEffect, useRef } from 'react';
 import { useFadeIn } from './useFadeIn.js';
@@ -29519,6 +29831,7 @@ export function useCounter() {
     return () => clearInterval(id);
   }, []);
   return count;
+  //加入delay依赖就ok了
 }
 
 答案
@@ -29657,13 +29970,23 @@ import { useEffect } from 'react';
 import { experimental_useEffectEvent as useEffectEvent } from 'react';
 
 export function useInterval(onTick, delay) {
+  //名为 useInterval 的自定义 Hook，它接受两个参数：回调函数 onTick 和时间间隔 delay。
   useEffect(() => {
     const id = setInterval(onTick, delay);
+    //使用 setInterval 设置一个定时器，每隔 delay 毫秒执行一次 onTick 回调函数，并将定时器 ID 存储在 id 中。
     return () => {
       clearInterval(id);
     };
-  }, [onTick, delay]);
+  }, [onTick, delay]);//指定 useEffect 的依赖项数组，当 onTick 或 delay 发生变化时，useEffect 会重新执行。
 }
+//export function useInterval(callback, delay) {
+//   const onTick = useEffectEvent(callback);使用 useEffectEvent 封装回调函数 callback。useEffectEvent 确保 callback 的引用在其值发生变化时也保持稳定，避免因依赖变化导致不必要的重新执行。
+//   useEffect(() => {
+//     const id = setInterval(onTick, delay);
+//     return () => clearInterval(id);
+//   }, [delay]);指定 useEffect 的依赖项数组，仅当 delay 发生变化时，useEffect 会重新执行。
+// }
+
 
 答案
 和 早前这个页面 做的一样，在 useInterval 内部把 tick 回调函数包裹进一个 Effect Event。
@@ -29722,8 +30045,19 @@ export function useInterval(callback, delay) {
 import { usePointerPosition } from './usePointerPosition.js';
 
 function useDelayedValue(value, delay) {
+  //自定义 Hook 返回一个延迟更新的值。两个参数：要延迟更新的 value 和延迟时间 delay（以毫秒为单位）。
   // TODO: 实现这个 Hook
+  // const [delayedValue, setDelayedValue] = useState(value);
+  //使用 useState Hook 创建一个状态变量 delayedValue，并初始化为 value 的初始值。setDelayedValue 是用于更新 delayedValue 的函数。
+  // useEffect(() => {
+  //使用 useEffect Hook 设置一个副作用，该副作用在 value 或 delay 发生变化时执行。
+  //   setTimeout(() => {
+  //     setDelayedValue(value);
+  //   }, delay);
+  // }, [value, delay]);
   return value;
+
+  //自定义 Hook useDelayedValue 接受一个值和一个延迟时间，返回一个在指定延迟时间后更新的值。它通过 useState 来存储延迟更新的值，通过 useEffect 来设置定时器，并在定时器触发时更新值。
 }
 
 export default function Canvas() {
@@ -29839,6 +30173,16 @@ export function usePointerPosition() {
 }
 注意这个 Effect 不 需要清理。如果你在清理函数中调用了 clearTimeout，那么每次 value 变化时，就会终止已经计划好的 timeout。为了保持运动连续，你需要触发所有 timeout。
 ```
+
+#### 表格 自定义hook复用逻辑
+
+| Column 1 | 问题\毛病 | Column 3 |
+|----------|----------|----------|
+||显示"网络状态"||
+||自定义 Hook 通过将组件逻辑封装在一个函数中，使其可以在多个组件中重复使用，从而复用逻辑。||
+||自定义 Hook 帮助你迁移到更好的模式是指通过提取和重用逻辑，简化组件结构，减少重复代码，从而提升代码的可维护性和可读性。||
+
+### 123
 
 ```js
 //
