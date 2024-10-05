@@ -1,5 +1,7 @@
 {
   "tutorialSidebar": [
+    "firstNote",
+    {},
     "frontend",
     {
       "label": "mdn",
@@ -117,6 +119,14 @@
         "react/interact",
         "react/state",
         "react/escape"
+      ]
+    },
+    "loveRead",
+    {
+      "type": "category",
+      "label": "loveRead",
+      "items": [
+        "loveRead/grow1"
       ]
     }
   ]
