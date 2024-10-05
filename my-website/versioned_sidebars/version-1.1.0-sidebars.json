@@ -107,6 +107,17 @@
           "dirName": "next/one"
         }
       ]
+    },
+    {
+      "type": "category",
+      "label": "react",
+      "items": [
+        "react/install",
+        "react/ui",
+        "react/interact",
+        "react/state",
+        "react/escape"
+      ]
     }
   ]
 }

@@ -47,7 +47,6 @@ const sidebars = {
     }],
       
     },
-    ,
     'backend',
     {
       type: 'category',
@@ -84,7 +83,7 @@ const sidebars = {
           dirName: 'next/one', // Generate sidebar slice from docs/tutorials/easy
         },
       ]
-    },
+    }
   ]
 };
 

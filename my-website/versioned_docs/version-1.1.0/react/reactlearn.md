@@ -1,4 +1,4 @@
-# REACT
+# reactlearn
 
 ## jsx
 
@@ -26,7 +26,7 @@ JSX (JavaScript XML)比 HTML 更加严格。你必须闭合标签，如 ``<br />
 
 React 并没有规定你如何添加 CSS 文件。最简单的方式是使用 HTML 的 ``<link>`` 标签。
 
-JSX 会让你把标签放到 JavaScript 中。而大括号会让你 “回到” JavaScript 中，这样你就可以从你的代码中嵌入一些变量并展示给用户。例如，这将显示 user.name：
+JSX 会让你把标签放到 JavaScript 中。而大括号会让你 “回到” JavaScript 中，这样你就可以从你的代码中嵌入一些变量并展示给用户。例如，这将显示 ``user.name``：
 
 ```jsx
 return (
@@ -64,9 +64,8 @@ export default function Profile() {
     </>
   );
 }
+// 你还可以将 JSX 属性 “转义到 JavaScript”，但你必须使用大括号 而非 引号。例如，className="avatar" 是将 "avatar" 字符串传递给 className，作为 CSS 的 class。但 src={user.imageUrl} 会读取 JavaScript 的 user.imageUrl 变量，然后将该值作为 src 属性传递.(在上面代码里面)
 ```
-
-你还可以将 JSX 属性 “转义到 JavaScript”，但你必须使用大括号 而非 引号。例如，className="avatar" 是将 "avatar" 字符串传递给 className，作为 CSS 的 class。但 src={user.imageUrl} 会读取 JavaScript 的 user.imageUrl 变量，然后将该值作为 src 属性传递.(在上面代码里面)
 
 ```jsx
 //React 没有特殊的语法来编写条件语句，因此你使用的就是普通的 JavaScript 代码。例如使用 if 语句根据条件引入 JSX：
@@ -1927,7 +1926,8 @@ let App = function Game() {
   );
 }
 
-function calculateWinner(squares) {
+function calculateWinner(squares) 
+{
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -1946,7 +1946,6 @@ function calculateWinner(squares) {
   }
   return null;
 }
-
 
 const root = createRoot(document.getElementById('root'));
 root.render(
@@ -3095,9 +3094,9 @@ export default function App() {
 //这是一个默认导出的 App 组件：使用了 useReducer 钩子，传入 stateReducer 作为状态更新函数，initialState 作为初始状态。useReducer 返回一个包含当前状态 state 和一个用于分发动作的 dispatch 函数的数组。state 用于访问当前的状态，dispatch 用于发送动作来更新状态。
 }
 
-useReducer 用于在 React 组件中管理复杂状态和状态逻辑。
+// useReducer 用于在 React 组件中管理复杂状态和状态逻辑。
 
-useState 用于在 React 组件中管理简单的状态。
+// useState 用于在 React 组件中管理简单的状态。
 ```
 
 ```jsx
@@ -3596,20 +3595,22 @@ export default function Gallery() {
 //引入过程中，你可能会遇到一些文件并未添加 .js 文件后缀，如下所示import Gallery from './Gallery';无论是 './Gallery.js' 还是 './Gallery'，在 React 里都能正常使用，只是前者更符合 原生 ES 模块。
 ```
 
-这是 JavaScript 里两个主要用来导出值的方式：默认导出和具名导出。到目前为止，我们的示例中只用到了默认导出。但你可以在一个文件中，选择使用其中一种，或者两种都使用。
+```js
+// 这是 JavaScript 里两个主要用来导出值的方式：默认导出和具名导出。到目前为止，我们的示例中只用到了默认导出。但你可以在一个文件中，选择使用其中一种，或者两种都使用。
 
-!!!一个文件里有且仅有一个 默认 导出，但是可以有任意多个 具名 导出。!!!
+// !!!一个文件里有且仅有一个 默认 导出，但是可以有任意多个 具名 导出。!!!
 
-组件的导出方式决定了其导入方式。当你用默认导入的方式，导入具名导出的组件时，就会报错。如下表格可以帮你更好地理解它们：
+// 组件的导出方式决定了其导入方式。当你用默认导入的方式，导入具名导出的组件时，就会报错。如下表格可以帮你更好地理解它们：
 
-默认:导出语句--export default function Button() {}
-导入语句--import Button from './Button.js';
-具名:导出语句--export function Button() {}
-导入语句--import { Button } from './Button.js';
+// 默认:导出语句--export default function Button() {}
+// 导入语句--import Button from './Button.js';
+// 具名:导出语句--export function Button() {}
+// 导入语句--import { Button } from './Button.js';
 
-当使用默认导入时，你可以在 import 语句后面进行任意命名。比如 import Banana from './Button.js'，如此你能获得与默认导出一致的内容。相反，对于具名导入，导入和导出的名字必须一致。这也是为什么称其为 具名 导入的原因！
+// 当使用默认导入时，你可以在 import 语句后面进行任意命名。比如 import Banana from './Button.js'，如此你能获得与默认导出一致的内容。相反，对于具名导入，导入和导出的名字必须一致。这也是为什么称其为 具名 导入的原因！
 
-通常，文件中仅包含一个组件时，人们会选择默认导出，而当文件中包含多个组件或某个值需要导出时，则会选择具名导出。 无论选择哪种方式，请记得给你的组件和相应的文件命名一个有意义的名字。我们不建议创建未命名的组件，比如 export default () => {}，因为这样会使得调试变得异常困难。
+// 通常，文件中仅包含一个组件时，人们会选择默认导出，而当文件中包含多个组件或某个值需要导出时，则会选择具名导出。 无论选择哪种方式，请记得给你的组件和相应的文件命名一个有意义的名字。我们不建议创建未命名的组件，比如 export default () => {}，因为这样会使得调试变得异常困难。
+```
 
 #### 从同一文件中导出和导入多个组件
 
@@ -4047,61 +4048,61 @@ export default function TodoList() {
 
 ```jsx
 //在 JavaScript 和 JSX 中，单引号 (`'`) 和双引号 (`"`) 用来包裹字符串值。虽然它们在功能上是等效的，但有一些最佳实践和使用情境可以帮助你选择何时使用单引号和双引号。
-单引号 (`'`) 和双引号 (`"`) 的使用建议
-1. **一致性**:
-   - 无论选择单引号还是双引号，保持一致性是最重要的。建议在整个项目中使用一种风格。
+// 单引号 (`'`) 和双引号 (`"`) 的使用建议
+// 1. **一致性**:
+//    - 无论选择单引号还是双引号，保持一致性是最重要的。建议在整个项目中使用一种风格。
 
-2. **JSX 中的属性**:
-   - 在 JSX 中，通常使用双引号来包裹属性值，这类似于 HTML 的属性规范。
-     ```jsx
-     <input type="text" placeholder="Enter your name" />
-     ```
+// 2. **JSX 中的属性**:
+//    - 在 JSX 中，通常使用双引号来包裹属性值，这类似于 HTML 的属性规范。
+//      ```jsx
+//      <input type="text" placeholder="Enter your name" />
+//      ```
 
-3. **字符串包含引号**:
-   - 如果字符串内部包含双引号，可以使用单引号来避免转义符。
-     ```javascript
-     const message = 'He said, "Hello!"';
-     ```
+// 3. **字符串包含引号**:
+//    - 如果字符串内部包含双引号，可以使用单引号来避免转义符。
+//      ```javascript
+//      const message = 'He said, "Hello!"';
+//      ```
 
-   - 反之，如果字符串内部包含单引号，可以使用双引号。
-     ```javascript
-     const message = "It's a beautiful day!";
-     ```
+//    - 反之，如果字符串内部包含单引号，可以使用双引号。
+//      ```javascript
+//      const message = "It's a beautiful day!";
+//      ```
 
-4. **嵌套引号**:
-   - 当需要嵌套引号时，外层使用一种引号，内层使用另一种引号。
-     ```javascript
-     const quote = "She said, 'I love JavaScript!'";
-     ```
+// 4. **嵌套引号**:
+//    - 当需要嵌套引号时，外层使用一种引号，内层使用另一种引号。
+//      ```javascript
+//      const quote = "She said, 'I love JavaScript!'";
+//      ```
 
-5. **模板字符串**:
-   - 对于包含变量或多行文本的字符串，可以使用反引号（`` ` ``），这称为模板字符串。
-     ```javascript
-     const name = "John";
-     const greeting = `Hello, ${name}!`;
-     ```
-使用单引号
-const singleQuoteString = 'This is a string with single quotes.';
-const stringWithDoubleQuotes = 'She said, "Hello!"';
+// 5. **模板字符串**:
+//    - 对于包含变量或多行文本的字符串，可以使用反引号（`` ` ``），这称为模板字符串。
+//      ```javascript
+//      const name = "John";
+//      const greeting = `Hello, ${name}!`;
+//      ```
+// 使用单引号
+// const singleQuoteString = 'This is a string with single quotes.';
+// const stringWithDoubleQuotes = 'She said, "Hello!"';
 
-使用双引号
-const doubleQuoteString = "This is a string with double quotes.";
-const stringWithSingleQuotes = "It's a sunny day.";
+// 使用双引号
+// const doubleQuoteString = "This is a string with double quotes.";
+// const stringWithSingleQuotes = "It's a sunny day.";
 
-JSX 中使用双引号
-function App() {
-  return (
-    <div>
-      <input type="text" placeholder="Enter your name" />
-    </div>
-  );
-}
+// JSX 中使用双引号
+// function App() {
+//   return (
+//     <div>
+//       <input type="text" placeholder="Enter your name" />
+//     </div>
+//   );
+// }
 
-模板字符串
-const name = 'Alice';
-const greeting = `Hello, ${name}! Welcome to the site.`;
+// 模板字符串
+// const name = 'Alice';
+// const greeting = `Hello, ${name}! Welcome to the site.`;
 
-总之，选择单引号或双引号主要取决于个人和团队的编码风格。在 JSX 中使用双引号是推荐的做法，而在 JavaScript 中，选择一种引号并保持一致是最佳实践。
+// 总之，选择单引号或双引号主要取决于个人和团队的编码风格。在 JSX 中使用双引号是推荐的做法，而在 JavaScript 中，选择一种引号并保持一致是最佳实践。
 ```
 
 ```jsx
@@ -4858,7 +4859,7 @@ return (
 
 思考:两个例子完全一样吗？ 
 
-如果你之前是习惯面向对象开发的，你可能会认为上面的两个例子略有不同，因为其中一个可能会创建两个不同的 <li> “实例”。但 JSX 元素不是“实例”，因为它们没有内部状态也不是真实的 DOM 节点。它们只是一些简单的描述，就像图纸一样。所以上面这两个例子事实上是完全相同的。在 状态的保持和重置 里会深入探讨其原因。
+// 如果你之前是习惯面向对象开发的，你可能会认为上面的两个例子略有不同，因为其中一个可能会创建两个不同的 <li> “实例”。但 JSX 元素不是“实例”，因为它们没有内部状态也不是真实的 DOM 节点。它们只是一些简单的描述，就像图纸一样。所以上面这两个例子事实上是完全相同的。在 状态的保持和重置 里会深入探讨其原因。
 ```
 
 ```jsx
@@ -7182,7 +7183,10 @@ export default function Gallery() {
   );
 }
 //datajs
-...
+```
+
+```js
+
 
 答:
 import { useState } from 'react';
@@ -11531,6 +11535,7 @@ const [state, setState] = useState({
 
 #### 合并关联的 state
 
+```js
 有时候你可能会不确定是使用单个 state 变量还是多个 state 变量。
 
 你会像下面这样做吗？
@@ -11541,6 +11546,7 @@ const [y, setY] = useState(0);
 
 const [position, setPosition] = useState({ x: 0, y: 0 });
 从技术上讲，你可以使用其中任何一种方法。但是，如果某两个 state 变量总是一起变化，则将它们统一成一个 state 变量可能更好。这样你就不会忘记让它们始终保持同步，就像下面这个例子中，移动光标会同时更新红点的两个坐标：
+```
 
 ```js
 //import { useState } from 'react';
@@ -15857,7 +15863,7 @@ state 与树中的位置相关联。 key 让你可以指定一个特定的位置
 ||如何保留state,因为你还想要与bob的聊天内容||
 ||||
 |原因在与返回的时候新组件顶了以前组件的位置,所以以前的保留不下来|点击确认,文本框清空重置的错误|解决:要么bureturn,用判断句决定要不要给``<p>``;要么return中用{null}占位|
-|<field中键入key|姓名姓氏输入框切换位置,内容没跟着换||
+|field中键入key|姓名姓氏输入框切换位置,内容没跟着换||
 |加key|点不同的人,下面的表单没换||
 ||点击,图片没有立马换(先清除)||
 |key是i还是contact.id|给个项下面都有展开的,倒转顺序以后展开情况却没有跟着走||
@@ -19290,22 +19296,23 @@ function Task({ task }) {
     //渲染一个删除按钮，允许用户删除任务。当点击删除按钮时，分发 deleted 类型的 action 删除任务。
   );
 }
-state 仍然 “存在于” 顶层 Task 组件中，由 useReducer 进行管理。不过，组件树里的组件只要导入这些 context 之后就可以获取 tasks 和 dispatch。
+// state 仍然 “存在于” 顶层 Task 组件中，由 useReducer 进行管理。不过，组件树里的组件只要导入这些 context 之后就可以获取 tasks 和 dispatch。
 ```
 
 #### 将相关逻辑迁移到一个文件当中
 
-这不是必须的，但你可以通过将 reducer 和 context 移动到单个文件中来进一步整理组件。目前，“TasksContext.js” 仅包含两个 context 声明：
+```js
+// 这不是必须的，但你可以通过将 reducer 和 context 移动到单个文件中来进一步整理组件。目前，“TasksContext.js” 仅包含两个 context 声明：
 
 import { createContext } from 'react';
 
 export const TasksContext = createContext(null);
 export const TasksDispatchContext = createContext(null);
-来给这个文件添加更多代码！将 reducer 移动到此文件中，然后声明一个新的 TasksProvider 组件。此组件将所有部分连接在一起：
+// 来给这个文件添加更多代码！将 reducer 移动到此文件中，然后声明一个新的 TasksProvider 组件。此组件将所有部分连接在一起：
 
-它将管理 reducer 的状态。
-它将提供现有的 context 给组件树。
-它将 把 children 作为 prop，所以你可以传递 JSX。
+// 它将管理 reducer 的状态。
+// 它将提供现有的 context 给组件树。
+// 它将 把 children 作为 prop，所以你可以传递 JSX。
 export function TasksProvider({ children }) {
   const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
 
@@ -19317,7 +19324,8 @@ export function TasksProvider({ children }) {
     </TasksContext.Provider>
   );
 }
-这将使 TaskApp 组件更加直观：
+// 这将使 TaskApp 组件更加直观：
+```
 
 ```js
 //app
@@ -19763,6 +19771,7 @@ ref 与 state 有何不同
 
 #### 给你的组件添加 ref
 
+```js
 你可以通过从 React 导入 useRef Hook 来为你的组件添加一个 ref：
 
 import { useRef } from 'react';
@@ -19774,6 +19783,7 @@ useRef 返回一个这样的对象:
 {
   current: 0 // 你向 useRef 传入的值
 }
+```
 
 ```js
 //你可以用 ref.current 属性访问该 ref 的当前值。这个值是有意被设置为可变的，意味着你既可以读取它也可以写入它。就像一个 React 追踪不到的、用来存储组件信息的秘密“口袋”。（这就是让它成为 React 单向数据流的“脱围机制”的原因 —— 详见下文！）
@@ -19803,12 +19813,11 @@ export default function Counter() {
 #### 示例：制作秒表
 
 ```js
-// 
-你可以在单个组件中把 ref 和 state 结合起来使用。例如，让我们制作一个秒表，用户可以通过按按钮来使其启动或停止。为了显示从用户按下“开始”以来经过的时间长度，你需要追踪按下“开始”按钮的时间和当前时间。此信息用于渲染，所以你会把它保存在 state 中：
+//你可以在单个组件中把 ref 和 state 结合起来使用。例如，让我们制作一个秒表，用户可以通过按按钮来使其启动或停止。为了显示从用户按下“开始”以来经过的时间长度，你需要追踪按下“开始”按钮的时间和当前时间。此信息用于渲染，所以你会把它保存在 state 中：
 const [startTime, setStartTime] = useState(null);
 const [now, setNow] = useState(null);
 
-当用户按下“开始”时，你将用 setInterval 每 10 毫秒更新一次时间：
+// 当用户按下“开始”时，你将用 setInterval 每 10 毫秒更新一次时间：
 import { useState } from 'react';
 
 export default function Stopwatch() {
@@ -19842,7 +19851,7 @@ export default function Stopwatch() {
     //显示经过的时间（secondsPassed），保留三位小数。---提供一个按钮，点击时调用 handleStart 开始计时。
   );
 }
-当按下“停止”按钮时，你需要取消现有的 interval，以便让它停止更新 now state 变量。你可以通过调用 clearInterval 来完成此操作。但你需要为其提供 interval ID，此 ID 是之前用户按下 Start、调用 setInterval 时返回的。你需要将 interval ID 保留在某处。 由于 interval ID 不用于渲染，你可以将其保存在 ref 中：
+// 当按下“停止”按钮时，你需要取消现有的 interval，以便让它停止更新 now state 变量。你可以通过调用 clearInterval 来完成此操作。但你需要为其提供 interval ID，此 ID 是之前用户按下 Start、调用 setInterval 时返回的。你需要将 interval ID 保留在某处。 由于 interval ID 不用于渲染，你可以将其保存在 ref 中：
 import { useState, useRef } from 'react';
 
 export default function Stopwatch() {
@@ -19884,7 +19893,7 @@ export default function Stopwatch() {
     </>
   );
 }
-当一条信息用于渲染时，将它保存在 state 中。当一条信息仅被事件处理器需要，并且更改它不需要重新渲染时，使用 ref 可能会更高效。
+// 当一条信息用于渲染时，将它保存在 state 中。当一条信息仅被事件处理器需要，并且更改它不需要重新渲染时，使用 ref 可能会更高效。
 ```
 
 #### ref 和 state 的不同之处
@@ -19915,9 +19924,9 @@ export default function Counter() {
     </button>
   );
 }
-因为 count 的值将会被显示，所以为其使用 state 是合理的。当使用 setCount() 设置计数器的值时，React 会重新渲染组件，并且屏幕会更新以展示新的计数。
+// 因为 count 的值将会被显示，所以为其使用 state 是合理的。当使用 setCount() 设置计数器的值时，React 会重新渲染组件，并且屏幕会更新以展示新的计数。
 
-如果你试图用 ref 来实现它，React 永远不会重新渲染组件，所以你永远不会看到计数变化！看看点击这个按钮如何 不更新它的文本：
+// 如果你试图用 ref 来实现它，React 永远不会重新渲染组件，所以你永远不会看到计数变化！看看点击这个按钮如何 不更新它的文本：
 import { useRef } from 'react';
 
 export default function Counter() {
@@ -19934,11 +19943,11 @@ export default function Counter() {
     </button>
   );
 }
-这就是为什么在渲染期间读取 ref.current 会导致代码不可靠的原因。如果需要，请改用 state。
+// 这就是为什么在渲染期间读取 ref.current 会导致代码不可靠的原因。如果需要，请改用 state。
 
-useRef 内部是如何运行的？ 
-:
-尽管 useState 和 useRef 都是由 React 提供的，原则上 useRef 可以在 useState 的基础上 实现。 你可以想象在 React 内部，useRef 是这样实现的：
+// useRef 内部是如何运行的？ 
+// :
+// 尽管 useState 和 useRef 都是由 React 提供的，原则上 useRef 可以在 useState 的基础上 实现。 你可以想象在 React 内部，useRef 是这样实现的：
 
 // React 内部
 function useRef(initialValue) {
@@ -19948,11 +19957,11 @@ function useRef(initialValue) {
   //使用 useState 钩子初始化一个状态 ref，该状态的初始值是一个对象 { current: initialValue }。unused 是状态的 setter 函数，但在这里不会用到。
   //返回 ref 对象，这个对象包含一个名为 current 的属性，其值为 initialValue
 }
-第一次渲染期间，useRef 返回 { current: initialValue }。 该对象由 React 存储，因此在下一次渲染期间将返回相同的对象。 请注意，在这个示例中，state 设置函数没有被用到。它是不必要的，因为 useRef 总是需要返回相同的对象！
+// 第一次渲染期间，useRef 返回 { current: initialValue }。 该对象由 React 存储，因此在下一次渲染期间将返回相同的对象。 请注意，在这个示例中，state 设置函数没有被用到。它是不必要的，因为 useRef 总是需要返回相同的对象！
 
-React 提供了一个内置版本的 useRef，因为它在实践中很常见。 但是你可以将其视为没有设置函数的常规 state 变量。 如果你熟悉面向对象编程，ref 可能会让你想起实例字段 —— 但是你写的不是 this.something，而是 somethingRef.current。
+// React 提供了一个内置版本的 useRef，因为它在实践中很常见。 但是你可以将其视为没有设置函数的常规 state 变量。 如果你熟悉面向对象编程，ref 可能会让你想起实例字段 —— 但是你写的不是 this.something，而是 somethingRef.current。
 
-看不懂???
+// 看不懂???
 ```
 
 #### 何时使用 ref
@@ -19984,17 +19993,17 @@ console.log(ref.current); // 5
 
 ```js
 //摘要
-ref 是一种脱围机制，用于保留不用于渲染的值。 你不会经常需要它们。
-ref 是一个普通的 JavaScript 对象，具有一个名为 current 的属性，你可以对其进行读取或设置。
-你可以通过调用 useRef Hook 来让 React 给你一个 ref。
-与 state 一样，ref 允许你在组件的重新渲染之间保留信息。
-与 state 不同，设置 ref 的 current 值不会触发重新渲染。
-不要在渲染过程中读取或写入 ref.current。这使你的组件难以预测。
+// ref 是一种脱围机制，用于保留不用于渲染的值。 你不会经常需要它们。
+// ref 是一个普通的 JavaScript 对象，具有一个名为 current 的属性，你可以对其进行读取或设置。
+// 你可以通过调用 useRef Hook 来让 React 给你一个 ref。
+// 与 state 一样，ref 允许你在组件的重新渲染之间保留信息。
+// 与 state 不同，设置 ref 的 current 值不会触发重新渲染。
+// 不要在渲染过程中读取或写入 ref.current。这使你的组件难以预测。
 ```
 
 ```js
 //第 1 个挑战 共 4 个挑战: 修复坏掉的聊天输入框 
-输入消息并单击“发送”。你会注意到，在看到“已发送！”提示框之前有 3 秒的延迟。在此延迟期间，你可以看到一个“撤消”按钮。点击它。这个“撤消”按钮应该阻止“发送！”消息弹出。它通过调用 clearTimeout 来做到这点，这一步骤需要使用在 handleSend 时保存的 timeout ID。但是，即使在单击“撤消”后，“已发送！”消息仍然出现。找出它不起作用的原因，然后修复它。
+// 输入消息并单击“发送”。你会注意到，在看到“已发送！”提示框之前有 3 秒的延迟。在此延迟期间，你可以看到一个“撤消”按钮。点击它。这个“撤消”按钮应该阻止“发送！”消息弹出。它通过调用 clearTimeout 来做到这点，这一步骤需要使用在 handleSend 时保存的 timeout ID。但是，即使在单击“撤消”后，“已发送！”消息仍然出现。找出它不起作用的原因，然后修复它。
 import { useState } from 'react';
 
 export default function Chat() {
@@ -20038,7 +20047,7 @@ export default function Chat() {
     </>
   );
 }
-答案:每当你的组件重新渲染时（例如当你设置 state 时），所有局部变量都会从头开始初始化。这就是为什么你不能将 timeout ID 保存在像 timeoutID 这样的局部变量中，然后期望未来另一个事件处理器“看到”它。相反，将它存储在一个 ref 中，React 将在渲染之间保留它。
+// 答案:每当你的组件重新渲染时（例如当你设置 state 时），所有局部变量都会从头开始初始化。这就是为什么你不能将 timeout ID 保存在像 timeoutID 这样的局部变量中，然后期望未来另一个事件处理器“看到”它。相反，将它存储在一个 ref 中，React 将在渲染之间保留它。
 import { useState, useRef } from 'react';
 
 export default function Chat() {
@@ -20100,8 +20109,8 @@ export default function Toggle() {
     </button>
   );
 }
-答案:
-在这个例子中，ref 的 current 值被用于计算渲染输出：{isOnRef.current ? '开'：'关'}。这表明此信息本来不应该在 ref 中，而应该放在 state 里。要修复它，请删除 ref ，使用 state 代替：
+// 答案:
+// 在这个例子中，ref 的 current 值被用于计算渲染输出：{isOnRef.current ? '开'：'关'}。这表明此信息本来不应该在 ref 中，而应该放在 state 里。要修复它，请删除 ref ，使用 state 代替：
 import { useState } from 'react';
 
 export default function Toggle() {
@@ -20120,11 +20129,11 @@ export default function Toggle() {
 
 ```js
 //第 3 个挑战 共 4 个挑战: 修复防抖 
-在这个例子中，所有按钮点击处理器都是 “防抖的”。 要了解这意味着什么，请按下其中一个按钮。注意消息在一秒后显示。如果你在等待消息时按下按钮，计时器将重置。因此如果你多次快速单击同一个按钮，则直到你停止单击 之后 1 秒钟，该消息才会显示。防抖可以让你将一些动作推迟到用户“停止动作”之后。
+// 在这个例子中，所有按钮点击处理器都是 “防抖的”。 要了解这意味着什么，请按下其中一个按钮。注意消息在一秒后显示。如果你在等待消息时按下按钮，计时器将重置。因此如果你多次快速单击同一个按钮，则直到你停止单击 之后 1 秒钟，该消息才会显示。防抖可以让你将一些动作推迟到用户“停止动作”之后。
 
-这个例子可以正常运行，但并不完全符合预期。按钮不是独立的。要查看问题，请单击其中一个按钮，然后立即单击另一个按钮。你本来期望在延迟之后，你会看到两个按钮的消息。但只有最后一个按钮的消息出现了。第一个按钮的消息丢失了。
+// 这个例子可以正常运行，但并不完全符合预期。按钮不是独立的。要查看问题，请单击其中一个按钮，然后立即单击另一个按钮。你本来期望在延迟之后，你会看到两个按钮的消息。但只有最后一个按钮的消息出现了。第一个按钮的消息丢失了。
 
-为什么按钮会相互干扰呢？查找并修复问题。
+// 为什么按钮会相互干扰呢？查找并修复问题。
 let timeoutID;
 
 function DebouncedButton({ onClick, children }) {
@@ -20165,8 +20174,8 @@ export default function Dashboard() {
     </>
   )
 }
-答案
-像 timeoutID 这样的变量是被所有组件共享的。这就是为什么单击第二个按钮会重置第一个按钮未完成的 timeout 的原因。要解决此问题，你可以把 timeout 保存在 ref 中。每个按钮都有自己的 ref，因此它们不会相互冲突。请注意快速单击两个按钮如何显示两个消息。
+// 答案
+// 像 timeoutID 这样的变量是被所有组件共享的。这就是为什么单击第二个按钮会重置第一个按钮未完成的 timeout 的原因。要解决此问题，你可以把 timeout 保存在 ref 中。每个按钮都有自己的 ref，因此它们不会相互冲突。请注意快速单击两个按钮如何显示两个消息。
 import { useRef } from 'react';
 
 function DebouncedButton({ onClick, children }) {
@@ -20209,9 +20218,9 @@ export default function Dashboard() {
 
 ```js
 //第 4 个挑战 共 4 个挑战: 读取最新的 state 
-在此示例中，当你按下“发送”后，在显示消息之前会有一小段延迟。输入“你好”，按下发送，然后再次快速编辑输入。尽管你进行了编辑，提示框仍会显示“你好”（这是按钮被点击 那一刻 state 的值）。
+// 在此示例中，当你按下“发送”后，在显示消息之前会有一小段延迟。输入“你好”，按下发送，然后再次快速编辑输入。尽管你进行了编辑，提示框仍会显示“你好”（这是按钮被点击 那一刻 state 的值）。
 
-通常，这种行为是你在应用程序中想要的。但是，有时可能需要一些异步代码来读取某些 state 的 最新 版本。你能想出一种方法，让提示框显示 当前 输入文本而不是点击时的内容吗？
+// 通常，这种行为是你在应用程序中想要的。但是，有时可能需要一些异步代码来读取某些 state 的 最新 版本。你能想出一种方法，让提示框显示 当前 输入文本而不是点击时的内容吗？
 import { useState, useRef } from 'react';
 
 export default function Chat() {
@@ -20243,8 +20252,8 @@ export default function Chat() {
     </>
   );
 }
-答案:
-state 运作起来 就像快照，因此你无法从 timeout 等异步操作中读取最新的 state。但是，你可以在 ref 中保存最新的输入文本。ref 是可变的，因此你可以随时读取 current 属性。由于当前文本也用于渲染，在这个例子中，你需要 同时 使用一个 state 变量（用于渲染）和 一个 ref（在 timeout 时读取它）。你需要手动更新当前的 ref 值。
+// 答案:
+// state 运作起来 就像快照，因此你无法从 timeout 等异步操作中读取最新的 state。但是，你可以在 ref 中保存最新的输入文本。ref 是可变的，因此你可以随时读取 current 属性。由于当前文本也用于渲染，在这个例子中，你需要 同时 使用一个 state 变量（用于渲染）和 一个 ref（在 timeout 时读取它）。你需要手动更新当前的 ref 值。
 import { useState, useRef } from 'react';
 
 export default function Chat() {
@@ -20299,21 +20308,23 @@ ref JSX 属性如何与 useRef Hook 相关联
 
 #### 获取指向节点的 ref
 
-要访问由 React 管理的 DOM 节点，首先，引入 useRef Hook：
+```js
+// 要访问由 React 管理的 DOM 节点，首先，引入 useRef Hook：
 
 import { useRef } from 'react';
-然后，在你的组件中使用它声明一个 ref：
+// 然后，在你的组件中使用它声明一个 ref：
 
 const myRef = useRef(null);
-最后，将 ref 作为 ref 属性值传递给想要获取的 DOM 节点的 JSX 标签：
+// 最后，将 ref 作为 ref 属性值传递给想要获取的 DOM 节点的 JSX 标签：
 
-``<div ref={myRef}>``
-useRef Hook 返回一个对象，该对象有一个名为 current 的属性。最初，myRef.current 是 null。当 React 为这个 ``<div>`` 创建一个 DOM 节点时，React 会把对该节点的引用放入 myRef.current。然后，你可以从 事件处理器 访问此 DOM 节点，并使用在其上定义的内置浏览器 API。
+// <div ref={myRef}>
+// useRef Hook 返回一个对象，该对象有一个名为 current 的属性。最初，myRef.current 是 null。当 React 为这个 ``<div>`` 创建一个 DOM 节点时，React 会把对该节点的引用放入 myRef.current。然后，你可以从 事件处理器 访问此 DOM 节点，并使用在其上定义的内置浏览器 API。
 
 // 你可以使用任意浏览器 API，例如：
-myRef.current.scrollIntoView();
-示例: 使文本输入框获得焦点
-在本例中，单击按钮将使输入框获得焦点：
+// myRef.current.scrollIntoView();
+// 示例: 使文本输入框获得焦点
+// 在本例中，单击按钮将使输入框获得焦点：
+```
 
 ```js
 //import { useRef } from 'react';
