@@ -1,6 +1,8 @@
 # nexterror
 
-## npm run dev npm ERR! Missing script: "dev"
+## 1
+
+<!-- npm run dev npm ERR! Missing script: "dev" -->
 
 这个错误表明 npm 找不到名为 "dev" 的脚本。这可能是因为在项目的 `package.json` 文件中没有定义 "dev" 脚本。
 
