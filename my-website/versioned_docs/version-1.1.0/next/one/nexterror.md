@@ -1,4 +1,4 @@
-# error
+# nexterror
 
 ## npm run dev npm ERR! Missing script: "dev"
 

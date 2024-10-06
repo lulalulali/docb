@@ -68,6 +68,19 @@ const config = {
     ],
   ],
 
+    // plugins: [
+    //   [
+    //     '@docusaurus/plugin-content-blog',
+    //     {
+    //       // 如果你不希望重复定义作者信息，忽略内联作者警告
+    //       onInlineAuthors: 'ignore',
+    //       // 如果你不想看到未截断博客文章的警告
+    //       onUntruncatedBlogPosts: 'ignore',
+    //     },
+    //   ],
+    // ],
+    // 其他配置项
+  
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
