@@ -102,12 +102,12 @@
     },
     {
       "type": "category",
-      "label": "next",
+      "label": "jsnext",
       "items": [
-        "next/next",
-        "next/nextlearn",
-        "next/nextroute",
-        "next/nexterror"
+        "jsnext/jsnext",
+        "jsnext/jsnextlearn",
+        "jsnext/jsnextroute",
+        "jsnext/jsnexterror"
       ]
     },
     {
