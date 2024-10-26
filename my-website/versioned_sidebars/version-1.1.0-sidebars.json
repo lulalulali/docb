@@ -126,7 +126,8 @@
       "type": "category",
       "label": "loveRead",
       "items": [
-        "loveRead/grow1"
+        "loveRead/grow1",
+        "loveRead/ai-assited-coding-pdf.md"
       ]
     }
   ]
