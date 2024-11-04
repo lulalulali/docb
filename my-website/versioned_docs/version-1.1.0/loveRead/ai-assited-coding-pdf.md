@@ -4,6 +4,12 @@
 
 ```js
 GitHub Copilot 和 ChatGPT 的到来，一切都发生了巨大的变化。尝试这些工具就像我第一次拿着 iPhone 的那一刻一样——绝对改变了游戏规则。
+figma是设计工具站
+synk安全站 检测安全漏洞
+pieces for developers
+otter
+bolt 包相关
+v0.dev也可视图转换
 
 ```
 
